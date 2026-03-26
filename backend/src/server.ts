@@ -25,7 +25,7 @@ io.on('connection', (socket: Socket) => {
     });
 
     socket.on('PLAYER_MOVE', (move: PlayerMoveAction) => {
-        console.log(`\n Movimiento recibido en la sala: ${move.roomId}`);
+        console.log(`\nMovimiento recibido en la sala: ${move.roomId}`);
         console.log(`Jugador: ${move.player}`);
         console.log(`Mueve desde (${move.from.x}, ${move.from.y}) hasta (${move.to.x}, ${move.to.y})`);
         console.log(`Carta usada: ${move.cardUsed}`);
