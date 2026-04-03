@@ -3,7 +3,7 @@ import cors from 'cors';
 import http from 'http';
 import { Server, Socket } from 'socket.io'
 import type { Board } from '../../shared/types';
-import { BoardGenerator } from './game/boardGenerator';
+import { BoardGenerator } from './game/BoardGenerator';
 
 const app = express();
 
