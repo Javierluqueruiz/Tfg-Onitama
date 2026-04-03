@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import type { PlayerMoveAction } from "../../shared/types";
 
 const socket = io('http://localhost:3000')
 
@@ -24,17 +23,7 @@ function App() {
     };
   }, []);
 
-  const mandarMovimientoPrueba = () => {
-    const jugada: PlayerMoveAction = {
-      roomId: 'sala-tfg-1',
-      player: 'red',
-      from: { x: 4, y: 2},
-      to: {x: 3, y: 2},
-      cardUsed: 'Dragon'
-    }
-
-    socket.emit('PLAYER_MOVE', jugada);
-  }
+  
 
   return (
     <div style={{ padding: '2rem', fontFamily: 'sans-serif', textAlign: 'center' }}>
@@ -45,12 +34,7 @@ function App() {
           {isConnected ? '🟢 CONECTADO' : '🔴 DESCONECTADO'}
         </p>
 
-        <button
-          onClick={mandarMovimientoPrueba}
-          style={{ padding: '10px 20px', fontSize: '1.2rem', cursor: 'pointer', marginTop: '20px' }}
-          >
-            Enviar Jugada al Servidor
-          </button>
+        
       </div>
     </div>
   );

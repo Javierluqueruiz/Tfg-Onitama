@@ -4,7 +4,7 @@ export type PlayerColor = RedPlayer | BluePlayer;
 
 type StudentPiece = 'student';
 type MasterPiece = 'master';
-export type PieceType = StudentPiece | MasterPiece;
+export type PieceType = StudentPiece | MasterPiece;q
 
 export interface Piece {
     type: PieceType;
