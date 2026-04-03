@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import { Server, Socket } from 'socket.io'
-import type { PlayerMoveAction } from '../../shared/types';
+import type { Board } from '../../shared/types';
+import { BoardGenerator } from './game/boardGenerator';
 
 const app = express();
 
@@ -17,7 +18,7 @@ const io = new Server(server, {
     }
 });
 
-io.on('connection', (socket: Socket) => {
+/*io.on('connection', (socket: Socket) => {
     console.log(`Nuevo jugador conectado. ID de sesión: ${socket.id}`);
 
     socket.on('disconnect', () => {
@@ -31,9 +32,25 @@ io.on('connection', (socket: Socket) => {
         console.log(`Carta usada: ${move.cardUsed}`);
     })
 });
-
+*/
 const PORT = 3000;
 server.listen(PORT, () =>{
     console.log(`Motor de Onitama rodando en http://localhost:${PORT}`);
-})
 
+    const board = BoardGenerator.createInitialBoard();
+    console.log('Tablero inicial generado:');
+    board.forEach(row => {
+        let rowString = "";
+        row.forEach((cell) => {
+            if (cell === null) {
+                rowString += "[ ] ";
+            } else {
+                const pieceSymbol = cell.type === 'master' ? 'M' : 'S';
+                const colorSymbol = cell.color === 'red' ? 'R' : 'B';
+                rowString += `[${colorSymbol}${pieceSymbol}] `;
+            }
+        });
+        console.log(rowString);
+    });
+    console.log("=================================");
+});
