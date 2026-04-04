@@ -1,43 +1,18 @@
-export type PlayerColor = 'red' | 'blue';
-export type PieceType = 'master' | 'student';
+type RedPlayer = 'red';
+type BluePlayer = 'blue';
+export type PlayerColor = RedPlayer | BluePlayer;
 
-export interface Position {
-    x: number;
-    y: number;
-}
+type StudentPiece = 'student';
+type MasterPiece = 'master';
+export type PieceType = StudentPiece | MasterPiece;q
 
 export interface Piece {
     type: PieceType;
     color: PlayerColor;
 }
 
-export interface Cell {
-    position: Position;
-    piece: Piece | null;
-}
+export type Cell = Piece | null;
 
-export interface Card {
-    name: string;
-    moves: Position[];
-}
+export type BoardRow = [Cell, Cell, Cell, Cell, Cell];
+export type Board = [BoardRow, BoardRow, BoardRow, BoardRow, BoardRow];
 
-export interface GameState {
-    roomId: string;
-    status: 'waiting' | 'playing' | 'finished';
-    currentTurn: PlayerColor;
-    board: Cell[][];
-    cards: {
-        red: Card[];
-        blue: Card[];
-        middle: Card[];
-    };
-    winner : PlayerColor | null;
-}
-
-export interface PlayerMoveAction {
-    roomId: string;
-    player: PlayerColor;
-    from: Position;
-    to: Position;
-    cardUsed: string;
-}

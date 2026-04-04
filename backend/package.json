@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "start": "node dist/backend/src/server.js"
+    "start": "node dist/backend/src/server.js",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "@types/node": "^25.5.0",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }
