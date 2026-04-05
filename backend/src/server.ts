@@ -5,10 +5,10 @@ import { Server, Socket } from 'socket.io'
 import type { Board } from '../../shared/types';
 import { BoardGenerator } from './game/BoardGenerator';
 
+import { DeckManager } from './game/DeckManager';
+
 const app = express();
-
 app.use(cors());
-
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -36,21 +36,21 @@ const io = new Server(server, {
 const PORT = 3000;
 server.listen(PORT, () =>{
     console.log(`Motor de Onitama rodando en http://localhost:${PORT}`);
-
-    const board = BoardGenerator.createInitialBoard();
-    console.log('Tablero inicial generado:');
-    board.forEach(row => {
-        let rowString = "";
-        row.forEach((cell) => {
-            if (cell === null) {
-                rowString += "[ ] ";
-            } else {
-                const pieceSymbol = cell.type === 'master' ? 'M' : 'S';
-                const colorSymbol = cell.color === 'red' ? 'R' : 'B';
-                rowString += `[${colorSymbol}${pieceSymbol}] `;
-            }
-        });
-        console.log(rowString);
-    });
-    console.log("=================================");
 });
+
+console.log("\n====== NUEVA PARTIDA INICIADA ====\n");
+
+const board = BoardGenerator.createInitialBoard();
+const deckResult = DeckManager.drawInitialCards();
+
+
+console.log('FEAT-01: Tablero')
+console.table(board);
+
+console.log('FEAT-02: Cartas iniciales');
+console.log('Cartas del jugador rojo:', deckResult.cards.red.map(c=> c.name));
+console.log('Cartas del jugador azul:', deckResult.cards.blue.map(c=> c.name));
+console.log('Carta neutral:', deckResult.cards.neutral.name, `(color: ${deckResult.cards.neutral.color})`);
+
+console.log('TURNO INICIAL')
+console.log('Jugador que inicia:', deckResult.firstTurn);
