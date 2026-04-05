@@ -2,10 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import { Server, Socket } from 'socket.io'
-import type { Board } from '../../shared/types';
-import { BoardGenerator } from './game/BoardGenerator';
-
-import { DeckManager } from './game/DeckManager';
+import { GameEngine } from './game/GameEngine';
 
 const app = express();
 app.use(cors());
@@ -40,17 +37,6 @@ server.listen(PORT, () =>{
 
 console.log("\n====== NUEVA PARTIDA INICIADA ====\n");
 
-const board = BoardGenerator.createInitialBoard();
-const deckResult = DeckManager.drawInitialCards();
-
-
-console.log('FEAT-01: Tablero')
-console.table(board);
-
-console.log('FEAT-02: Cartas iniciales');
-console.log('Cartas del jugador rojo:', deckResult.cards.red.map(c=> c.name));
-console.log('Cartas del jugador azul:', deckResult.cards.blue.map(c=> c.name));
-console.log('Carta neutral:', deckResult.cards.neutral.name, `(color: ${deckResult.cards.neutral.color})`);
-
-console.log('TURNO INICIAL')
-console.log('Jugador que inicia:', deckResult.firstTurn);
+const gameState = GameEngine.createNewGame('room1');
+console.log("Estado inicial del juego:");
+console.log(JSON.stringify(gameState, null, 2));
