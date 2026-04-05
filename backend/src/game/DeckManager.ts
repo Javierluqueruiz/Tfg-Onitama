@@ -1,5 +1,14 @@
 import {Card, PlayerColor} from '../../../shared/types';
 
+type DeckDrawResult = {
+    cards: {
+        red: [Card, Card];
+        blue: [Card, Card];
+        neutral: Card;
+    },
+    firstTurn: PlayerColor;
+};
+
 const ONITAMA_DECK: Card[] = [
     {name: 'Tiger', description: '', color: 'blue', moves: [{x: 0, y: -2}, {x: 0, y: 1}]},
     {name: 'Dragon', description: '', color: 'red', moves: [{x: -2, y: -1}, {x: 2, y: -1}, {x: -1, y: 1}, {x: 1, y: 1}]},
@@ -21,16 +30,13 @@ const ONITAMA_DECK: Card[] = [
 
 export class DeckManager {
 
-    public static drawInitialCards(){
+    public static drawInitialCards(): DeckDrawResult {
         const deck = [...ONITAMA_DECK];
 
         //Algoritmo de Fisher-Yates para mezclar el mazo
-        for (let i = deck.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
+        const shuffledDeck = this.shuffleDeck(deck);
 
-        const drawnCards = deck.slice(0, 5);
+        const drawnCards = shuffledDeck.slice(0, 5);
         
         const redCards: [Card, Card] = [drawnCards[0], drawnCards[1]];
         const blueCards: [Card, Card] = [drawnCards[2], drawnCards[3]];
@@ -46,5 +52,14 @@ export class DeckManager {
             },
             firstTurn: initialTurn
         };
+    }
+
+    private static shuffleDeck(deck: Card[]): Card[] {
+        const shuffledDeck = [...deck];
+        for (let i = shuffledDeck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledDeck[i], shuffledDeck[j]] = [shuffledDeck[j], shuffledDeck[i]];
+        }
+        return shuffledDeck;
     }
 }
