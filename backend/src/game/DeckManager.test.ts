@@ -5,11 +5,8 @@ describe('FEAT-02: DeckManager', () => {
 
     let deckResult: ReturnType<typeof DeckManager.drawInitialCards>;
 
-    beforeAll(() => {
-        deckResult = DeckManager.drawInitialCards();
-    });
-
     it('Debe repartir exactamente 5 cartas al inicio de la partida', () => {
+        const deckResult = DeckManager.drawInitialCards();
         const totalCards = [
             ...deckResult.cards.red,
             ...deckResult.cards.blue,
@@ -24,6 +21,7 @@ describe('FEAT-02: DeckManager', () => {
     });
 
     it('Cada jugador debe recibir exactamente 2 cartas', () => {
+        const deckResult = DeckManager.drawInitialCards();
         expect(deckResult.cards.red.length).toBe(2);
         expect(deckResult.cards.blue.length).toBe(2);
     });

@@ -31,11 +31,11 @@ export interface Card {
 }
 
 //ESTADO GLOBAL DEL JUEGO
-type gameStatus = 'waiting' | 'in_progress' | 'finished';
+type GameStatus = 'waiting' | 'in_progress' | 'finished';
 
 export interface GameState {
     roomId: string;
-    status: gameStatus;
+    status: GameStatus;
     currentTurn: PlayerColor;
     board: Board;
     cards: {
