@@ -2,13 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import { Server, Socket } from 'socket.io'
-import type { Board } from '../../shared/types';
-import { BoardGenerator } from './game/BoardGenerator';
+import { GameEngine } from './game/GameEngine';
 
 const app = express();
-
 app.use(cors());
-
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -36,21 +33,10 @@ const io = new Server(server, {
 const PORT = 3000;
 server.listen(PORT, () =>{
     console.log(`Motor de Onitama rodando en http://localhost:${PORT}`);
-
-    const board = BoardGenerator.createInitialBoard();
-    console.log('Tablero inicial generado:');
-    board.forEach(row => {
-        let rowString = "";
-        row.forEach((cell) => {
-            if (cell === null) {
-                rowString += "[ ] ";
-            } else {
-                const pieceSymbol = cell.type === 'master' ? 'M' : 'S';
-                const colorSymbol = cell.color === 'red' ? 'R' : 'B';
-                rowString += `[${colorSymbol}${pieceSymbol}] `;
-            }
-        });
-        console.log(rowString);
-    });
-    console.log("=================================");
 });
+
+console.log("\n====== NUEVA PARTIDA INICIADA ====\n");
+
+const gameState = GameEngine.createNewGame('room1');
+console.log("Estado inicial del juego:");
+console.log(JSON.stringify(gameState, null, 2));

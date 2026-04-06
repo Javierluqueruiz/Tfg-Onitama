@@ -19,7 +19,7 @@ jobs:
       with:
         node-version: '24.x' 
 
-    - name: Install dependencies
+    - name: Install dependencies and run tests
       working-directory: ./backend
       run: |
         npm install
