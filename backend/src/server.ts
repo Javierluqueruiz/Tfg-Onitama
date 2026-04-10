@@ -13,7 +13,7 @@ const io = new Server(server, {
         origin: "*",
         methods: ["GET", "POST"]
     }
-});
+} as any);
 
 /*io.on('connection', (socket: Socket) => {
     console.log(`Nuevo jugador conectado. ID de sesión: ${socket.id}`);
