@@ -6,20 +6,32 @@ export class MovementManager {
 
     public static movePiece(board: Board, from: Position, to: Position): Board {
     
-        //1.Clonar el tablero
+        //1.Validar las posiciones
+        if (this.isOutOfBounds(from)) {
+            throw new Error(`[FEAT-03] La posición de origen (${from.x}, ${from.y}) está fuera de los límites del tablero`);
+        }
+        if (this.isOutOfBounds(to)) {
+            throw new Error(`[FEAT-03] La posición de destino (${to.x}, ${to.y}) está fuera de los límites del tablero`);
+        }
+        
+        //2.Clonar el tablero
         const newBoard: Board = board.map(row => [...row]) as Board;
 
-        //2. Validar que haya una pieza en la posición de origen
+        //3. Validar que haya una pieza en la posición de origen
         const pieceToMove = newBoard[from.y][from.x];
 
         if (!pieceToMove) {
             throw new Error(`[FEAT-03] No hay pieza en la posición de origen (${from.x}, ${from.y})`);
         }
 
-        //3. Mover la pieza
+        //4. Mover la pieza
         newBoard[to.y][to.x] = pieceToMove; 
         newBoard[from.y][from.x] = null;
 
         return newBoard;
+    }
+
+    private static isOutOfBounds(pos: Position): boolean {
+        return pos.x < 0 || pos.x > 4 || pos.y < 0 || pos.y > 4;
     }
 }
