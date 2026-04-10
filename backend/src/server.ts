@@ -48,11 +48,11 @@ console.table(gameState.board);
 console.log("\n=== EJECUTANDO MOVIMIENTOS DE PRUEBA ===");
 console.log("Moviendo la pieza de la esquina superior izquierda (0,0) a la casilla inferior (0,1)");
 
-const newBoard = MovementManager.movePiece(gameState.board, { x: 0, y: 0 }, { x: 5, y: 2 });
+const newBoard = MovementManager.movePiece(gameState.board, { x: 0, y: 0 }, { x: 0, y: 2 });
 
 console.log("\n=== TABLERO DESPUÉS DEL MOVIMIENTO ===");
 console.table(newBoard);
 
-console.log("\n=== VERIFICANDO QUE EL TABLERO ORIGINAL NO SE MODIFICÓ ===");
-console.log("\n=== TABLERO ORIGINAL ===");
-console.table(gameState.board);
+//console.log("\n=== VERIFICANDO QUE EL TABLERO ORIGINAL NO SE MODIFICÓ ===");
+//console.log("\n=== TABLERO ORIGINAL ===");
+//console.table(gameState.board);
