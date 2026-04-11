@@ -48,10 +48,17 @@ console.table(gameState.board);
 console.log("\n=== EJECUTANDO MOVIMIENTOS DE PRUEBA ===");
 console.log("Moviendo la pieza de la esquina superior izquierda (0,0) a la casilla inferior (0,1)");
 
-const newBoard = MovementManager.movePiece(gameState.board, { x: 0, y: 0 }, { x: 0, y: 2 });
+const movement1 = MovementManager.movePiece(gameState.board, { x: 0, y: 0 }, { x: 0, y: 2 });
 
 console.log("\n=== TABLERO DESPUÉS DEL MOVIMIENTO ===");
-console.table(newBoard);
+console.table(movement1 .newBoard);
+
+const movement2 = MovementManager.movePiece(movement1.newBoard, { x: 0, y: 4 }, { x: 0, y: 2 });
+
+console.log("\n=== TABLERO DESPUÉS DEL SEGUNDO MOVIMIENTO ===");
+console.table(movement2.newBoard);
+console.log(`Pieza capturada en el segundo movimiento: ${movement2.capturedPiece ? movement2.capturedPiece.type + ' (' + movement2.capturedPiece.color + ')' : 'Ninguna'}`);
+
 
 //console.log("\n=== VERIFICANDO QUE EL TABLERO ORIGINAL NO SE MODIFICÓ ===");
 //console.log("\n=== TABLERO ORIGINAL ===");
