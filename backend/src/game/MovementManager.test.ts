@@ -4,7 +4,7 @@ import { GameEngine } from "./GameEngine";
 import { Board } from "../../../shared/types";
 import { BoardGenerator } from "./BoardGenerator";
 
-describe('FEAT-03 y FEAT-04: MovementManager', () => {
+describe('FEAT-03 : Desplazamiento de piezas', () => {
 
     let initialBoard: Board;
     beforeAll(() => {
@@ -46,8 +46,23 @@ describe('FEAT-03 y FEAT-04: MovementManager', () => {
         expect(() => MovementManager.movePiece(initialBoard, { x: 0, y: 0 }, { x: 5, y: 1 }))
             .toThrowError(`[FEAT-03] La posición de destino (5, 1) está fuera de los límites del tablero`);
     });
+})
 
-    it('FEAT-04: Debe capturar la pieza en la posición destino si existe', () => {
+describe('FEAT-04: Detección de capturas', () => {
+    let initialBoard: Board;
+    beforeAll(() => {
+        console.log("\n=== INICIANDO PRUEBAS DE CAPTURA ===");
+        initialBoard = BoardGenerator.createInitialBoard();
+    });
+
+    it('Debe devolver null si la posición destino está vacía', () => {
+        const from = { x: 0, y: 0 };
+        const to = { x: 0, y: 1 }; //Posición vacía
+        const { capturedPiece } = MovementManager.movePiece(initialBoard, from, to);
+        expect(capturedPiece).toBeNull();
+    });
+
+    it('Debe capturar la pieza en la posición destino si existe', () => {
         const from = {x: 0, y: 0};
         const to = {x: 0, y: 4}; 
 
