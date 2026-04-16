@@ -4,6 +4,7 @@ import http from 'http';
 import { Server, Socket } from 'socket.io'
 import { GameEngine } from './game/GameEngine';
 import { MovementManager } from './game/MovementManager';
+import { DeckManager } from './game/DeckManager';
 
 const app = express();
 app.use(cors());
@@ -41,7 +42,7 @@ console.log("\n====== NUEVA PARTIDA INICIADA ====\n");
 const gameState = GameEngine.createNewGame('room1');
 //console.log("Estado inicial del juego:");
 //console.log(JSON.stringify(gameState, null, 2));
-
+/*
 console.log("\n=== TABLERO INICIAL ===");
 console.table(gameState.board);
 
@@ -62,4 +63,15 @@ console.log(`Pieza capturada en el segundo movimiento: ${movement2.capturedPiece
 
 //console.log("\n=== VERIFICANDO QUE EL TABLERO ORIGINAL NO SE MODIFICÓ ===");
 //console.log("\n=== TABLERO ORIGINAL ===");
-//console.table(gameState.board);
+//console.table(gameState.board);*/
+
+console.log("\n\n===ROTACIÓN DE LA CARTA NEUTRAL===")
+    console.log(`Cartas iniciales : Jugador Rojo: ${gameState.cards.red.map(c =>c .name)},
+        Jugador Azul: ${gameState.cards.blue.map(c=>c.name)}, 
+        Carta Neutra: ${gameState.cards.neutral.name}`)
+
+console.log(`\nEl Jugador Rojo juega su primera carta, ${gameState.cards.red[1].name}`)
+const newCards = DeckManager.playCard(gameState.cards, 'red', gameState.cards.red[1].name);
+console.log(`Cartas iniciales : Jugador Rojo: ${newCards.red.map(c =>c .name)},
+        Jugador Azul: ${newCards.blue.map(c=>c.name)}, 
+        Carta Neutra: ${newCards.neutral.name}`)
