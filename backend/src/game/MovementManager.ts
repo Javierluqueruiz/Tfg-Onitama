@@ -1,10 +1,15 @@
-import { Board, Position } from '../../../shared/types';
+import { Board, Piece, Position } from '../../../shared/types';
+
+export interface MoveResult {
+    newBoard: Board;
+    capturedPiece: Piece | null;
+}
 
 export class MovementManager {
 
     //FEAT-03: Ejecuta el desplazamiento de una pieza. Devuelve una copia del tablero, protegiendo el estado original.
 
-    public static movePiece(board: Board, from: Position, to: Position): Board {
+    public static movePiece(board: Board, from: Position, to: Position): MoveResult {
     
         //1.Validar las posiciones
         if (this.isOutOfBounds(from)) {
@@ -24,11 +29,16 @@ export class MovementManager {
             throw new Error(`[FEAT-03] No hay pieza en la posición de origen (${from.x}, ${from.y})`);
         }
 
+        const capturedPiece = newBoard[to.y][to.x]; 
+
         //4. Mover la pieza
         newBoard[to.y][to.x] = pieceToMove; 
         newBoard[from.y][from.x] = null;
 
-        return newBoard;
+        return {
+            newBoard,
+            capturedPiece
+        };
     }
 
     private static isOutOfBounds(pos: Position): boolean {
