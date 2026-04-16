@@ -1,9 +1,10 @@
 import { describe, beforeAll, it, expect } from 'vitest';
-import { DeckManager } from './DeckManager';
+import { DeckDrawResult, DeckManager, CardsState } from './DeckManager';
+import { Card, PlayerColor } from '../../../shared/types';
 
 describe('FEAT-02: DeckManager', () => {
 
-    let deckResult: ReturnType<typeof DeckManager.drawInitialCards>;
+    let deckResult: DeckDrawResult;
 
     it('Debe repartir exactamente 5 cartas al inicio de la partida', () => {
         const deckResult = DeckManager.drawInitialCards();
@@ -36,4 +37,49 @@ describe('FEAT-02: DeckManager', () => {
     });
 
 
+})
+
+describe('FEAT-05: DeckManager', () => {
+
+    let initialCards: CardsState;
+    const player: PlayerColor = 'red';
+    beforeAll(() => {
+        console.log("\n=== INICIANDO PRUEBAS DE JUAGADAS DE CARTAS ===")
+        initialCards = DeckManager.drawInitialCards().cards;
+    })
+
+    it('Debe permitir a un jugador jugar una carta y rotar las cartas correctamente', () => {
+        const cardToPlay: Card = initialCards.red[0];
+        const originalNeutral: Card = initialCards.neutral;
+        
+
+        const newCards: CardsState = DeckManager.playCard(initialCards, player, cardToPlay.name);
+
+        //La carta jugada por el jugador debe convertirse en la nueva carta neutral
+        expect(newCards.neutral.name).toBe(cardToPlay.name);
+
+        //La carte neutral original debe estar en la mano del jugador rojo
+        expect(newCards.red).toContainEqual(originalNeutral);
+
+        //La carta que jugó el jugador rojo ya no debe estar en su mano
+        expect(newCards.red).not.toContainEqual(initialCards.red[0]);
+    });
+
+    it('Debe lanzar un error si el jugador intenta jugar una carta que no tiene', () => {
+        const cartToPlay: Card = initialCards.blue[0];
+        
+        expect(() => DeckManager.playCard(initialCards, player, cartToPlay.name))
+            .toThrowError(`[FEAT-05] El jugador ${player} no tiene la carta ${cartToPlay.name} en su mano`)
+    });
+
+    it('Debe garantizar la inmutabilidad del objeto que contiene las cartas originales', () => {
+        const cardToPlay: Card = initialCards.red[0];
+        const originalNeutral: Card = initialCards.neutral;
+
+        const newCards = DeckManager.playCard(initialCards, player, cardToPlay.name);
+
+        expect(initialCards.neutral.name).toBe(originalNeutral.name);
+        expect(initialCards.red[0]).toBe(cardToPlay);
+
+    });
 })
