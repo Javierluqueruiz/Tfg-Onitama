@@ -1,6 +1,6 @@
-import {Card, PlayerColor} from '../../../shared/types';
+import {Card, GameState, PlayerColor} from '../../../shared/types';
 
-type DeckDrawResult = {
+export type DeckDrawResult = {
     cards: {
         red: [Card, Card];
         blue: [Card, Card];
@@ -8,6 +8,8 @@ type DeckDrawResult = {
     },
     firstTurn: PlayerColor;
 };
+
+export type CardsState = GameState['cards'];
 
 const ONITAMA_DECK: Card[] = [
     {name: 'Tiger', description: '', color: 'blue', moves: [{x: 0, y: -2}, {x: 0, y: 1}]},
@@ -62,4 +64,31 @@ export class DeckManager {
         }
         return shuffledDeck;
     }
+
+    public static playCard(currentCards: CardsState, playerColor: PlayerColor, cardName: string): CardsState {
+        
+        const newCards: CardsState = {
+            red: [...currentCards.red],
+            blue: [...currentCards.blue],
+            neutral: currentCards.neutral
+        }
+
+        
+        const playerCards = newCards[playerColor];
+        const cardIndex = playerCards.findIndex(card => card.name === cardName);
+
+        if (cardIndex === -1) {
+            throw new Error(`[FEAT-05] El jugador ${playerColor} no tiene la carta ${cardName} en su mano`);
+        }
+
+        const playedCard = playerCards[cardIndex];
+        const oldNeutralCard = newCards.neutral;
+
+        //Ejecutamos la rotación de las cartas
+        playerCards[cardIndex] = oldNeutralCard;
+        newCards.neutral = playedCard;
+
+        return newCards;
+    }
+
 }
