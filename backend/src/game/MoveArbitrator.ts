@@ -3,13 +3,22 @@ import { Board, Card, PlayerColor, Position } from "../../../shared/types";
 
 export class MoveArbitrator {
 
-    public static ValidateMove(
+    private static isOutOfBounds(pos: Position): boolean {
+        return pos.x < 0 || pos.x > 4 || pos.y < 0 || pos.y > 4;
+    }
+
+    public static validateMove(
         board: Board,
         from: Position,
         to: Position,
         player: PlayerColor,
         card: Card
     ): boolean {
+
+        //Comprueba los límites
+        if (this.isOutOfBounds(from) || this.isOutOfBounds(to)) {
+            throw new Error(`[FEAT-06] Movimiento Ilegal: Las casillas están fuera de los límites del tablero.`);
+        }
 
         const pieceToMove = board[from.y][from.x];
         const pieceDestination = board[to.y][to.x];
