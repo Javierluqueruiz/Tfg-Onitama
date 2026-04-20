@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { Board, Card } from "../../../shared/types";
 import { BoardGenerator } from "./BoardGenerator";
 import { MoveArbitrator } from "./MoveArbitrator";
+import { GameEngine } from "./GameEngine";
 
 
 
@@ -83,4 +84,34 @@ describe('FEAT-06 : Validador de movimientos', () => {
             expect(() => MoveArbitrator.validateMove(board, from, to, playerColor, mockcard))
             .toThrowError(`[FEAT-06] Movimiento Ilegal: Las casillas están fuera de los límites del tablero.`);
         })  
+})
+
+describe('FEAT-07: Detección de ausencia de movimientos válidos', () => {
+    const mockCard: Card = {
+        name: 'Test',
+        description: '',
+        color: 'blue',
+        moves: [{ x: 0, y: -1}, {x: 1, y: 0}]
+    };
+    const cards: [Card, Card] = [mockCard, mockCard];
+
+    it('Debe retornar true si el jugador tiene movimientos válidos', () => {
+        const board: Board = GameEngine.createNewGame("testId").board;
+
+        const hasValidMoves = MoveArbitrator.hasValidMoves(board, 'blue', cards);
+        expect(hasValidMoves).toBe(true);
+    });
+
+    it('Debe retornar false si el jugador no tiene movimientos válidos', () => {
+        const board: Board = Array(5).fill(null).map(() => Array(5).fill(null)) as Board;
+
+        board[0][4] = { type: 'master', color: 'blue'};
+        board[1][4] = { type: 'student', color: 'blue'};
+
+        console.log(board);
+
+        const hasValidMoves = MoveArbitrator.hasValidMoves(board, 'blue', cards);
+        expect(hasValidMoves).toBe(false);
+    });
+        
 })
