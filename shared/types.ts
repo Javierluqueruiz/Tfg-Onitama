@@ -31,7 +31,7 @@ export interface Card {
 }
 
 //ESTADO GLOBAL DEL JUEGO
-type GameStatus = 'waiting' | 'in_progress' | 'finished';
+type GameStatus = 'waiting' | 'in_progress' | 'finished' | 'waiting_for_discard';
 
 export interface GameState {
     roomId: string;
