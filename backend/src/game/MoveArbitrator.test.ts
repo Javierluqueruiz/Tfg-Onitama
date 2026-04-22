@@ -108,8 +108,6 @@ describe('FEAT-07: Detección de ausencia de movimientos válidos', () => {
         board[0][4] = { type: 'master', color: 'blue'};
         board[1][4] = { type: 'student', color: 'blue'};
 
-        console.log(board);
-
         const hasValidMoves = MoveArbitrator.hasValidMoves(board, 'blue', cards);
         expect(hasValidMoves).toBe(false);
     });

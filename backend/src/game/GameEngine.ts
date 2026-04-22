@@ -1,7 +1,9 @@
-import { Card, GameState } from "../../../shared/types";
+import { Card, GameState, Position } from "../../../shared/types";
 import { BoardGenerator } from "./BoardGenerator";
 import { DeckManager } from "./DeckManager";
 import { MoveArbitrator } from "./MoveArbitrator";
+import { MovementManager } from "./MovementManager";
+import { VictoryArbitrator } from "./VictoryArbitrator";
 
 export class GameEngine {
 
@@ -48,4 +50,38 @@ export class GameEngine {
 
         return newState;
     }
+
+    //Flujo de turno completo
+    public static processTurn(state: GameState, from: Position, to: Position, cardName: string): GameState {
+        let newState: GameState = { ...state};
+
+        //FEAT-06: Validar movimiento
+        const hand = newState.currentTurn === 'red' ? newState.cards.red : newState.cards.blue;
+        const cardUsed = hand.find(card => card.name === cardName);
+
+        if (!cardUsed) throw new Error(`La carta ${cardName} no está en la mano del jugador ${newState.currentTurn}`);
+
+        MoveArbitrator.validateMove(newState.board, from, to, newState.currentTurn,cardUsed);
+
+        //FEAT-03/04: Ejecución del movimiento
+        newState.board = MovementManager.movePiece(newState.board, from, to).newBoard;
+
+        //FEAT-09: Verificar condiciones de victoria
+        const winner = VictoryArbitrator.checkVictory(newState.board);
+
+        if (winner) {
+            newState.status = 'finished';
+            newState.winner = winner;
+            return newState;
+        }
+
+        //FEAT-05: Rotación de cartas
+        newState.cards = DeckManager.playCard(newState.cards, newState.currentTurn, cardName);
+
+        //FEAT-08: Cambio de turno y detección de bloqueos
+        return this.switchTurn(newState);
+    }
+
+
+
 }
