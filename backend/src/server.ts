@@ -1,77 +1,79 @@
 import express from 'express';
-import cors from 'cors';
 import http from 'http';
 import { Server, Socket } from 'socket.io'
 import { GameEngine } from './game/GameEngine';
-import { MovementManager } from './game/MovementManager';
-import { DeckManager } from './game/DeckManager';
+import { SocketEvents } from '../../shared/types';
+import { RoomManager } from './network/RoomManager';
 
 const app = express();
-app.use(cors());
+//app.use(cors());
 const server = http.createServer(app);
-
 const io = new Server(server, {
     cors: {
+        //origin: "http://localhost:5173",
         origin: "*",
         methods: ["GET", "POST"]
     }
-} as any);
+})
 
-/*io.on('connection', (socket: Socket) => {
-    console.log(`Nuevo jugador conectado. ID de sesión: ${socket.id}`);
+io.on('connection', (socket: Socket) => {
+    console.log(`Usuario conectado: ${socket.id}`);
 
-    socket.on('disconnect', () => {
-        console.log(`Jugador desconectado: ${socket.id}`);
+    //CREAR LA SALA
+    socket.on(SocketEvents.CREATE_ROOM, (playerName: string) => {
+        const roomId = `room-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+        
+        socket.join(roomId);
+
+        RoomManager.createRoom(roomId);
+            
+        console.log(`Sala creada: ${roomId} por el jugador ${playerName} (ID: ${socket.id})`);
+
+        socket.emit(SocketEvents.ROOM_CREATED, { roomId });
     });
 
-    socket.on('PLAYER_MOVE', (move: PlayerMoveAction) => {
-        console.log(`\nMovimiento recibido en la sala: ${move.roomId}`);
-        console.log(`Jugador: ${move.player}`);
-        console.log(`Mueve desde (${move.from.x}, ${move.from.y}) hasta (${move.to.x}, ${move.to.y})`);
-        console.log(`Carta usada: ${move.cardUsed}`);
-    })
+    //UNIRSE A LA SALA
+    socket.on(SocketEvents.JOIN_ROOM, (payload: { roomId: string, playerName: string }) => {
+        const { roomId, playerName } = payload;
+
+        //¿EXISTE LA SALA?
+        if (!RoomManager.roomExists(roomId)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'La sala no existe.' });
+        }
+
+        //CONTROL DE JUGADORES 
+        const room = io.sockets.adapter.rooms.get(roomId);
+        const numPlayers = room ? room.size : 0;
+
+        if (numPlayers === 0 ){
+            return socket.emit(SocketEvents.ERROR, { message: 'La sala ha caducado.' });
+        } else if (numPlayers >= 2) {
+            return socket.emit(SocketEvents.ERROR, { message: 'La sala está llena.' });
+        }
+
+        socket.join(roomId);
+        console.log(`Jugador ${playerName} (ID: ${socket.id}) se unió a la sala ${roomId}`);
+
+        //INICIAR EL JUEGO
+        const engine = RoomManager.getGameEngine(roomId);
+
+        if (engine) {
+
+            const initialState = engine.createNewGame(roomId);
+
+            io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState });
+            console.log('Partida iniciada en la sala:', roomId);
+        }
+
+    });
+
+
+    socket.on('disconnect', () => {
+        console.log(`Usuario desconectado: ${socket.id}`);
+    });
 });
-*/
-const PORT = 3000;
-server.listen(PORT, () =>{
-    console.log(`Motor de Onitama rodando en http://localhost:${PORT}`);
-});
 
-console.log("\n====== NUEVA PARTIDA INICIADA ====\n");
+server.listen(3000, () => {
+    console.log('Servidor escuchando en el puerto 3000');
+})
 
-const gameState = GameEngine.createNewGame('room1');
-//console.log("Estado inicial del juego:");
-//console.log(JSON.stringify(gameState, null, 2));
-/*
-console.log("\n=== TABLERO INICIAL ===");
-console.table(gameState.board);
-
-console.log("\n=== EJECUTANDO MOVIMIENTOS DE PRUEBA ===");
-console.log("Moviendo la pieza de la esquina superior izquierda (0,0) a la casilla inferior (0,1)");
-
-const movement1 = MovementManager.movePiece(gameState.board, { x: 0, y: 0 }, { x: 0, y: 2 });
-
-console.log("\n=== TABLERO DESPUÉS DEL MOVIMIENTO ===");
-console.table(movement1 .newBoard);
-
-const movement2 = MovementManager.movePiece(movement1.newBoard, { x: 0, y: 4 }, { x: 0, y: 2 });
-
-console.log("\n=== TABLERO DESPUÉS DEL SEGUNDO MOVIMIENTO ===");
-console.table(movement2.newBoard);
-console.log(`Pieza capturada en el segundo movimiento: ${movement2.capturedPiece ? movement2.capturedPiece.type + ' (' + movement2.capturedPiece.color + ')' : 'Ninguna'}`);
-
-
-//console.log("\n=== VERIFICANDO QUE EL TABLERO ORIGINAL NO SE MODIFICÓ ===");
-//console.log("\n=== TABLERO ORIGINAL ===");
-//console.table(gameState.board);*/
-
-console.log("\n\n===ROTACIÓN DE LA CARTA NEUTRAL===")
-    console.log(`Cartas iniciales : Jugador Rojo: ${gameState.cards.red.map(c =>c .name)},
-        Jugador Azul: ${gameState.cards.blue.map(c=>c.name)}, 
-        Carta Neutra: ${gameState.cards.neutral.name}`)
-
-console.log(`\nEl Jugador Rojo juega su primera carta, ${gameState.cards.red[1].name}`)
-const newCards = DeckManager.playCard(gameState.cards, 'red', gameState.cards.red[1].name);
-console.log(`Cartas iniciales : Jugador Rojo: ${newCards.red.map(c =>c .name)},
-        Jugador Azul: ${newCards.blue.map(c=>c.name)}, 
-        Carta Neutra: ${newCards.neutral.name}`)

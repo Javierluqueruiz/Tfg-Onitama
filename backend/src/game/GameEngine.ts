@@ -7,11 +7,17 @@ import { VictoryArbitrator } from "./VictoryArbitrator";
 
 export class GameEngine {
 
-    public static createNewGame(roomId: string): GameState {
+    private gameState!: GameState;
+
+    constructor() {
+
+    }
+
+    public createNewGame(roomId: string): GameState {
         const board = BoardGenerator.createInitialBoard();
         const deckResult = DeckManager.drawInitialCards();
 
-        return {
+        this.gameState = {
             roomId,
             status: 'waiting',
             currentTurn: deckResult.firstTurn,
@@ -20,10 +26,12 @@ export class GameEngine {
             winner: null
         };
 
+        return this.gameState;
+
     }
 
     //FEAT-08: Alternar el turno entre los jugadores
-    public static switchTurn(currentState: GameState): GameState {
+    public switchTurn(currentState: GameState): GameState {
 
         const newState: GameState = {
             ...currentState,
@@ -52,8 +60,8 @@ export class GameEngine {
     }
 
     //Flujo de turno completo
-    public static processTurn(state: GameState, from: Position, to: Position, cardName: string): GameState {
-        let newState: GameState = { ...state};
+    public processTurn(state: GameState, from: Position, to: Position, cardName: string): GameState {
+        let newState: GameState = { ...this.gameState};
 
         //FEAT-06: Validar movimiento
         const hand = newState.currentTurn === 'red' ? newState.cards.red : newState.cards.blue;
@@ -79,7 +87,12 @@ export class GameEngine {
         newState.cards = DeckManager.playCard(newState.cards, newState.currentTurn, cardName);
 
         //FEAT-08: Cambio de turno y detección de bloqueos
-        return this.switchTurn(newState);
+        this.gameState =  this.switchTurn(newState);
+        return this.gameState;
+    }
+
+    public getGameStatic(): GameState {
+        return this.gameState;
     }
 
 
