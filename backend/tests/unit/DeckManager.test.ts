@@ -1,5 +1,5 @@
 import { describe, beforeAll, it, expect } from 'vitest';
-import { DeckDrawResult, DeckManager, CardsState } from './DeckManager';
+import { DeckDrawResult, DeckManager, CardsState } from '../../src/game/DeckManager';
 import { Card, PlayerColor } from '../../../shared/types';
 
 describe('FEAT-02: DeckManager', () => {

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { Board, Card } from "../../../shared/types";
-import { BoardGenerator } from "./BoardGenerator";
-import { MoveArbitrator } from "./MoveArbitrator";
-import { GameEngine } from "./GameEngine";
+import { BoardGenerator } from "../../src/game/BoardGenerator";
+import { MoveArbitrator } from "../../src/game/MoveArbitrator";
+import { GameEngine } from "../../src/game/GameEngine";
 
 
 

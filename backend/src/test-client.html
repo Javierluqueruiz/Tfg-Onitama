@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Sockets Onitama</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 20px; background: #f4f4f9; }
+        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button, input { padding: 10px; margin: 5px 0; font-size: 16px; }
+        pre { background: #222; color: #0f0; padding: 15px; border-radius: 8px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🕹️ Test FEAT-03: Salas Privadas</h1>
+    
+    <div class="box">
+        <h3>Jugador 1 (Anfitrión)</h3>
+        <button onclick="crearSala()">Crear Sala</button>
+    </div>
+
+    <div class="box">
+        <h3>Jugador 2 (Invitado)</h3>
+        <input type="text" id="roomInput" placeholder="Pega el Room ID aquí...">
+        <button onclick="unirseSala()">Unirse a la Sala</button>
+    </div>
+
+    <div class="box">
+        <h3>Consola del Cliente:</h3>
+        <p><i>Abre también las DevTools (F12) para ver los objetos completos.</i></p>
+        <pre id="log">Esperando acciones...</pre>
+    </div>
+
+    <script>
+        // 1. Conectar al servidor Backend
+        const socket = io("http://localhost:3000");
+        const logEl = document.getElementById('log');
+
+        function log(msg) {
+            logEl.innerHTML += '\n' + msg;
+            console.log(msg);
+        }
+
+        // 2. Escuchar Eventos del Servidor
+        socket.on("connect", () => log("🟢 Conectado al servidor con ID: " + socket.id));
+        
+        socket.on("room_created", (data) => {
+            log("🏠 SALA CREADA. Tu código es: " + data.roomId);
+        });
+
+        socket.on("error", (data) => {
+            log("❌ ERROR DEL SERVIDOR: " + data.message);
+        });
+
+        socket.on("game_start", (data) => {
+            log("⚔️ ¡PARTIDA INICIADA! El estado inicial ha llegado.");
+            console.log("👉 ESTADO DEL JUEGO:", data.gameState); // ¡Aquí verás tu tablero 5x5!
+        });
+
+        // 3. Emitir Eventos al Servidor
+        function crearSala() {
+            log("⏳ Emitiendo create_room...");
+            socket.emit("create_room", "Alice (P1)");
+        }
+
+        function unirseSala() {
+            const roomId = document.getElementById('roomInput').value;
+            if(!roomId) return alert("Escribe un ID de sala");
+            
+            log(`⏳ Emitiendo join_room para la sala ${roomId}...`);
+            socket.emit("join_room", { roomId: roomId, playerName: "Bob (P2)" });
+        }
+    </script>
+</body>
+</html>

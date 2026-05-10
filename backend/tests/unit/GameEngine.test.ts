@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { Board, Card, GameState } from "../../../shared/types";
-import { MoveArbitrator } from "./MoveArbitrator";
-import { GameEngine } from "./GameEngine";
+import { MoveArbitrator } from "../../src/game/MoveArbitrator";
+import { GameEngine } from "../../src/game/GameEngine";
 
 
 
