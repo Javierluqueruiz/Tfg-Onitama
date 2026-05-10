@@ -96,7 +96,8 @@ describe('FEAT-07: Detección de ausencia de movimientos válidos', () => {
     const cards: [Card, Card] = [mockCard, mockCard];
 
     it('Debe retornar true si el jugador tiene movimientos válidos', () => {
-        const board: Board = GameEngine.createNewGame("testId").board;
+        const engine = new GameEngine();
+        const board: Board = engine.createNewGame("testId").board;
 
         const hasValidMoves = MoveArbitrator.hasValidMoves(board, 'blue', cards);
         expect(hasValidMoves).toBe(true);
