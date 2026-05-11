@@ -77,7 +77,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
         });
     });
 
-    it("Sub-03.2 y Sub-03.3: Debe permitir a un segundo jugador unirse a la sala privada y comenzar el juego", () => {
+    it("Sub-03.2:  Debe permitir a un segundo jugador unirse a la sala privada y comenzar el juego", () => {
         console.log("Sub-03.2 y Sub-03.3: Creando sala con Player1 y uniendo Player2...");
         return new Promise<void>((resolve) => {
             clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
