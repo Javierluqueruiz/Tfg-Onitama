@@ -2,23 +2,30 @@ import { SocketEvents } from '../../../shared/types';
 import { useSocket } from '../contexts/SocketContext';
 import { useEffect, useState } from 'react';
 
+type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITIING';
+
 export const Lobby: React.FC = () => {
     const { socket, isConnected } = useSocket();
 
-    const [playerName, setPlayerName] = useState<string>('');
+    const [currentScreen, setCurrentScreen] = useState<MenuScreen>('MAIN');
 
-    const [isRoomCreated, setIsRoomCreated] = useState<boolean>(false);
+    //Estados de datos
+    const [playerName, setPlayerName] = useState<string>('');
+    const [joinCode, setJoinCode] = useState<string>('');
+    const [createdRoomCode, setCreatedRoomCode] = useState<string>('');
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [gameStarted, setGameStarted] = useState(false);
 
-    const [createPassword, setCreatePassword] = useState<string>('');
-    const [joinPassword, setJoinPassword] = useState<string>('');
+    //const [isRoomCreated, setIsRoomCreated] = useState<boolean>(false);
+
+
 
     useEffect(() => {
         if (!socket) return;
 
-        socket.on(SocketEvents.ROOM_CREATED, () => {
-            setIsRoomCreated(true);
+        socket.on(SocketEvents.ROOM_CREATED, (data: { roomCode: string }) => {
+            setCreatedRoomCode(data.roomCode)
+            setCurrentScreen('WAITIING');
             setErrorMsg(null);
         });
 
@@ -45,15 +52,14 @@ export const Lobby: React.FC = () => {
             return;
         }
 
-        if (!createPassword.trim()) return setErrorMsg('La contraseña no puede estar vacía.');
-        socket?.emit(SocketEvents.CREATE_ROOM, { playerName, password: createPassword });
+        socket?.emit(SocketEvents.CREATE_ROOM, { hostName: playerName });
     };
 
     const handleJoinRoom = () => {
         if (!playerName.trim()) return setErrorMsg('El nombre del jugador no puede estar vacío.');
-        if (!joinPassword.trim()) return setErrorMsg('La contraseña no puede estar vacía.');
+        if (!joinCode.trim()) return setErrorMsg('El código no puede estar vacío.');
 
-        socket?.emit(SocketEvents.JOIN_ROOM, { playerName, password: joinPassword });
+        socket?.emit(SocketEvents.JOIN_ROOM, { guestName: playerName, roomCode: joinCode });
     }
 
     if (gameStarted){
@@ -66,84 +72,131 @@ export const Lobby: React.FC = () => {
     }
 
     return (
-        <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px', fontFamily: 'sans-serif' }}>
-            <h1 style={{ textAlign: 'center' }}>⛩️ Onitama Lobby</h1>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', background: '#f5f5f5', padding: '20px', borderRadius: '8px' }}>
-                
-                <div style={{ textAlign: 'center', color: isConnected ? 'green' : 'red', fontWeight: 'bold' }}>
-                    {isConnected ? '🟢 Conectado' : '🔴 Desconectado'}
-                </div>
+        <div style={{ display: 'flex', height: '100vh', fontFamily: 'sans-serif', backgroundImage: 'url(https://i0.wp.com/churapereviews.com/wp-content/uploads/2024/01/Onitama-Background.png?fit=2775%2C1875&ssl=1)'}}>
+            <div style={{
+                flex: 1,
+                //backgroundColor: '#2c2e50',
+                color: 'white',
+                display:'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundSize: 'cover'
+            }}>
+                <h1 style={{fontSize: '4rem', margin:'5', letterSpacing: '4px'}}>⛩️ ONITAMA</h1>
+                <p style={{ fontSize: '1.2rem', opacity: 0.8 }}>El Camino del Maestro</p>
+            </div>
 
-                <div>
-                    <label><strong>Tu Nombre:</strong></label>
-                    <input 
-                        type="text" 
-                        value={playerName} 
-                        onChange={(e) => setPlayerName(e.target.value)}
-                        placeholder="Ej. Maestro Splinter"
-                        style={{ width: '100%', padding: '8px', marginTop: '5px' }}
-                    />
-                </div>
+            <div style={{
+                flex: 1,
+                //backgroundColor: '#f5f6fa',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px'
+            }}>
+                <div style={{ width: '100%', maxWidth: '400px', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+                    <div style={{ textAlign: 'right', fontSize: '42px', color: isConnected ? '#4cd137' : '#e84118', marginBottom: '20px'}}>
+                        {isConnected ? '● Servidor Online' : '● Conectando...'}
+                    </div>
 
-                <hr style={{ width: '100%' }} />
-
-                {/* --- MODO ANFITRIÓN --- */}
-                <div style={{ background: '#e3f2fd', padding: '15px', borderRadius: '8px' }}>
-                    <h3 style={{ margin: '0 0 10px 0', color: '#1565c0' }}>Crear Partida</h3>
-                    {!isRoomCreated ? (
-                        <>
-                            <input 
-                                type="text" 
-                                value={createPassword} 
-                                onChange={(e) => setCreatePassword(e.target.value)}
-                                placeholder="Inventa una contraseña..."
-                                style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-                            />
+                    {/* ---PANTALLA PRINCIPAL --- */}
+                    {currentScreen === 'MAIN' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px'}}>
+                            <h2 style={{textAlign: 'center', marginTop: 0}}>Bienvenido</h2>
                             <button 
-                                onClick={handleCreateRoom}
-                                style={{ width: '100%', padding: '10px', background: '#2196F3', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                                onClick={() => { setErrorMsg(null); setCurrentScreen('CREATE')}}
+                                style={{ padding: '15px', fontSize: '16px', background: '#2980b9', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'}}
                             >
+                                Crear Nueva Partida
+                            </button>
+                            <button
+                                onClick={()=>{setErrorMsg(null); setCurrentScreen('JOIN')}}
+                                style={{ padding: '15px', fontSize: '16px', background: '#2980b9', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'}}
+                            >
+                                Unirse a la Partida
+                            </button>
+                        </div>  
+                    )}
+
+                    {/* ---PANTALLA: CREAR SALA --- */}
+                    {currentScreen === "CREATE" && (
+                        <div style={{ display: 'flex', flexDirection: 'column'}}>
+                            <h2 style={{ marginTop: 0}}>Modo Anfitrión</h2>
+                            <label style={{fontWeight: 'bold'}}>Tu nombre:</label>
+                            <input
+                                type='text'
+                                value={playerName}
+                                onChange={(e)=> setPlayerName(e.target.value)}
+                                placeholder='EJ. Maestro Nuby'
+                                style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px'}}
+                            />
+                            <button onClick={handleCreateRoom} style={{ fontSize: '20px', padding: '15px', background: '#2980b9', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', marginTop: '10px' }}>
                                 Crear Sala
                             </button>
-                        </>
-                    ) : (
-                        <div style={{ textAlign: 'center', color: '#2e7d32', fontWeight: 'bold' }}>
-                            ¡Sala creada! Dile a tu rival que use la contraseña: <br/>
-                            <span style={{ fontSize: '20px', background: 'white', padding: '5px 10px', display: 'inline-block', marginTop: '10px', border: '1px solid #2e7d32' }}>
-                                {createPassword}
-                            </span>
-                            <p style={{ fontSize: '12px', color: '#666' }}>Esperando al jugador 2...</p>
+                            <button onClick={() => setCurrentScreen('MAIN')} style={{ fontSize: '20px', padding: '10px', background: 'transparent', color: '#7f8c8d', border: 'none', cursor: 'pointer' }}>
+                                Volver
+                            </button>
+
                         </div>
                     )}
-                </div>
 
-                {/* --- MODO INVITADO --- */}
-                <div style={{ background: '#fbe9e7', padding: '15px', borderRadius: '8px' }}>
-                    <h3 style={{ margin: '0 0 10px 0', color: '#d84315' }}>Unirse a Partida</h3>
-                    <input 
-                        type="text" 
-                        value={joinPassword} 
-                        onChange={(e) => setJoinPassword(e.target.value)}
-                        placeholder="Contraseña de tu amigo..."
-                        style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-                        disabled={isRoomCreated} // Si ya has creado, no puedes unirte a otra
-                    />
-                    <button 
-                        onClick={handleJoinRoom}
-                        disabled={isRoomCreated}
-                        style={{ width: '100%', padding: '10px', background: isRoomCreated ? '#ccc' : '#ff5722', color: 'white', border: 'none', borderRadius: '4px', cursor: isRoomCreated ? 'not-allowed' : 'pointer' }}
-                    >
-                        Entrar a la Sala
-                    </button>
-                </div>
+                    {currentScreen === "WAITIING" && (
+                        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '15px'}}>
+                            <h2 style={{ marginTop: 0, color: '#27ae60'}}>¡Sala Creada!</h2>
+                            <p>Pásale este código a tu rival:</p>
+                            <div style={{ fontSize: '32px', fontWeight: 'bold', letterSpacing: '4px', background: '#f1f2f6', padding: '20px', borderRadius: '8px', border: '2px dashed #bdc3c7' }}>
+                                {createdRoomCode}
+                            </div>
+                            <div style={{ marginTop: '20px', color: '#7f8c8d' }}>
+                                <span className="loading-dots">Esperando al jugador 2...</span>
+                            </div>
+                        </div>
+                    )}
 
-                {errorMsg && (
-                    <div style={{ color: 'white', background: '#f44336', padding: '10px', borderRadius: '4px', textAlign: 'center' }}>
-                        {errorMsg}
-                    </div>
-                )}
+                    {currentScreen === "JOIN" && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <h2 style={{ marginTop: 0 }}>Unirse a Partida</h2>
+                            
+                            <label style={{ fontWeight: 'bold' }}>Tu Nombre:</label>
+                            <input 
+                                type="text" 
+                                value={playerName} 
+                                onChange={(e) => setPlayerName(e.target.value)}
+                                placeholder="Tu nombre..."
+                                style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px' }}
+                            />
+
+                            <label style={{ fontWeight: 'bold' }}>Código de la Sala:</label>
+                            <input 
+                                type="text" 
+                                value={joinCode} 
+                                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                                placeholder="Ej. K8P2X"
+                                maxLength={5}
+                                style={{ padding: '12px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '2px' }}
+                            />
+
+                            <button onClick={handleJoinRoom} style={{ padding: '15px', background: '#e67e22', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', marginTop: '10px' }}>
+                                Entrar a la Sala
+                            </button>
+                            <button onClick={() => setCurrentScreen('MAIN')} style={{ padding: '10px', background: 'transparent', color: '#7f8c8d', border: 'none', cursor: 'pointer' }}>
+                                ← Volver
+                            </button>
+                        </div>
+                    )}
+
+                    {/*Mensaje de error*/}
+                    {errorMsg && (
+                        <div style={{ background: '#ff7675', color: 'white', padding: '12px', borderRadius: '6px', marginTop: '20px', textAlign: 'center', fontSize: '14px'}}>
+                            {errorMsg}
+                        </div>
+                    )}
+
+
+                </div>
             </div>
         </div>
-    );
+
+    ); 
 }
