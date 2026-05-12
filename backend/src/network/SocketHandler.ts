@@ -25,14 +25,18 @@ export function registerSocketEvents(io: Server) {
         });
 
         //UNIRSE A LA SALA
-        socket.on(SocketEvents.JOIN_ROOM, (payload: { password: string, playerName: string }) => {
-            const { password, playerName } = payload;
+        socket.on(SocketEvents.JOIN_ROOM, (payload: { roomCode: string, guestName: string }) => {
+            const { roomCode, guestName } = payload;
+            const guestProfile: PlayerProfile = {
+                id: socket.id,
+                name: guestName
+            }
 
-            const room = RoomManager.getRoomByPassword(password);
+            const room = RoomManager.getRoomByCode(roomCode);
 
             //¿EXISTE LA SALA?
             if (!room) {
-                return socket.emit(SocketEvents.ERROR, { message: 'Contraseña incorrecta o la sala no existe.' });
+                return socket.emit(SocketEvents.ERROR, { message: 'Código incorrecto o la sala no existe.' });
             }
 
             const roomId = room.roomId;
@@ -48,7 +52,9 @@ export function registerSocketEvents(io: Server) {
             }
 
             socket.join(roomId);
-            console.log(`Jugador ${playerName} (ID: ${socket.id}) se unió a la sala ${roomId}`);
+            console.log(`Jugador ${guestName} (ID: ${socket.id}) se unió a la sala ${roomId}`);
+
+            room.guestProfile = guestProfile;
 
             //INICIAR EL JUEGO
             const engine = room.gameEngine;

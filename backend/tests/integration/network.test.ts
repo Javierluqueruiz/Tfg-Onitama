@@ -78,12 +78,12 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
     });
 
     it("Sub-03.2:  Debe permitir a un segundo jugador unirse a la sala privada y comenzar el juego", () => {
-        console.log("Sub-03.2 y Sub-03.3: Creando sala con Player1 y uniendo Player2...");
+        console.log("Sub-03.2: Creando sala con Player1 y uniendo Player2...");
         return new Promise<void>((resolve) => {
             clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
 
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
-                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomId: data.roomId, playerName: 'Player2' });
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
             clientSocket2.on(SocketEvents.GAME_START, (data) => {
@@ -97,11 +97,11 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
     it("Sub-03.3: Debe rechazar la conexión si la sala no existe", () => {
         return new Promise<void>((resolve) => {
             clientSocket2.on(SocketEvents.ERROR, (error) => {
-                expect(error.message).toBe('La sala no existe.');
+                expect(error.message).toBe('Código incorrecto o la sala no existe.');
                 resolve();
             });
 
-            clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomId: 'nonexistent-room', playerName: 'Player2'});
+            clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: 'nonexistent-room', guestName: 'Player2'});
         });
     });
 
@@ -111,14 +111,14 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
             clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
 
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
-                const roomId = data.roomId;
+                const roomCode = data.roomCode;
 
-                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomId: data.roomId, playerName: 'Player2' });
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: roomCode, guestName: 'Player2' });
                 clientSocket2.on(SocketEvents.GAME_START, () => {
                     const clientSocket3 = ioClient(`http://localhost:${port}`);
 
                     clientSocket3.on('connect', () => {
-                        clientSocket3.emit(SocketEvents.JOIN_ROOM, { roomId, playerName: 'Player3' });
+                        clientSocket3.emit(SocketEvents.JOIN_ROOM, { roomCode: roomCode, guestName: 'Player3' });
                     });
 
                     clientSocket3.on(SocketEvents.ERROR, (error) => {
