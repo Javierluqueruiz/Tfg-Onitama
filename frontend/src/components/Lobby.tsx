@@ -2,7 +2,7 @@ import { SocketEvents } from '../../../shared/types';
 import { useSocket } from '../contexts/SocketContext';
 import { useEffect, useState } from 'react';
 
-type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITIING';
+type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITING';
 
 export const Lobby: React.FC = () => {
     const { socket, isConnected } = useSocket();
@@ -25,7 +25,7 @@ export const Lobby: React.FC = () => {
 
         socket.on(SocketEvents.ROOM_CREATED, (data: { roomCode: string }) => {
             setCreatedRoomCode(data.roomCode)
-            setCurrentScreen('WAITIING');
+            setCurrentScreen('WAITING');
             setErrorMsg(null);
         });
 
@@ -141,7 +141,7 @@ export const Lobby: React.FC = () => {
                         </div>
                     )}
 
-                    {currentScreen === "WAITIING" && (
+                    {currentScreen === "WAITING" && (
                         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '15px'}}>
                             <h2 style={{ marginTop: 0, color: '#27ae60'}}>¡Sala Creada!</h2>
                             <p>Pásale este código a tu rival:</p>
