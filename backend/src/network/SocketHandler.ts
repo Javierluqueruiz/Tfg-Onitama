@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { SocketEvents } from "../../../shared/types";
+import { PlayerProfile, SocketEvents } from "../../../shared/types";
 import { RoomManager } from "./RoomManager";
 
 export function registerSocketEvents(io: Server) {
@@ -9,20 +9,19 @@ export function registerSocketEvents(io: Server) {
         console.log(`Usuario conectado: ${socket.id}`);
 
         //CREAR LA SALA
-        socket.on(SocketEvents.CREATE_ROOM, (playload: {playerName: string, password: string}) => {
-            const { playerName, password } = playload;
-
-            const room = RoomManager.createRoom(password);
-
-            if (!room) {
-                return socket.emit(SocketEvents.ERROR, { message: 'Esa contraseña ya está en uso.' });
+        socket.on(SocketEvents.CREATE_ROOM, ( hostName: string ) => {
+            const hostProfile: PlayerProfile = {
+                id: socket.id,
+                name: hostName
             }
+
+            const room = RoomManager.createRoom(hostProfile);
 
             socket.join(room.roomId);
                 
-            console.log(`Sala creada: ${room.roomId} por el jugador ${playerName} (password: ${password})`);
+            console.log(`Sala creada: ${room.roomId} por el jugador ${hostName} (código: ${room.roomCode})`);
 
-            socket.emit(SocketEvents.ROOM_CREATED, { roomId: room.roomId });
+            socket.emit(SocketEvents.ROOM_CREATED, { roomCode: room.roomCode });
         });
 
         //UNIRSE A LA SALA

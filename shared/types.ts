@@ -60,3 +60,9 @@ export enum SocketEvents {
     GAME_START = 'game_start',
     //GAME_UPDATE = 'game_update',
 }
+
+//Primera versión de la interfaz del perfil del jugador.
+export interface PlayerProfile {
+    id: string;
+    name: string;
+}

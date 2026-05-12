@@ -10,7 +10,7 @@ import { createServer } from 'http';
 
 describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
     let io: Server;
-    let serverSocket: any;
+    //let serverSocket: any;
     let clientSocket1: ClientSocket;
     let clientSocket2: ClientSocket;
     let port: number;
@@ -64,12 +64,12 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
     });
 
     //Suite de test
-    it('Sub-03.1: Debe crear una sala privada y devolver el ID de la sala', () => {
+    it('Sub-03.1: Debe crear una sala privada y devolver el código de la sala', () => {
         return new Promise<void>((resolve) => {
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
-                expect(data.roomId).toBeDefined();
-                expect(typeof data.roomId).toBe('string');
-                expect(RoomManager.roomExists(data.roomId)).toBe(true);
+                expect(data.roomCode).toBeDefined();
+                expect(typeof data.roomCode).toBe('string');
+                expect(RoomManager.getRoomByCode(data.roomCode)).toBeDefined();
                 resolve();
             });
 
