@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 
 import { RoomManager } from "../../src/network/RoomManager";
 import { registerSocketEvents } from "../../src/network/SocketHandler";
-import { SocketEvents } from "../../../shared/types";
+import { SocketEvents } from "../../../shared";
 
 import { Server } from 'socket.io';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
@@ -10,7 +10,6 @@ import { createServer } from 'http';
 
 describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
     let io: Server;
-    //let serverSocket: any;
     let clientSocket1: ClientSocket;
     let clientSocket2: ClientSocket;
     let port: number;
@@ -105,7 +104,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
         });
     });
 
-    it("Sub-03.3: Debe rechazar la conexión si la sala está llena", () => {
+    it("Sub-03.4: Debe rechazar la conexión si la sala está llena", () => {
         return new Promise<void>((resolve) => {
 
             clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
