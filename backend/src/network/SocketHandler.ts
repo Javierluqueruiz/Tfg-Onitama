@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { PlayerProfile, SocketEvents } from "../../../shared/types";
+import { PlayerProfile, SocketEvents } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 
 export function registerSocketEvents(io: Server) {

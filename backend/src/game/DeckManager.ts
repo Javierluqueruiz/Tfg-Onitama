@@ -1,4 +1,4 @@
-import {Card, GameState, PlayerColor} from '../../../shared/types';
+import {Card, GameState, PlayerColor} from '../../../shared';
 
 export type DeckDrawResult = {
     cards: {

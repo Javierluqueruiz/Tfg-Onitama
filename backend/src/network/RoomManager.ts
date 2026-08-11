@@ -1,4 +1,4 @@
-import { PlayerProfile } from "../../../shared/types";
+import { PlayerProfile } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 
 export interface RoomSession {

@@ -1,4 +1,4 @@
-import { SocketEvents } from '../../../shared/types';
+import { SocketEvents } from '../../../shared';
 import { useSocket } from '../contexts/SocketContext';
 import { useEffect, useState } from 'react';
 

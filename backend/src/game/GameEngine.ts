@@ -1,4 +1,4 @@
-import { Card, GameState, Position } from "../../../shared/types";
+import { Card, GameState, Position } from "../../../shared";
 import { BoardGenerator } from "./BoardGenerator";
 import { DeckManager } from "./DeckManager";
 import { MoveArbitrator } from "./MoveArbitrator";
