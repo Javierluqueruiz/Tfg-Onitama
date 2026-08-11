@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Board } from '../../shared/types';
+import type { Board } from '../../shared';
 
 interface BoardViewProps {
     board: Board;

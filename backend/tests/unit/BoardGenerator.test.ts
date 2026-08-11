@@ -1,5 +1,5 @@
 import { describe, beforeAll, it, expect } from 'vitest';
-import { BoardGenerator } from './BoardGenerator';
+import { BoardGenerator } from '../../src/game/BoardGenerator';
 import { Board } from '../../../shared/types';
 import { before } from 'node:test';
 

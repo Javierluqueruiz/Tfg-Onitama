@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { Board, Card } from "../../../shared/types";
-import { BoardGenerator } from "./BoardGenerator";
-import { MoveArbitrator } from "./MoveArbitrator";
-import { GameEngine } from "./GameEngine";
+import { BoardGenerator } from "../../src/game/BoardGenerator";
+import { MoveArbitrator } from "../../src/game/MoveArbitrator";
+import { GameEngine } from "../../src/game/GameEngine";
 
 
 
@@ -96,7 +96,8 @@ describe('FEAT-07: Detección de ausencia de movimientos válidos', () => {
     const cards: [Card, Card] = [mockCard, mockCard];
 
     it('Debe retornar true si el jugador tiene movimientos válidos', () => {
-        const board: Board = GameEngine.createNewGame("testId").board;
+        const engine = new GameEngine();
+        const board: Board = engine.createNewGame("testId").board;
 
         const hasValidMoves = MoveArbitrator.hasValidMoves(board, 'blue', cards);
         expect(hasValidMoves).toBe(true);
