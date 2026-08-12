@@ -1,6 +1,7 @@
 import { SocketEvents } from '../../../shared';
 import { useSocket } from '../contexts/SocketContext';
 import { useEffect, useState } from 'react';
+import { MainMenu } from './lobby/MainMenu';
 
 type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITING';
 
@@ -102,21 +103,17 @@ export const Lobby: React.FC = () => {
 
                     {/* ---PANTALLA PRINCIPAL --- */}
                     {currentScreen === 'MAIN' && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px'}}>
-                            <h2 style={{textAlign: 'center', marginTop: 0}}>Bienvenido</h2>
-                            <button 
-                                onClick={() => { setErrorMsg(null); setCurrentScreen('CREATE')}}
-                                style={{ padding: '15px', fontSize: '16px', background: '#2980b9', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'}}
-                            >
-                                Crear Nueva Partida
-                            </button>
-                            <button
-                                onClick={()=>{setErrorMsg(null); setCurrentScreen('JOIN')}}
-                                style={{ padding: '15px', fontSize: '16px', background: '#2980b9', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold'}}
-                            >
-                                Unirse a la Partida
-                            </button>
-                        </div>  
+                        <MainMenu 
+                            onSelectCreate={() => {
+                                setErrorMsg(null);
+                                setCurrentScreen('CREATE');
+                            }}
+                            onSelectJoin={() => {
+                                setErrorMsg(null);
+                                setCurrentScreen('JOIN');
+                            }}
+                            isCOnnected={isConnected}
+                        />
                     )}
 
                     {/* ---PANTALLA: CREAR SALA --- */}
