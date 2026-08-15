@@ -4,9 +4,10 @@ import styles from './BoardView.module.css';
 
 interface BoardViewProps {
     board: Board;
+    isReversed?: boolean; 
 }
 
-export const BoardView: React.FC<BoardViewProps> = ({ board }) => {
+export const BoardView: React.FC<BoardViewProps> = ({ board, isReversed=false }) => {
     return (
         <div className={styles.boardContainer}>
             {board.map((row, y) => ( 
@@ -21,7 +22,14 @@ export const BoardView: React.FC<BoardViewProps> = ({ board }) => {
                                     ${cell.color === 'red' ? styles.pieceRed : styles.pieceBlue}
                                     ${cell.type === 'master' ? styles.master : styles.student}
                                 `}>
-                                    {cell.type === 'master' ? 'M' : 'E'}
+                                    <span style={{ 
+                                    display: 'inline-block', 
+                                    transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.5s ease'
+                                    }}>
+                                        {cell.type === 'master' ? 'M' : 'E'}
+                                    </span>
+                                    
                                 </div>
                             ) : (
                                 <span className={styles.emptyCell}>·</span>

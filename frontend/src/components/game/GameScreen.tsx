@@ -1,59 +1,63 @@
 import React from 'react';
-import type { GameState } from '../../../../shared';
+import type { GameState, PlayerColor } from '../../../../shared';
 import { BoardView } from './BoardView';
 import { CardView } from './CardView';
 import { PlayerInfo } from './PlayerInfo';
+import styles from './GameScreen.module.css';
 
 interface GameScreenProps {
     gameState: GameState;
+    localColor: PlayerColor | null;
 }
 
-export const GameScreen: React.FC<GameScreenProps> = ({ gameState })  => {
+export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor })  => {
     const {board, currentTurn} = gameState;
     const redCards = gameState.cards.red;
     const blueCards = gameState.cards.blue;
     const neutralCard = gameState.cards.neutral;
 
+    const isLocalRed = localColor === 'red';
+
+    //Cartas
+    const myCards = isLocalRed ? redCards : blueCards;
+    const opponentCards = isLocalRed ? blueCards : redCards;
+
+    const boardRotation = isLocalRed ? 'rotate(180deg)' : 'rotate(0deg)';
+    console.log("Local Color:", localColor);
+
+
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', gap: '20px' }}>
-            <div style={{ textAlign: 'center' }}>
-                <h2>Sala de Juego</h2>
-                <h3 style={{ margin: 0 }}>
-                    Turno actual: <span style={{ color: gameState.currentTurn === 'red' ? 'red' : 'blue' }}>
-                        {currentTurn}
-                    </span>
-                </h3>
+        <div className={styles.screenContainer}>
+            <div className={styles.header}>
+                <h2 className={styles.title}>Sala de Juego</h2>
+                <div className={`${styles.turnIndicator} ${currentTurn === localColor ? styles.turnRed : styles.turnBlue}`}>
+                    {currentTurn === localColor ? 'Tu Turno' : 'Turno del Rival'}
+                </div>
             </div>
 
             {/* Zona del Jugador Rival */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+            <div className={styles.playerZone}>
                 <PlayerInfo
-                    playerName="Jugador Azul"
-                    color="blue"
-                    isActive={gameState.currentTurn === 'blue'}
+                    playerName={`Rival: ${isLocalRed ? 'Jugador Azul' : 'Jugador Rojo'}`}
+                    color={isLocalRed ? 'blue' : 'red'}
+                    isActive={currentTurn !== localColor}
                 />
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    {blueCards.map((card, index) => (
-                        <CardView key={`blue-card-${index}`} card={card} faction="blue" />
+                <div className={styles.cardsRow}>
+                    {opponentCards.map((card, index) => (
+                        <CardView key={`opponent-card-${index}`} card={card} faction={isLocalRed ? 'blue' : 'red'} isFlipped={true} />
                     ))}
                 </div>
             </div>
 
             {/* Zona Central: Tablero + Carta Neutral */}
-            <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '50px',
-                backgroundColor: '#f8f9fa',
-                padding: '20px',
-                borderRadius: '12px',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
-            }}>
-                <BoardView board={board} />
+            <div className={styles.centerZone}>
+                <div style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
+                    <BoardView board={board} isReversed={isLocalRed} />
+                </div>
                 
                 {/* Contenedor para la carta neutral en la mesa */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontWeight: 'bold', color: '#7f8c8d', fontSize: '14px', textTransform: 'uppercase' }}>
+                <div className={styles.neutralZone}>
+                    <span className={styles.neutralLabel}>
                         Mesa (Siguiente)
                     </span>
                     {neutralCard && (
@@ -63,17 +67,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState })  => {
             </div>
 
             {/* Zona del Jugador Local */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-                <PlayerInfo
-                    playerName="Jugador Rojo"
-                    color="red"
-                    isActive={gameState.currentTurn === 'red'}
-                />
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    {redCards.map((card, index) => (
-                        <CardView key={`red-card-${index}`} card={card} faction="red" />
+            <div className={styles.playerZone}>
+                
+                <div className={styles.cardsRow}>
+                    {myCards.map((card, index) => (
+                        <CardView key={`my-card-${index}`} card={card} faction={isLocalRed ? 'red' : 'blue'} />
                     ))}
                 </div>
+
+                <PlayerInfo
+                    playerName="Jugador Rojo"
+                    color={isLocalRed ? 'red' : 'blue'}
+                    isActive={gameState.currentTurn === localColor}
+                />
             </div>
         </div>
 

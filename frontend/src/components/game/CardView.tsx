@@ -5,9 +5,10 @@ import styles from './CardView.module.css';
 interface CardViewProps {
     card: Card;
     faction?: 'red' | 'blue' | 'neutral';
+    isFlipped?: boolean; 
 }
 
-export const CardView: React.FC<CardViewProps> = ({ card, faction='neutral' }) => {
+export const CardView: React.FC<CardViewProps> = ({ card, faction='neutral', isFlipped=false }) => {
     const gridRows = [0, 1, 2, 3, 4];
     const gridCols = [0, 1, 2, 3, 4];
 
@@ -23,9 +24,11 @@ export const CardView: React.FC<CardViewProps> = ({ card, faction='neutral' }) =
     const factionClass = faction === 'red' ? styles.redFaction
         : faction === 'blue' ? styles.blueFaction
         : styles.neutralFaction;
-    
+
+    const flippedClass = isFlipped ? styles.flipped : '';
+
     return (
-        <div className={`${styles.cardContainer} ${factionClass}`}>
+        <div className={`${styles.cardContainer} ${factionClass} ${flippedClass}`}>
             <h4 className={styles.cardTitle}>{card.name}</h4>
 
             <div className={styles.miniGrid}>

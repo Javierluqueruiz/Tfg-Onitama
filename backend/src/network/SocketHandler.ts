@@ -11,7 +11,7 @@ export function registerSocketEvents(io: Server) {
         //CREAR LA SALA
         socket.on(SocketEvents.CREATE_ROOM, ( hostName: string ) => {
             const hostProfile: PlayerProfile = {
-                id: socket.id,
+                socketId: socket.id,
                 name: hostName
             }
 
@@ -28,7 +28,7 @@ export function registerSocketEvents(io: Server) {
         socket.on(SocketEvents.JOIN_ROOM, (payload: { roomCode: string, guestName: string }) => {
             const { roomCode, guestName } = payload;
             const guestProfile: PlayerProfile = {
-                id: socket.id,
+                socketId: socket.id,
                 name: guestName
             }
 
@@ -54,7 +54,11 @@ export function registerSocketEvents(io: Server) {
             socket.join(roomId);
             console.log(`Jugador ${guestName} (ID: ${socket.id}) se unió a la sala ${roomId}`);
 
-            room.guestProfile = guestProfile;
+            if (!room.players.red) {
+                room.players.red = guestProfile;
+            } else if (!room.players.blue) {
+                room.players.blue = guestProfile;
+            }
 
             //INICIAR EL JUEGO
             const engine = room.gameEngine;
@@ -63,7 +67,12 @@ export function registerSocketEvents(io: Server) {
 
                 const initialState = engine.createNewGame(roomId);
 
-                io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState });
+                const playersMapping = {
+                    red: room.players.red,
+                    blue: room.players.blue
+                }
+
+                io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState, players: playersMapping });
                 console.log('Partida iniciada en la sala:', roomId);
             }
 

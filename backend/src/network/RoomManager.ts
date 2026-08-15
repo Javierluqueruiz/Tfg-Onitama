@@ -5,8 +5,10 @@ export interface RoomSession {
     roomId: string;
     gameEngine: GameEngine;
     roomCode: string;
-    hostProfile: PlayerProfile;
-    guestProfile?: PlayerProfile;
+    players: {
+        red: PlayerProfile | null;
+        blue: PlayerProfile | null;
+    }
 }
 
 export class RoomManager {
@@ -31,12 +33,17 @@ export class RoomManager {
         //Genera un id de sala aleatorio. Se puede investigar otras formas de generar ids.
         const roomId = `room-${Math.random().toString(36).substring(2, 17)}`; 
 
+        const isHostRed = Math.random() < 0.5;
+
         //Crea una sala con un nuevo GameEngine.
         const newRoom: RoomSession = {
             roomId,
             gameEngine: new GameEngine(),
             roomCode,
-            hostProfile
+            players: {
+                red: isHostRed ? hostProfile : null,
+                blue: isHostRed ? null : hostProfile
+            }
         };
 
         this.activeRooms.set(roomId, newRoom);
