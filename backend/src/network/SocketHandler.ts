@@ -9,17 +9,17 @@ export function registerSocketEvents(io: Server) {
         console.log(`Usuario conectado: ${socket.id}`);
 
         //CREAR LA SALA
-        socket.on(SocketEvents.CREATE_ROOM, ( hostName: string ) => {
+        socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string } ) => {
             const hostProfile: PlayerProfile = {
                 socketId: socket.id,
-                name: hostName
+                name: data.hostName
             }
 
             const room = RoomManager.createRoom(hostProfile);
 
             socket.join(room.roomId);
                 
-            console.log(`Sala creada: ${room.roomId} por el jugador ${hostName} (código: ${room.roomCode})`);
+            console.log(`Sala creada: ${room.roomId} por el jugador ${data.hostName} (código: ${room.roomCode})`);
 
             socket.emit(SocketEvents.ROOM_CREATED, { roomCode: room.roomCode });
         });

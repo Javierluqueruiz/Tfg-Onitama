@@ -10,6 +10,7 @@ export const App = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
 
   const [localColor, setLocalColor] = useState<PlayerColor | null>(null);
+  const [playersProfile, setPlayersProfile] = useState<{ red: PlayerProfile, blue: PlayerProfile } | null>(null); 
 
   useEffect(() => {
     if (!socket) return;
@@ -17,6 +18,7 @@ export const App = () => {
     socket.on(SocketEvents.GAME_START, (data: { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } }) => {
       console.log('¡Partida iniciada! Estado inicial recibido:', data.gameState);
       setGameState(data.gameState);
+      setPlayersProfile(data.players);
       if (socket.id === data.players.red.socketId) {
         setLocalColor('red');
       } else if (socket.id === data.players.blue.socketId) {
@@ -30,7 +32,7 @@ export const App = () => {
   }, [socket]);
 
   if (gameState) {
-    return <GameScreen gameState={gameState} localColor={localColor} />;
+    return <GameScreen gameState={gameState} localColor={localColor} playersProfile={playersProfile} />;
   }
 
   return <Lobby />;

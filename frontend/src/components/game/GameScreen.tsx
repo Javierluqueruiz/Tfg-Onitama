@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GameState, PlayerColor } from '../../../../shared';
+import type { GameState, PlayerColor, PlayerProfile } from '../../../../shared';
 import { BoardView } from './BoardView';
 import { CardView } from './CardView';
 import { PlayerInfo } from './PlayerInfo';
@@ -8,9 +8,10 @@ import styles from './GameScreen.module.css';
 interface GameScreenProps {
     gameState: GameState;
     localColor: PlayerColor | null;
+    playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null;
 }
 
-export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor })  => {
+export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
     const {board, currentTurn} = gameState;
     const redCards = gameState.cards.red;
     const blueCards = gameState.cards.blue;
@@ -18,6 +19,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor })
 
     const isLocalRed = localColor === 'red';
 
+    const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
+    const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
+    console.log("Players Profile:", playersProfile);
+    console.log("Opponent Name:", opponentName);
+    console.log("Local Name:", localName);
+    
     //Cartas
     const myCards = isLocalRed ? redCards : blueCards;
     const opponentCards = isLocalRed ? blueCards : redCards;
@@ -38,7 +45,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor })
             {/* Zona del Jugador Rival */}
             <div className={styles.playerZone}>
                 <PlayerInfo
-                    playerName={`Rival: ${isLocalRed ? 'Jugador Azul' : 'Jugador Rojo'}`}
+                    playerName={`Rival: ${opponentName}`}
                     color={isLocalRed ? 'blue' : 'red'}
                     isActive={currentTurn !== localColor}
                 />
@@ -76,7 +83,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor })
                 </div>
 
                 <PlayerInfo
-                    playerName="Jugador Rojo"
+                    playerName={`Jugador: ${localName}`}
                     color={isLocalRed ? 'red' : 'blue'}
                     isActive={gameState.currentTurn === localColor}
                 />
