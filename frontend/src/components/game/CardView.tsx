@@ -6,9 +6,11 @@ interface CardViewProps {
     card: Card;
     faction?: 'red' | 'blue' | 'neutral';
     isFlipped?: boolean; 
+    isSelected?: boolean;
+    onClick?: () => void;
 }
 
-export const CardView: React.FC<CardViewProps> = ({ card, faction='neutral', isFlipped=false }) => {
+export const CardView: React.FC<CardViewProps> = ({ card, faction='neutral', isFlipped=false, isSelected=false, onClick }) => {
     const gridRows = [0, 1, 2, 3, 4];
     const gridCols = [0, 1, 2, 3, 4];
 
@@ -26,9 +28,13 @@ export const CardView: React.FC<CardViewProps> = ({ card, faction='neutral', isF
         : styles.neutralFaction;
 
     const flippedClass = isFlipped ? styles.flipped : '';
+    const selectedClass = isSelected ? styles.selected : '';
 
     return (
-        <div className={`${styles.cardContainer} ${factionClass} ${flippedClass}`}>
+        <div className={`${styles.cardContainer} ${factionClass} ${flippedClass} ${selectedClass}`}
+            onClick={onClick}
+            style={{ cursor: onClick ? 'pointer' : 'default' }}
+        >
             <h4 className={styles.cardTitle}>{card.name}</h4>
 
             <div className={styles.miniGrid}>

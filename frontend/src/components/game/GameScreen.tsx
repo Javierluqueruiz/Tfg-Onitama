@@ -1,5 +1,5 @@
-import React from 'react';
-import type { GameState, PlayerColor, PlayerProfile } from '../../../../shared';
+import React, {useState} from 'react';
+import type { GameState, PlayerColor, PlayerProfile, Card } from '../../../../shared';
 import { BoardView } from './BoardView';
 import { CardView } from './CardView';
 import { PlayerInfo } from './PlayerInfo';
@@ -13,6 +13,7 @@ interface GameScreenProps {
 
 export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
     const {board, currentTurn} = gameState;
+    const [selectedCard, setSelectedCard] = useState<Card | null>(null);
     const redCards = gameState.cards.red;
     const blueCards = gameState.cards.blue;
     const neutralCard = gameState.cards.neutral;
@@ -77,9 +78,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
             <div className={styles.playerZone}>
                 
                 <div className={styles.cardsRow}>
-                    {myCards.map((card, index) => (
-                        <CardView key={`my-card-${index}`} card={card} faction={isLocalRed ? 'red' : 'blue'} />
-                    ))}
+                    {myCards.map((card, index) => {
+                        const isCardSelected = selectedCard?.name === card.name;
+                        return (
+                            <CardView key={`my-card-${index}`} card={card} faction={isLocalRed ? 'red' : 'blue'} isSelected={isCardSelected} onClick={() => setSelectedCard(card)} />
+                        )
+})}
                 </div>
 
                 <PlayerInfo
