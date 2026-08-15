@@ -1,9 +1,10 @@
-import React, {useState} from 'react';
-import type { GameState, PlayerColor, PlayerProfile, Card } from '../../../../shared';
+import React, {useState, useMemo} from 'react';
+import { type GameState, type PlayerColor, type PlayerProfile, type Card, type Position, SocketEvents } from '../../../../shared';
 import { BoardView } from './BoardView';
 import { CardView } from './CardView';
 import { PlayerInfo } from './PlayerInfo';
 import styles from './GameScreen.module.css';
+import { useSocket } from '../../contexts/SocketContext';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -12,8 +13,8 @@ interface GameScreenProps {
 }
 
 export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
+    const { socket } = useSocket();
     const {board, currentTurn} = gameState;
-    const [selectedCard, setSelectedCard] = useState<Card | null>(null);
     const redCards = gameState.cards.red;
     const blueCards = gameState.cards.blue;
     const neutralCard = gameState.cards.neutral;
@@ -22,17 +23,62 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
 
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
     const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
-    console.log("Players Profile:", playersProfile);
-    console.log("Opponent Name:", opponentName);
-    console.log("Local Name:", localName);
+
     
     //Cartas
     const myCards = isLocalRed ? redCards : blueCards;
     const opponentCards = isLocalRed ? blueCards : redCards;
 
     const boardRotation = isLocalRed ? 'rotate(180deg)' : 'rotate(0deg)';
-    console.log("Local Color:", localColor);
 
+    const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+    const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
+
+    const validTargets = useMemo(() => {
+        if (!selectedCard || !selectedPiece) return [];
+
+        return selectedCard.moves.map(move => {
+            const multiplier = isLocalRed ? -1 : 1;
+            return{
+                x: selectedPiece.x + move.x * multiplier,
+                y: selectedPiece.y + move.y * multiplier    
+            };
+        }).filter(pos => 
+            pos.x >= 0 && pos.x < 5 && pos.y >= 0 && pos.y < 5
+        );
+    }, [selectedCard, selectedPiece, isLocalRed]);
+
+
+    const handleCellClick = (position: Position) => {
+        if (currentTurn !== localColor) return;
+
+        const clickedCell = board[position.y][position.x];
+        const isMyPiece = clickedCell && clickedCell.color === localColor;
+
+        if (isMyPiece) {
+            if (!selectedCard) {
+                console.log("Selecciona una carta primero")
+                return;
+            }
+            setSelectedPiece(position);
+            return;
+        }
+
+        const isTarget = validTargets.some(t=>t.x === position.x && t.y === position.y);
+        if (isTarget && selectedPiece && selectedCard) {
+            const moveData = {
+                from: { x: selectedPiece.x, y: selectedPiece.y},
+                to : { x: position.x, y: position.y},
+                cardName: selectedCard.name
+            };
+
+            console.log("Movimiento realizado:", moveData);
+            socket?.emit(SocketEvents.PLAYER_MOVE, moveData);
+
+            setSelectedCard(null);
+            setSelectedPiece(null);
+        }
+    }
 
     return (
         <div className={styles.screenContainer}>
@@ -60,7 +106,15 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
             {/* Zona Central: Tablero + Carta Neutral */}
             <div className={styles.centerZone}>
                 <div style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
-                    <BoardView board={board} isReversed={isLocalRed} />
+                    <BoardView 
+                        board={board} 
+                        isReversed={isLocalRed}
+                        localColor={localColor}
+                        currentTurn={currentTurn}
+                        selectedPiece={selectedPiece}
+                        validTargets={validTargets}
+                        onCellClick={handleCellClick}
+                     />
                 </div>
                 
                 {/* Contenedor para la carta neutral en la mesa */}

@@ -59,3 +59,24 @@
     color: #bdc3c7;
     font-size: 24px;
 }
+
+/*Selección de piezas*/
+.selectedPiece {
+    box-shadow: 0 0 0 4px #f1c40f;
+    transform: scale(1.1);
+    z-index: 2; 
+}
+
+.clicablePiece {
+    cursor: pointer;
+}
+
+.validTarget {
+    background-color: rgba(46, 204, 113, 0.3) !important;
+    border: 2px dashed #2ecc71 !important;
+    cursor: pointer;
+}
+
+.validTarget:hover {
+    background-color: rgba(46, 204, 113, 0.6) !important;
+}
