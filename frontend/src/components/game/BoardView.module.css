@@ -1,0 +1,61 @@
+.boardContainer {
+    display: grid;
+    grid-template-columns: repeat(5, 80px);
+    grid-template-rows: repeat(5, 80px);
+    gap: 5px;
+    background-color: #bdc3c7;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.cell {
+    background-color: #ecf0f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    font-size: 24px;
+    font-weight: bold;
+    transition: background-color 0.2s, ease;
+}
+
+.cell:hover {
+    background-color: #e0e6ed;
+    cursor: pointer;
+}
+
+.piece {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    color: white;
+    font-size: 12px;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.pieceRed {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.pieceBlue {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+.master {
+    border: 3px solid #f1c40f;
+    font-weight: 900;
+}
+
+.student {
+    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.emptyCell {
+    color: #bdc3c7;
+    font-size: 24px;
+}

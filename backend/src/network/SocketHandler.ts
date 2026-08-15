@@ -9,17 +9,17 @@ export function registerSocketEvents(io: Server) {
         console.log(`Usuario conectado: ${socket.id}`);
 
         //CREAR LA SALA
-        socket.on(SocketEvents.CREATE_ROOM, ( hostName: string ) => {
+        socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string } ) => {
             const hostProfile: PlayerProfile = {
-                id: socket.id,
-                name: hostName
+                socketId: socket.id,
+                name: data.hostName
             }
 
             const room = RoomManager.createRoom(hostProfile);
 
             socket.join(room.roomId);
                 
-            console.log(`Sala creada: ${room.roomId} por el jugador ${hostName} (código: ${room.roomCode})`);
+            console.log(`Sala creada: ${room.roomId} por el jugador ${data.hostName} (código: ${room.roomCode})`);
 
             socket.emit(SocketEvents.ROOM_CREATED, { roomCode: room.roomCode });
         });
@@ -28,7 +28,7 @@ export function registerSocketEvents(io: Server) {
         socket.on(SocketEvents.JOIN_ROOM, (payload: { roomCode: string, guestName: string }) => {
             const { roomCode, guestName } = payload;
             const guestProfile: PlayerProfile = {
-                id: socket.id,
+                socketId: socket.id,
                 name: guestName
             }
 
@@ -54,7 +54,11 @@ export function registerSocketEvents(io: Server) {
             socket.join(roomId);
             console.log(`Jugador ${guestName} (ID: ${socket.id}) se unió a la sala ${roomId}`);
 
-            room.guestProfile = guestProfile;
+            if (!room.players.red) {
+                room.players.red = guestProfile;
+            } else if (!room.players.blue) {
+                room.players.blue = guestProfile;
+            }
 
             //INICIAR EL JUEGO
             const engine = room.gameEngine;
@@ -63,7 +67,12 @@ export function registerSocketEvents(io: Server) {
 
                 const initialState = engine.createNewGame(roomId);
 
-                io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState });
+                const playersMapping = {
+                    red: room.players.red,
+                    blue: room.players.blue
+                }
+
+                io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState, players: playersMapping });
                 console.log('Partida iniciada en la sala:', roomId);
             }
 

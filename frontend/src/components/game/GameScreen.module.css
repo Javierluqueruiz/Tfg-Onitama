@@ -1,0 +1,73 @@
+.screenContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    padding: 20px;
+    font-family: sans-serif;
+}
+
+.header {
+    text-align: center;
+}
+
+.title {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+}
+
+.turnIndicator {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.turnRed {
+    background-color: #fadbd8;
+    border: 2px solid #e74c3c;
+    color: #c0392b;
+}
+
+.turnBlue {
+    background-color: #d6eaf8;
+    border: 2px solid #3498db;
+    color: #2980b9;
+}
+
+.playerZone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.cardsRow {
+    display: flex;
+    gap: 20px;
+}
+
+.centerZone {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.neutralZone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.neutralLabel {
+    font-weight: bold;
+    color: #7f8c8d;
+    font-size: 14px;
+    text-transform: uppercase;
+}

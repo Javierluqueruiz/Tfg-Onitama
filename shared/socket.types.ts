@@ -1,4 +1,6 @@
 //Eventos para los WebSockets
+import type { PlayerColor, GameState } from './domain.types';
+
 export enum SocketEvents {
     //Cliente a Servidor
     CREATE_ROOM = 'create_room',
@@ -14,6 +16,16 @@ export enum SocketEvents {
 
 //Primera versión de la interfaz del perfil del jugador.
 export interface PlayerProfile {
-    id: string;
+    socketId: string;
     name: string;
+}
+
+export interface RoomSession {
+    roomId: string;
+    roomCode: string;
+    players: {
+        RED: PlayerProfile | null;
+        BLUE: PlayerProfile | null;
+    };
+    gameState: GameState | null;
 }

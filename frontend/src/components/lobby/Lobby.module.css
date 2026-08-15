@@ -1,0 +1,87 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: sans-serif;
+    background-image: url(https://i0.wp.com/churapereviews.com/wp-content/uploads/2024/01/Onitama-Background.png?fit=2775%2C1875&ssl=1);
+    background-size: cover;
+    background-position: center;
+}
+
+
+.header {
+    padding: 50px;
+    flex: 1;
+    background: '#2c2disple50';
+    color: 'white';
+    display:'flex';
+    flex-direction: 'column';
+    align-items: 'center';
+    background-size: 'cover';
+    justify-content: center;
+}
+
+.mainTitle {
+    margin: 5;
+    color: #2c3e50;
+    font-size: 4rem;
+    letter-spacing: 4px;
+}
+
+.subTitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    color: black;
+    font-weight: bold;
+}
+
+.content {
+    flex: 1;    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: '40px';
+    height: 100%;
+}
+
+.statusContainer {
+    width: 100%;
+    max-width: 400px;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.dot {
+    display: inline-block;
+    width: 16px;       
+    height: 16px;
+    border-radius: 50%; 
+    margin-right: 8px;  
+    vertical-align: middle;
+    position: relative;
+    top: -20px;
+}
+
+.dotConnected { background-color: #4cd137; }
+.dotDisconnected { background-color: #e84118; }
+
+.statusText {
+    display: inline-block;
+    vertical-align: middle;
+    font-size: 40px;
+    color: #2c3e50;
+    position: relative;
+    top: -20px;
+}
+
+.errorBox {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 16px;
+}
