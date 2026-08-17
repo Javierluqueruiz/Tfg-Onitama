@@ -10,6 +10,10 @@ interface BoardViewProps {
     selectedPiece: Position | null;
     validTargets: Position[];
     onCellClick: (position: Position) => void;
+    lastMove?: {
+        from: Position;
+        to: Position;
+    };
 }
 
 export const BoardView: React.FC<BoardViewProps> = ({ 
@@ -19,7 +23,8 @@ export const BoardView: React.FC<BoardViewProps> = ({
     currentTurn,
     selectedPiece,
     validTargets,
-    onCellClick
+    onCellClick,
+    lastMove
 }) => {
     return (
         <div className={styles.boardContainer}>
@@ -30,8 +35,15 @@ export const BoardView: React.FC<BoardViewProps> = ({
                         const isMyPiece = cell && cell.color === localColor;
                         const isMyTurn = currentTurn === localColor;
 
+                        const isLastMove = lastMove && 
+                            ((lastMove.from.x === x && lastMove.from.y === y) ||
+                            (lastMove.to.x === x && lastMove.to.y === y)
+                        );
+
                         let cellClass = styles.cell;
                         if (isValidTarget) cellClass += ` ${styles.validTarget}`;
+                        if (isLastMove) cellClass += ` ${styles.lastMove}`;
+                        console.log(`Cell (${x}, ${y}) - isLastMove: ${isLastMove}, lastMove: ${JSON.stringify(lastMove)}`);
 
                         let pieceClass = styles.piece;
                         if (cell) pieceClass += cell.color === 'red' ? ` ${styles.pieceRed}` : ` ${styles.pieceBlue}`;

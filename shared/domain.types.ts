@@ -44,4 +44,8 @@ export interface GameState {
         neutral: Card;
     };
     winner: PlayerColor | null;
+    lastMove?: {
+        from : Position;
+        to: Position;
+    };
 }

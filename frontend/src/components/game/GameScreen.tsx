@@ -122,6 +122,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
                         selectedPiece={selectedPiece}
                         validTargets={validTargets}
                         onCellClick={handleCellClick}
+                        lastMove={gameState.lastMove}
                      />
                 </div>
                 
