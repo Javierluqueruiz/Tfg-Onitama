@@ -14,6 +14,7 @@ export enum SocketEvents {
     //GAME_UPDATE = 'game_update',
 
     PLAYER_MOVE = 'player_move',
+    GAME_UPDATE = 'game_update',
 }
 
 //Primera versión de la interfaz del perfil del jugador.

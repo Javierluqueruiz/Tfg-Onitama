@@ -66,6 +66,7 @@ export function registerSocketEvents(io: Server) {
             if (engine) {
 
                 const initialState = engine.createNewGame(roomId);
+                room.gameState = initialState;
 
                 const playersMapping = {
                     red: room.players.red,
@@ -78,6 +79,25 @@ export function registerSocketEvents(io: Server) {
 
         });
 
+        socket.on(SocketEvents.PLAYER_MOVE, (moveData: { from: { x: number, y: number }, to: { x: number, y: number }, cardName: string }) => {
+            const room = RoomManager.getRoomBySocketId(socket.id);
+
+            if (!room || !room.gameState) {
+                return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala o el estado del juego.' });
+            }
+
+            try {
+                const newState = room.gameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
+                room.gameState = newState;
+
+                io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: newState });
+
+                console.log(`Movimiento procesado en la sala ${room.roomId}:`, moveData);
+            } catch (error: any) {
+                console.warn(`Jugada invalida rechazada: ${error.message}`);
+                socket.emit(SocketEvents.ERROR, { message: error.message });
+            }
+        });
 
         socket.on('disconnect', () => {
             console.log(`Usuario desconectado: ${socket.id}`);

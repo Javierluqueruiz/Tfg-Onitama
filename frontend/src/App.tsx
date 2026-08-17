@@ -26,8 +26,14 @@ export const App = () => {
       }
     });
 
+    socket.on(SocketEvents.GAME_UPDATE, (data: { gameState: GameState }) => {
+      console.log('Actualización del estado del juego recibida:', data.gameState);
+      setGameState(data.gameState);
+    });
+
     return () => {
       socket.off(SocketEvents.GAME_START);
+      socket.off(SocketEvents.GAME_UPDATE);
     };
   }, [socket]);
 
