@@ -99,6 +99,19 @@ export function registerSocketEvents(io: Server) {
             }
         });
 
+        socket.on(SocketEvents.LEAVE_ROOM, () => {
+            const room = RoomManager.getRoomBySocketId(socket.id);
+
+            if (room) {
+                socket.leave(room.roomId);
+
+                socket.to(room.roomId).emit(SocketEvents.ERROR, { message: 'El jugador ha abandonado la sala.' });
+
+                RoomManager.deleteRoom(room.roomId);
+                console.log(`Sala ${room.roomId} eliminada}`)
+            }
+        });
+
         socket.on('disconnect', () => {
             console.log(`Usuario desconectado: ${socket.id}`);
         });

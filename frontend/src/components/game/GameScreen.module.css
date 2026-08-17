@@ -71,3 +71,56 @@
     font-size: 14px;
     text-transform: uppercase;
 }
+
+/* Ganador */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+}
+
+.victoryModal {
+    background-color: white;
+    padding: 40px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+}
+
+.victoryTitle {
+    font-size: 32px;
+    margin: 0 0 10px 0;
+}
+
+.victoryWin {
+    color: #2ecc71;
+}
+
+.victoryLose {
+    color: #e74c3c;
+}
+
+.btnExit {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background-color: #34495e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.btnExit:hover {
+    background-color: #2c3e50;
+}

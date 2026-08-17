@@ -34,6 +34,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);
     const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
 
+    // Ganador
+    const isGameOver = gameState.winner !== null;
+    const isWinner = gameState.winner === localColor;
+
     const validTargets = useMemo(() => {
         if (!selectedCard || !selectedPiece) return [];
 
@@ -48,9 +52,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
         );
     }, [selectedCard, selectedPiece, isLocalRed]);
 
-
     const handleCellClick = (position: Position) => {
-        if (currentTurn !== localColor) return;
+        if (isGameOver || currentTurn !== localColor) return;
 
         const clickedCell = board[position.y][position.x];
         const isMyPiece = clickedCell && clickedCell.color === localColor;
@@ -78,6 +81,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
             setSelectedCard(null);
             setSelectedPiece(null);
         }
+    }
+
+    const handleExit = () => {
+        socket?.emit(SocketEvents.LEAVE_ROOM);
+        window.location.reload();
     }
 
     return (
@@ -146,7 +154,27 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
                     isActive={gameState.currentTurn === localColor}
                 />
             </div>
+
+            {isGameOver && (
+                <div className={styles.overlay}>
+                    <div className={styles.victoryModal}>
+                        <h2 className={`${styles.victoryTitle} ${isWinner ? styles.victoryWin : styles.defeatLose}`}>
+                        {isWinner ? '¡Victoria!' : 'Derrota'}
+                    </h2>
+                    <p>{isWinner ? '¡Felicidades! Has ganado la partida.' : 'No te rindas, ¡inténtalo de nuevo!'}</p>
+
+                    <button 
+                        className={styles.btnExit}
+                        onClick={handleExit}
+                    >
+                        Volver al Menú
+                    </button>
+                    </div>
+                </div>
+            )}
         </div>
+
+        
 
     );
 };

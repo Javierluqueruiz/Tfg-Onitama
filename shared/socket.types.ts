@@ -5,6 +5,7 @@ export enum SocketEvents {
     //Cliente a Servidor
     CREATE_ROOM = 'create_room',
     JOIN_ROOM = 'join_room',
+    LEAVE_ROOM = 'leave_room',
     //PLAYER_MOVE = 'player_move',
 
     //Servidor a Cliente

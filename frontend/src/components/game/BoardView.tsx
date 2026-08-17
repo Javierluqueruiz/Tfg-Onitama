@@ -42,7 +42,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                         return (
                         <div 
                             key={`cell-${x}-${y}`}
-                            className={styles.cell}
+                            className={cellClass}
                             onClick={() => onCellClick({ x, y })}
                         >
                             {cell ? (
