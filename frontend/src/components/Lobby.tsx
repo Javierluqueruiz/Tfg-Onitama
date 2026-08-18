@@ -9,7 +9,7 @@ export const Lobby: React.FC = () => {
     const {
         isConnected, currentScreen, setCurrentScreen,
         playerName, setPlayerName, joinCode, setJoinCode, 
-        createdRoomCode, setCreatedRoomCode, errorMsg, setErrorMsg,
+        createdRoomCode, errorMsg, setErrorMsg,
         handleCreateRoom, handleJoinRoom
     } = useLobby();
 

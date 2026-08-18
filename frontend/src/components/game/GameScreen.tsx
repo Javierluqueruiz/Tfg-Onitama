@@ -159,17 +159,27 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
             {isGameOver && (
                 <div className={styles.overlay}>
                     <div className={styles.victoryModal}>
-                        <h2 className={`${styles.victoryTitle} ${isWinner ? styles.victoryWin : styles.defeatLose}`}>
-                        {isWinner ? '¡Victoria!' : 'Derrota'}
-                    </h2>
-                    <p>{isWinner ? '¡Felicidades! Has ganado la partida.' : 'No te rindas, ¡inténtalo de nuevo!'}</p>
 
-                    <button 
-                        className={styles.btnExit}
-                        onClick={handleExit}
-                    >
-                        Volver al Menú
-                    </button>
+                        <div className={`${styles.modalHeader} ${isWinner ? styles.modalHeaderWin : styles.modalHeaderLose}`}>
+                            <h2 className={styles.victoryTitle}>
+                                {isWinner ? '¡Victoria!' : 'Derrota'}
+                            </h2>
+                        </div>
+
+                        <div className={styles.modalBody}>
+                            <p className={styles.modalMessage}>
+                                {isWinner 
+                                    ? 'Has demostrado ser un verdadero Maestro. Tu honor prevalece.' 
+                                    : 'Tu templo ha caído. Levántate, aprende de tus errores y vuelve a intentarlo.'}
+                            </p>
+                            
+                            <button 
+                                className={styles.btnExit} 
+                                onClick={handleExit} 
+                            >
+                                Volver al Menú
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

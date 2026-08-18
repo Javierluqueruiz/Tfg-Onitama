@@ -60,7 +60,6 @@ export const useLobby = () => {
         joinCode,
         setJoinCode,
         createdRoomCode,
-        setCreatedRoomCode,
         errorMsg,
         setErrorMsg,
         handleCreateRoom,

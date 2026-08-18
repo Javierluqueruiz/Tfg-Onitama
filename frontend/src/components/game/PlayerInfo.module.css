@@ -20,11 +20,13 @@
 .activeRed {
     border-color: #e74c3c;
     animation: gentlePulse 2s infinite ease-in-out;
+    background-color: #71f790;
 }
 
 .activeBlue {
     border-color: #3498db;
     animation: gentlePulse 2s infinite ease-in-out;
+    background-color: #71f790;
 }
 
 .avatar {
@@ -69,6 +71,6 @@
 }
 
 .statusActive {
-    color: #2ecc71;
+    color: #128240;
     font-weight: bold;
 }
