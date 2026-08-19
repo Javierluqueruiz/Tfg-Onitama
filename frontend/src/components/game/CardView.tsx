@@ -35,7 +35,15 @@ export const CardView: React.FC<CardViewProps> = ({ card, faction='neutral', isF
             onClick={onClick}
             style={{ cursor: onClick ? 'pointer' : 'default' }}
         >
-            <h4 className={styles.cardTitle}>{card.name}</h4>
+            <h4 
+                className={styles.cardTitle}
+                style={{ 
+                    transform: isFlipped ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease'
+                }}
+            >
+                {card.name}
+            </h4>
 
             <div className={styles.miniGrid}>
                 {gridRows.map(y => (

@@ -5,7 +5,7 @@ import { WaitingRoom } from './lobby/WaitingRoom';
 import styles from './lobby/Lobby.module.css';
 import { useLobby } from './useLobby';
 
-export const Lobby: React.FC = () => {
+export const Lobby: React.FC =  () => {
     const {
         isConnected, currentScreen, setCurrentScreen,
         playerName, setPlayerName, joinCode, setJoinCode, 
@@ -39,7 +39,7 @@ export const Lobby: React.FC = () => {
                                 setErrorMsg(null);
                                 setCurrentScreen('JOIN');
                             }}
-                            isCOnnected={isConnected}
+                            isConnected={isConnected}
                         />
                     )}
 
