@@ -88,6 +88,7 @@ export class GameEngine {
 
         //FEAT-08: Cambio de turno y detección de bloqueos
         this.gameState =  this.switchTurn(newState);
+        this.gameState.lastMove = { from, to };
         return this.gameState;
     }
 

@@ -1,9 +1,10 @@
-import React from 'react';
-import type { GameState, PlayerColor, PlayerProfile } from '../../../../shared';
+import { type GameState, type PlayerColor, type PlayerProfile } from '../../../../shared';
 import { BoardView } from './BoardView';
 import { CardView } from './CardView';
 import { PlayerInfo } from './PlayerInfo';
 import styles from './GameScreen.module.css';
+import { useGameScreen } from './useGameScreen';
+import { GameOverModal } from './GameOverModal';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -11,34 +12,21 @@ interface GameScreenProps {
     playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null;
 }
 
-export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
-    const {board, currentTurn} = gameState;
-    const redCards = gameState.cards.red;
-    const blueCards = gameState.cards.blue;
-    const neutralCard = gameState.cards.neutral;
+export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
 
-    const isLocalRed = localColor === 'red';
+    const { 
+        board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
+        opponentName, localName, myCards, opponentCards, neutralCard, 
+        boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
+        validTargets, handleCellClick, handleExit 
+    } = useGameScreen(gameState, localColor, playersProfile);
 
-    const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
-    const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
-    console.log("Players Profile:", playersProfile);
-    console.log("Opponent Name:", opponentName);
-    console.log("Local Name:", localName);
-    
-    //Cartas
-    const myCards = isLocalRed ? redCards : blueCards;
-    const opponentCards = isLocalRed ? blueCards : redCards;
-
-    const boardRotation = isLocalRed ? 'rotate(180deg)' : 'rotate(0deg)';
-    console.log("Local Color:", localColor);
-
-
-    return (
+    return (    
         <div className={styles.screenContainer}>
             <div className={styles.header}>
                 <h2 className={styles.title}>Sala de Juego</h2>
-                <div className={`${styles.turnIndicator} ${currentTurn === localColor ? styles.turnRed : styles.turnBlue}`}>
-                    {currentTurn === localColor ? 'Tu Turno' : 'Turno del Rival'}
+                <div className={`${styles.turnIndicator} ${isMyTurn ? styles.turnRed : styles.turnBlue}`}>
+                    {isMyTurn ? 'Tu Turno' : 'Turno del Rival'}
                 </div>
             </div>
 
@@ -47,7 +35,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
                 <PlayerInfo
                     playerName={`Rival: ${opponentName}`}
                     color={isLocalRed ? 'blue' : 'red'}
-                    isActive={currentTurn !== localColor}
+                    isActive={!isMyTurn}
                 />
                 <div className={styles.cardsRow}>
                     {opponentCards.map((card, index) => (
@@ -59,7 +47,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
             {/* Zona Central: Tablero + Carta Neutral */}
             <div className={styles.centerZone}>
                 <div style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
-                    <BoardView board={board} isReversed={isLocalRed} />
+                    <BoardView 
+                        board={board} 
+                        isReversed={isLocalRed}
+                        localColor={localColor}
+                        currentTurn={currentTurn}
+                        selectedPiece={selectedPiece}
+                        validTargets={validTargets}
+                        onCellClick={handleCellClick}
+                        lastMove={lastMove}
+                     />
                 </div>
                 
                 {/* Contenedor para la carta neutral en la mesa */}
@@ -75,20 +72,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, p
 
             {/* Zona del Jugador Local */}
             <div className={styles.playerZone}>
-                
                 <div className={styles.cardsRow}>
-                    {myCards.map((card, index) => (
-                        <CardView key={`my-card-${index}`} card={card} faction={isLocalRed ? 'red' : 'blue'} />
-                    ))}
+                    {myCards.map((card, index) => {
+                        const isCardSelected = selectedCard?.name === card.name;
+                        return (
+                            <CardView 
+                                key={`my-card-${index}`} 
+                                card={card} 
+                                faction={isLocalRed ? 'red' : 'blue'} 
+                                isSelected={isCardSelected} 
+                                onClick={() => setSelectedCard(card)} 
+                            />
+                        )
+                    })}
                 </div>
-
                 <PlayerInfo
                     playerName={`Jugador: ${localName}`}
                     color={isLocalRed ? 'red' : 'blue'}
-                    isActive={gameState.currentTurn === localColor}
+                    isActive={isMyTurn}
                 />
             </div>
-        </div>
 
+            {isGameOver && <GameOverModal isWinner={isWinner} onExit={handleExit} />}
+        </div>
     );
 };

@@ -1,31 +1,68 @@
 import React from 'react';
-import type { Board } from '../../../../shared';
+import type { Board, PlayerColor, Position } from '../../../../shared';
 import styles from './BoardView.module.css';
 
 interface BoardViewProps {
     board: Board;
     isReversed?: boolean; 
+    localColor: PlayerColor | null;
+    currentTurn: PlayerColor | null;
+    selectedPiece: Position | null;
+    validTargets: Position[];
+    onCellClick: (position: Position) => void;
+    lastMove?: {
+        from: Position;
+        to: Position;
+    };
 }
 
-export const BoardView: React.FC<BoardViewProps> = ({ board, isReversed=false }) => {
+export const BoardView: React.FC<BoardViewProps> = ({ 
+    board, 
+    isReversed=false,
+    localColor,
+    currentTurn,
+    selectedPiece,
+    validTargets,
+    onCellClick,
+    lastMove
+}) => {
     return (
         <div className={styles.boardContainer}>
             {board.map((row, y) => ( 
-                    row.map((cell, x) => (
+                    row.map((cell, x) => {
+                        const isSelected = selectedPiece?.x === x && selectedPiece?.y === y;
+                        const isValidTarget = validTargets.some(pos => pos.x === x && pos.y === y);
+                        const isMyPiece = cell && cell.color === localColor;
+                        const isMyTurn = currentTurn === localColor;
+
+                        const isLastMove = lastMove && 
+                            ((lastMove.from.x === x && lastMove.from.y === y) ||
+                            (lastMove.to.x === x && lastMove.to.y === y)
+                        );
+
+                        let cellClass = styles.cell;
+                        if (isValidTarget) cellClass += ` ${styles.validTarget}`;
+                        if (isLastMove) cellClass += ` ${styles.lastMove}`;
+                        console.log(`Cell (${x}, ${y}) - isLastMove: ${isLastMove}, lastMove: ${JSON.stringify(lastMove)}`);
+
+                        let pieceClass = styles.piece;
+                        if (cell) pieceClass += cell.color === 'red' ? ` ${styles.pieceRed}` : ` ${styles.pieceBlue}`;
+                        if (cell) pieceClass += cell.type === 'master' ? ` ${styles.master}` : ` ${styles.student}`;
+                        if (isSelected) pieceClass += ` ${styles.selectedPiece}`;
+                        if (isMyPiece && isMyTurn) pieceClass += ` ${styles.clickablePiece}`;
+
+                        return (
                         <div 
                             key={`cell-${x}-${y}`}
-                            className={styles.cell}
+                            className={cellClass}
+                            onClick={() => onCellClick({ x, y })}
                         >
                             {cell ? (
-                                <div className={`
-                                    ${styles.piece}
-                                    ${cell.color === 'red' ? styles.pieceRed : styles.pieceBlue}
-                                    ${cell.type === 'master' ? styles.master : styles.student}
-                                `}>
+                                <div className={pieceClass}>
                                     <span style={{ 
-                                    display: 'inline-block', 
-                                    transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
-                                    transition: 'transform 0.5s ease'
+                                        display: 'inline-block', 
+                                        transform: isReversed ? 'rotate(180deg)' : 'rotate(0deg)',
+                                        transition: 'transform 0.5s ease'
                                     }}>
                                         {cell.type === 'master' ? 'M' : 'E'}
                                     </span>
@@ -35,7 +72,8 @@ export const BoardView: React.FC<BoardViewProps> = ({ board, isReversed=false })
                                 <span className={styles.emptyCell}>·</span>
                             )}
                             </div>
-                    ))
+                        );
+                    })
                 
             ))}
         </div>

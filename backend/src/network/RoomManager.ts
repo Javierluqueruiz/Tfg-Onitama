@@ -1,9 +1,10 @@
-import { PlayerProfile } from "../../../shared";
+import { GameState, PlayerProfile } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 
 export interface RoomSession {
     roomId: string;
     gameEngine: GameEngine;
+    gameState: GameState;
     roomCode: string;
     players: {
         red: PlayerProfile | null;
@@ -39,6 +40,7 @@ export class RoomManager {
         const newRoom: RoomSession = {
             roomId,
             gameEngine: new GameEngine(),
+            gameState: null as unknown as GameState, // Inicialmente null, se establecerá cuando se cree un nuevo juego.
             roomCode,
             players: {
                 red: isHostRed ? hostProfile : null,
@@ -69,6 +71,14 @@ export class RoomManager {
 
     public static deleteRoom(roomId: string): void {
         this.activeRooms.delete(roomId);
+    }
+
+    public static getRoomBySocketId(socketId: string): RoomSession | undefined {
+        for (const room of this.activeRooms.values()) {
+            if (room.players.red?.socketId === socketId || room.players.blue?.socketId === socketId) {
+                return room;
+            }
+        }  
     }
     
 }
