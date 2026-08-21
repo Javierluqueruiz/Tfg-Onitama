@@ -3,10 +3,12 @@ import styles from './GameScreen.module.css';
 
 interface GameOverModalProps {
     isWinner: boolean;
+    onCloseModal: () => void;
     onExit: () => void;
+    
 }
 
-export const GameOverModal: React.FC<GameOverModalProps> = ({ isWinner, onExit }) => {
+export const GameOverModal: React.FC<GameOverModalProps> = ({ isWinner, onCloseModal, onExit }) => {
     return (
         <div className={styles.overlay}>
             <div className={styles.victoryModal}>
@@ -20,13 +22,22 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ isWinner, onExit }
                         {isWinner 
                             ? 'Has demostrado ser un verdadero Maestro. Tu honor prevalece.' 
                             : 'Tu templo ha caído. Levántate, aprende de tus errores y vuelve a intentarlo.'}
-                    </p>        
-                    <button 
+                    </p>       
+                    <div className={styles.modalActions}>
+                        <button 
+                            className={styles.btnExit}
+                            onClick={onCloseModal}
+                        >
+                            Ver Tablero final
+                        </button>
+                        <button 
                         className={styles.btnExit} 
                         onClick={onExit} 
-                    >
-                        Volver al Menú
-                    </button>
+                        >
+                            Volver al Menú
+                        </button>
+                    </div> 
+                    
                 </div>
             </div>
         </div>

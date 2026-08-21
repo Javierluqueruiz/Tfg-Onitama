@@ -18,7 +18,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
-        validTargets, handleCellClick, handleExit 
+        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen 
     } = useGameScreen(gameState, localColor, playersProfile);
 
     return (    
@@ -74,7 +74,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             <div className={styles.playerZone}>
                 <div className={styles.cardsRow}>
                     {myCards.map((card, index) => {
-                        const isCardSelected = selectedCard?.name === card.name;
+                        const isCardSelected = selectedCard?.name === card.name && !isGameOver;
                         return (
                             <CardView 
                                 key={`my-card-${index}`} 
@@ -93,7 +93,29 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 />
             </div>
 
-            {isGameOver && <GameOverModal isWinner={isWinner} onExit={handleExit} />}
+            <div className={styles.gameControls}>
+                {gameState.status === 'finished' ? (
+                    <button 
+                        className={styles.btnExit}
+                        onClick={handleExit}>
+                        Salir de la Partida
+                    </button>
+                ) : (
+
+                    <button
+                        className={styles.btnSurrender}
+                        onClick={handleSurrender}
+                        disabled={isGameOver}
+                    >
+                        Rendirse
+                    </button>
+                )}
+            </div>
+            
+
+            {gameState.status === 'finished' && isGameOver && isModalOpen && (
+                <GameOverModal isWinner={isWinner} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
+            )}
         </div>
     );
 };

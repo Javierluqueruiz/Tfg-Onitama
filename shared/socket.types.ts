@@ -6,16 +6,15 @@ export enum SocketEvents {
     CREATE_ROOM = 'create_room',
     JOIN_ROOM = 'join_room',
     LEAVE_ROOM = 'leave_room',
-    //PLAYER_MOVE = 'player_move',
+    PLAYER_MOVE = 'player_move',
+    SURRENDER = 'surrender',
 
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
     ERROR = 'error',
     GAME_START = 'game_start',
-    //GAME_UPDATE = 'game_update',
-
-    PLAYER_MOVE = 'player_move',
     GAME_UPDATE = 'game_update',
+
 }
 
 //Primera versión de la interfaz del perfil del jugador.

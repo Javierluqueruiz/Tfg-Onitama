@@ -14,6 +14,7 @@ export const useGameScreen = (
     const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
 
     //Estado global
+    const [isModalOpen, setIsModalOpen] = useState(true);
     const {board, currentTurn, cards, winner, lastMove} = gameState;
     const isLocalRed = localColor === 'red';
     const isMyTurn = currentTurn === localColor;
@@ -72,6 +73,15 @@ export const useGameScreen = (
         }
     };
 
+    const handleSurrender = () => {
+        if (!isGameOver) {
+            const confirmSurrender = window.confirm("¿Estás seguro de que deseas abandonar la partida? Tu oponente ganará automáticamente.");
+            if (confirmSurrender) {
+                socket?.emit(SocketEvents.SURRENDER);
+            }
+        }
+    };
+
     const handleExit = () => {
         socket?.emit(SocketEvents.LEAVE_ROOM);
         window.location.reload();
@@ -81,7 +91,7 @@ export const useGameScreen = (
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleExit
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen
     };
 
 }

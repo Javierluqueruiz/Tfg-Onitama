@@ -17,6 +17,10 @@ export class RoomManager {
     //Guarda las salas activas en memoria. A lo mejor se puede quitar el string, y dejar solo el RoomSession, pero por ahora lo dejo así para facilitar la búsqueda por id.
     private static activeRooms: Map<string, RoomSession> = new Map();
 
+    public static getActiveRooms(): Map<string, RoomSession> {
+        return this.activeRooms;
+    }
+
     public static createRoom(hostProfile: PlayerProfile): RoomSession { 
         let roomCode: string = '';
         let isUnique: boolean = false;
@@ -79,6 +83,26 @@ export class RoomManager {
                 return room;
             }
         }  
+    }
+
+    //Sub-05.1
+    public static surrenderGame(roomId: string, surrenderingPlayerSocketId: string): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room) return null;
+
+        const isRed = room.players.red?.socketId === surrenderingPlayerSocketId;
+        const winner = isRed ? 'blue' : 'red';
+
+        const updatedState: GameState = {
+            ...room.gameState,
+            status: 'finished',
+            winner: winner
+        };
+        
+        room.gameState = updatedState;
+        this.activeRooms.set(roomId, room); // Actualiza la sala con el nuevo estado del juego
+
+        return updatedState;
     }
     
 }

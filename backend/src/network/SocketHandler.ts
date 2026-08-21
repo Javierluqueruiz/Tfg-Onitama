@@ -112,6 +112,26 @@ export function registerSocketEvents(io: Server) {
             }
         });
 
+        //Sub-05.1
+        socket.on(SocketEvents.SURRENDER, () => {
+            const room = RoomManager.getRoomBySocketId(socket.id);
+            if (!room) {
+                return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala.' });
+            }
+
+            try {
+                const updatedGameState = RoomManager.surrenderGame(room.roomId, socket.id);
+
+                if (updatedGameState) {
+                    io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: updatedGameState });
+                    RoomManager.deleteRoom(room.roomId);
+                }
+            } catch (error) {
+                socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la rendición.' });
+            }
+        });
+
+
         socket.on('disconnect', () => {
             console.log(`Usuario desconectado: ${socket.id}`);
         });

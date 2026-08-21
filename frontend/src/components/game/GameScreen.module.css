@@ -169,3 +169,100 @@
     0% { transform: scale(0.8) translateY(20px); opacity: 0; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
 }
+
+/* --- DISEÑO RESPONSIVO PARA MÓVILES --- */
+@media (max-width: 768px) {
+    .screenContainer {
+        flex-direction: column;
+        justify-content: space-evenly;
+        padding: 10px;
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    /* El tablero se adapta al ancho de la pantalla */
+    .centerZone {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .boardWrapper {
+        width: 95vw;
+        height: 95vw;
+        max-width: 400px;
+        max-height: 400px;
+    }
+
+    /* Reducimos ligeramente el tamaño de las cartas */
+    .cardsRow {
+        gap: 10px;
+        transform: scale(0.85);
+        transform-origin: center;
+    }
+
+    /* Ajustamos los textos para que no ocupen tanto espacio */
+    .title {
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+}
+
+
+/* Sub-05.1 */
+/* --- Contenedor de los controles de partida --- */
+.gameControls {
+  display: flex;
+  justify-content: flex-end; /* Alineamos el botón a la derecha */
+  align-items: center;
+  width: 100%;
+  max-width: 600px; /* Ajústalo al ancho máximo de tu tablero */
+  margin: 0 auto 1rem auto;
+  padding: 0 1rem;
+}
+
+/* --- Botón de Rendición (Surrender) --- */
+.btnSurrender {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #dc3545; /* Rojo clásico para acciones destructivas */
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Efecto al pasar el ratón */
+.btnSurrender:hover:not(:disabled) {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Efecto al hacer clic */
+.btnSurrender:active:not(:disabled) {
+  background-color: #bd2130;
+  transform: translateY(1px);
+}
+
+/* Estado deshabilitado (cuando la partida ya ha terminado) */
+.btnSurrender:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
