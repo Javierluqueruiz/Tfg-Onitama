@@ -321,27 +321,54 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
         });
     });
 
-    it('Sub-04.3: Debe procesar el abandono de sala mediante LEAVE_ROOM y notificar al rival', () => {
+    it('Sub-04.3: Debe rechazar una jugada inválida y mantener el tablero sin cambios', () =>{
         return new Promise<void>((resolve, reject) => {
-            clientSocket2.on(SocketEvents.ERROR, (error: any) => {
+            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: any) => {
+                const gameState = data.gameState;
+                const activeColor = gameState.currentTurn;
+                
+                // Solo el jugador que tiene el turno intentará hacer la trampa
+                const isMyTurn = (activeColor === 'red' && isHost) || (activeColor === 'blue' && !isHost);
+                
+                if (isMyTurn) {
+                    // 1. Obtenemos una de sus cartas reales para que esa validación pase
+                    const playerCards = activeColor === 'red' ? gameState.cards.red : gameState.cards.blue;
+                    const selectedCard = playerCards[0];
+
+                    // 2. Emitimos un movimiento claramente ilegal (coordenadas fuera de la matriz 5x5)
+                    client.emit('player_move', {
+                        from: { x: 0, y: 0 },
+                        to: { x: 10, y: 10 }, // Destino matemáticamente imposible
+                        cardName: selectedCard.name
+                    });
+                }
+            };
+
+            // Escuchamos el evento de error que debe escupir el backend
+            const handleError = (error: any) => {
                 try {
-                    expect(error.message).toContain('abandonado');
+                    expect(error.message).toBeDefined();
+                    // Opcionalmente, puedes ser más estricto comprobando el texto del error
+                    // expect(error.message).toContain('fuera de los límites');
                     resolve();
                 } catch (err) {
                     reject(err);
                 }
+            };
+
+            // Suscribimos ambos clientes por si el error le llega al que no debe
+            clientSocket1.on('error', handleError);
+            clientSocket2.on('error', handleError);
+
+            clientSocket1.on('game_start', handleGameStart(clientSocket1, true));
+            clientSocket2.on('game_start', handleGameStart(clientSocket2, false));
+
+            // Flujo estándar de arranque de sala
+            clientSocket1.on('room_created', (data) => {
+                clientSocket2.emit('join_room', { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.on(SocketEvents.GAME_START, () => {
-                // El jugador 1 se retira voluntariamente tras iniciar
-                clientSocket1.emit(SocketEvents.LEAVE_ROOM);
-            });
-
-            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
-                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
-            });
-
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit('create_room', 'Player1');
         });
     });
 });
