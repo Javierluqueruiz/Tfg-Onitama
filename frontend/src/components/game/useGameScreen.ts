@@ -25,6 +25,9 @@ export const useGameScreen = (
     const [disconnectTimer, setDisconnectTimer] = useState<number | null>(null);
     const [reconnectMessage, setReconnectMessage] = useState<boolean>(false);
 
+    //Sub-05.3: Temporizador de juego
+    const [timeRemaining, setTimeRemaining] = useState<{ red: number; blue: number }>({ red: 0, blue: 0 });
+
     //Perfiles y nombres
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
     const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
@@ -72,6 +75,18 @@ export const useGameScreen = (
             localStorage.removeItem('onitama_session');
         }
     }, [gameState.status]);
+
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on(SocketEvents.TIME_TICK, (data: { timeRemaining: { red: number; blue: number } }) => {
+            setTimeRemaining(data.timeRemaining);
+        });
+
+        return () => {
+            socket.off(SocketEvents.TIME_TICK);
+        };
+    }, [socket]);
 
     //Destinos Válidos
     const validTargets = useMemo(() => {
@@ -129,11 +144,20 @@ export const useGameScreen = (
         window.location.reload();
     };
 
+
+
     return {
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, 
+        disconnectTimer, reconnectMessage, isConnected, timeRemaining
     };
 
 }
+
+export const formatTime = (totalSeconds: number): string => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};

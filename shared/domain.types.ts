@@ -48,4 +48,8 @@ export interface GameState {
         from : Position;
         to: Position;
     };
+    timeRemaining: {
+        red: number;
+        blue: number;
+    };
 }

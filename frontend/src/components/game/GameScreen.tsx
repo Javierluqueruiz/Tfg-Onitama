@@ -18,7 +18,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
-        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected
+        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining
     } = useGameScreen(gameState, localColor, playersProfile);
 
     return (    
@@ -36,6 +36,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                     playerName={`Rival: ${opponentName}`}
                     color={isLocalRed ? 'blue' : 'red'}
                     isActive={!isMyTurn}
+                    timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
                 />
                 <div className={styles.cardsRow}>
                     {opponentCards.map((card, index) => (
@@ -110,6 +111,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                     playerName={`Jugador: ${localName}`}
                     color={isLocalRed ? 'red' : 'blue'}
                     isActive={isMyTurn}
+                    timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
                 />
             </div>
 

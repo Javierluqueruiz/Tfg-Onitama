@@ -19,6 +19,8 @@ export class RoomManager {
     private static activeRooms: Map<string, RoomSession> = new Map();
     //Sub-05.2
     private static disconnectTimers: Map<string, NodeJS.Timeout> = new Map();
+    //Sub-05.3
+    private static gameTimers: Map<string, NodeJS.Timeout> = new Map();
 
     public static getActiveRooms(): Map<string, RoomSession> {
         return this.activeRooms;
@@ -139,5 +141,46 @@ export class RoomManager {
 
         return room;
     }
+    
+    //Sub-05.3: Temporizador de juego
+    public static startGameTimer(
+        roomId: string,
+        onTick: (remainingTime: { red: number; blue: number }) => void,
+        onTimeUp: (finalState: GameState) => void
+    ): void {
+        if (this.gameTimers.has(roomId)) {
+            clearTimeout(this.gameTimers.get(roomId)!);
+        }
 
+        const timer = setInterval(() => {
+            const room = this.getRoomById(roomId);
+            if (!room || room.gameState.status === 'finished') {
+                this.stopGameTimer(roomId);
+                return;
+            }
+
+            const activeColor = room.gameState.currentTurn;
+            room.gameState.timeRemaining[activeColor] -= 1;
+
+            onTick(room.gameState.timeRemaining);
+
+            if(room.gameState.timeRemaining[activeColor] <= 0) {
+                this.stopGameTimer(roomId);
+                room.gameState.status = 'finished';
+                room.gameState.winner = activeColor === 'red' ? 'blue' : 'red';
+                onTimeUp(room.gameState);
+            }
+        }, 1000);
+
+        this.gameTimers.set(roomId, timer);
+    }
+
+
+    public static stopGameTimer(roomId: string): void {
+        const timer = this.gameTimers.get(roomId);
+        if (timer) {
+            clearInterval(timer);
+            this.gameTimers.delete(roomId);
+        }
+    }
 }

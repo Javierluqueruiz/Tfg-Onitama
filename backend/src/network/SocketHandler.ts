@@ -74,6 +74,16 @@ export function registerSocketEvents(io: Server) {
                 }
 
                 io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState, players: playersMapping });
+                RoomManager.startGameTimer(roomId,
+                    (timeRemaining) => {
+                        io.to(roomId).emit(SocketEvents.TIME_TICK, { timeRemaining });
+                    },
+
+                    (finalState) => {
+                        io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
+                        RoomManager.deleteRoom(roomId);
+                    }
+                );
                 console.log('Partida iniciada en la sala:', roomId);
             }
 
@@ -91,8 +101,12 @@ export function registerSocketEvents(io: Server) {
                 room.gameState = newState;
 
                 io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: newState });
+                
+                if (newState.status === 'finished') {
+                    RoomManager.stopGameTimer(room.roomId);
+                    RoomManager.deleteRoom(room.roomId);
+                } 
 
-                console.log(`Movimiento procesado en la sala ${room.roomId}:`, moveData);
             } catch (error: any) {
                 console.warn(`Jugada invalida rechazada: ${error.message}`);
                 socket.emit(SocketEvents.ERROR, { message: error.message });
@@ -106,7 +120,7 @@ export function registerSocketEvents(io: Server) {
                 socket.leave(room.roomId);
 
                 socket.to(room.roomId).emit(SocketEvents.ERROR, { message: 'El jugador ha abandonado la sala.' });
-
+                RoomManager.stopGameTimer(room.roomId);
                 RoomManager.deleteRoom(room.roomId);
                 console.log(`Sala ${room.roomId} eliminada}`)
             }
@@ -124,6 +138,7 @@ export function registerSocketEvents(io: Server) {
 
                 if (updatedGameState) {
                     io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: updatedGameState });
+                    RoomManager.stopGameTimer(room.roomId); 
                     RoomManager.deleteRoom(room.roomId);
                 }
             } catch (error) {
@@ -151,6 +166,7 @@ export function registerSocketEvents(io: Server) {
 
                     if (updatedGameState) {
                         io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: updatedGameState });
+                        RoomManager.stopGameTimer(room.roomId);
                         RoomManager.deleteRoom(room.roomId);
                         RoomManager.clearDisconnectTimer(room.roomId);
                         console.log(RoomManager.getActiveRooms());

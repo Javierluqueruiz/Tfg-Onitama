@@ -1,5 +1,5 @@
 //Eventos para los WebSockets
-import type { PlayerColor, GameState } from './domain.types';
+import type {GameState } from './domain.types';
 
 export enum SocketEvents {
     //Cliente a Servidor
@@ -19,6 +19,7 @@ export enum SocketEvents {
     OPPONENT_RECONNECTED = 'opponent_reconnected',
     RECONNECT_SUCCESS = 'reconnect_success',
     RECONNECT_FAILED = 'reconnect_failed',
+    TIME_TICK = 'time_tick'
 
 
 }
