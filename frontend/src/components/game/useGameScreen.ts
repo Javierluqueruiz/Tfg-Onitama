@@ -9,7 +9,7 @@ export const useGameScreen = (
         localColor: PlayerColor | null, 
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
 ) => {
-    const { socket } = useSocket();
+    const { socket, isConnected } = useSocket();
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);
     const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
 
@@ -133,7 +133,7 @@ export const useGameScreen = (
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected
     };
 
 }

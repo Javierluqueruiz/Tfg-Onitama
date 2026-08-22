@@ -47,6 +47,20 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
             console.error('Error from server:', data.message);
         });
 
+        const handleNetworkRecover = () => {
+            if (socket.disconnected) {
+                socket.connect();
+            }
+        };
+
+        const handleOffline = () => {
+            console.warn('Conexión a Internet perdida. Intentando reconectar...');
+            setIsConnected(false);
+            socket.disconnect();
+        };
+
+        window.addEventListener('online', handleNetworkRecover);
+        window.addEventListener('offline', handleOffline);
 
         return () => {
             socket.disconnect();
@@ -54,6 +68,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
             socket.off('disconnect');
             socket.off(SocketEvents.RECONNECT_FAILED);
             socket.off(SocketEvents.ERROR);
+            window.removeEventListener('online', handleNetworkRecover);
+            window.removeEventListener('offline', handleOffline);
         };
 
     }, [socket]);

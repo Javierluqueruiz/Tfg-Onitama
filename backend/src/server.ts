@@ -11,7 +11,11 @@ const io = new Server(server, {
         //origin: "http://localhost:5173",
         origin: "*",
         methods: ["GET", "POST"]
-    }
+    },
+    
+    // Sub-05.2: Configuración de ping para detectar desconexiones
+    pingInterval: 10000,
+    pingTimeout: 5000,
 })
 
 registerSocketEvents(io);
