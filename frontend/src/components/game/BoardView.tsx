@@ -43,7 +43,6 @@ export const BoardView: React.FC<BoardViewProps> = ({
                         let cellClass = styles.cell;
                         if (isValidTarget) cellClass += ` ${styles.validTarget}`;
                         if (isLastMove) cellClass += ` ${styles.lastMove}`;
-                        console.log(`Cell (${x}, ${y}) - isLastMove: ${isLastMove}, lastMove: ${JSON.stringify(lastMove)}`);
 
                         let pieceClass = styles.piece;
                         if (cell) pieceClass += cell.color === 'red' ? ` ${styles.pieceRed}` : ` ${styles.pieceBlue}`;

@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { PlayerProfile, SocketEvents } from "../../../shared";
+import { PlayerProfile, SocketEvents, ReconnectPayload } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 
 export function registerSocketEvents(io: Server) {
@@ -134,7 +134,61 @@ export function registerSocketEvents(io: Server) {
 
         socket.on('disconnect', () => {
             console.log(`Usuario desconectado: ${socket.id}`);
+
+            //Sub-05.2
+            const room = RoomManager.getRoomBySocketId(socket.id);
+
+            if (!room || room.gameState.status === 'finished') return;
+
+            io.to(room.roomId).emit(SocketEvents.OPPONENT_DISCONNECTED, {
+                message: 'El oponente se ha desconectado. Esperando reconexión...',
+                timeLimit: 30000 // 30 segundos
+            });
+
+            const timer = setTimeout(() => {
+                try {
+                    const updatedGameState = RoomManager.surrenderGame(room.roomId, socket.id);
+
+                    if (updatedGameState) {
+                        io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: updatedGameState });
+                        RoomManager.deleteRoom(room.roomId);
+                        RoomManager.clearDisconnectTimer(room.roomId);
+                        console.log(RoomManager.getActiveRooms());
+                    }
+                } catch (error) {
+                    socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la rendición por desconexión.' });
+                }
+            }, 30000); // 30 segundos
+
+            RoomManager.setDisconnectTimer(room.roomId, timer);
+            console.log(RoomManager.getActiveRooms());
+
         });
+
+        socket.on(SocketEvents.RECONNECT_ATTEMPT, (payload: ReconnectPayload) => {
+            try {
+                const room = RoomManager.reconnectPlayer(
+                    payload.roomId,
+                    payload.originalSocketId,
+                    socket.id //Nuevo socketId del jugador que se reconecta
+                );
+
+                if (room) {
+                    socket.join(room.roomId);
+
+                    socket.emit(SocketEvents.RECONNECT_SUCCESS, { 
+                        gameState: room.gameState,
+                        players: room.players
+                    });
+
+                    socket.to(room.roomId).emit(SocketEvents.OPPONENT_RECONNECTED);
+                } else {
+                    socket.emit(SocketEvents.RECONNECT_FAILED);
+                }
+            } catch (error: any) {
+                socket.emit(SocketEvents.ERROR, { message: 'Error al procesar el intento de reconexión: ' + error.message });
+            }
+        })
     });
 
 }

@@ -1,5 +1,6 @@
-import { GameState, PlayerProfile } from "../../../shared";
+import { GameState, PlayerProfile, SocketEvents } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
+import { Server } from 'socket.io';
 
 export interface RoomSession {
     roomId: string;
@@ -16,6 +17,8 @@ export class RoomManager {
 
     //Guarda las salas activas en memoria. A lo mejor se puede quitar el string, y dejar solo el RoomSession, pero por ahora lo dejo así para facilitar la búsqueda por id.
     private static activeRooms: Map<string, RoomSession> = new Map();
+    //Sub-05.2
+    private static disconnectTimers: Map<string, NodeJS.Timeout> = new Map();
 
     public static getActiveRooms(): Map<string, RoomSession> {
         return this.activeRooms;
@@ -105,4 +108,36 @@ export class RoomManager {
         return updatedState;
     }
     
+    //SUB-05.2: Desconexión
+    public static setDisconnectTimer(roomId: string, timer: NodeJS.Timeout): void {
+        this.disconnectTimers.set(roomId, timer);
+    }
+
+    public static clearDisconnectTimer(roomId: string): void {
+        const timer = this.disconnectTimers.get(roomId);
+        if (timer) {
+            clearTimeout(timer);
+            this.disconnectTimers.delete(roomId);
+        }
+    }
+
+    //Sub-05.2: Reconexión 
+    public static reconnectPlayer(roomId: string, oldSocketId: string, newSocketId: string): RoomSession | null {
+        const room = this.getRoomById(roomId);
+
+        if (!room || room.gameState.status === 'finished') return null;
+
+        if (room.players.red?.socketId === oldSocketId) {
+            room.players.red.socketId = newSocketId;
+        } else if (room.players.blue?.socketId === oldSocketId) {
+            room.players.blue.socketId = newSocketId;
+        } else {
+            return null;
+        }
+
+        this.clearDisconnectTimer(roomId);
+
+        return room;
+    }
+
 }

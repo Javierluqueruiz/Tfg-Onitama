@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile } from '../../../../shared';
 import { useSocket } from '../../contexts/SocketContext';
 
@@ -20,7 +20,11 @@ export const useGameScreen = (
     const isMyTurn = currentTurn === localColor;
     const isGameOver = winner !== null;
     const isWinner = winner === localColor;
-    
+
+    //Sub-05.2: Reconexión
+    const [disconnectTimer, setDisconnectTimer] = useState<number | null>(null);
+    const [reconnectMessage, setReconnectMessage] = useState<boolean>(false);
+
     //Perfiles y nombres
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
     const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
@@ -30,6 +34,44 @@ export const useGameScreen = (
     const opponentCards = isLocalRed ? cards.blue : cards.red;
     const neutralCard = cards.neutral;
     const boardRotation = isLocalRed ? 'rotate(180deg)' : 'rotate(0deg)';
+
+    //Sub-05.2
+    useEffect(() => {
+        if (!socket) return;
+
+        socket?.on(SocketEvents.OPPONENT_DISCONNECTED, (data: { timeLimit: number }) => {
+            setDisconnectTimer(data.timeLimit / 1000);
+            setReconnectMessage(false);
+        });
+
+        socket?.on(SocketEvents.OPPONENT_RECONNECTED, () => {
+            setDisconnectTimer(null);
+            setReconnectMessage(true);
+
+            setTimeout(() => setReconnectMessage(false), 3000);
+        });
+
+        return () => {
+            socket?.off(SocketEvents.OPPONENT_DISCONNECTED);
+            socket?.off(SocketEvents.OPPONENT_RECONNECTED);
+        };
+    }, [socket]);
+
+    useEffect(() => {
+        if (disconnectTimer === null || disconnectTimer <= 0) return;
+
+        const interval = setInterval(() => {
+            setDisconnectTimer((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [disconnectTimer]);
+
+    useEffect(() => {
+        if (gameState.status === 'finished') {
+            localStorage.removeItem('onitama_session');
+        }
+    }, [gameState.status]);
 
     //Destinos Válidos
     const validTargets = useMemo(() => {
@@ -91,7 +133,7 @@ export const useGameScreen = (
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage
     };
 
 }

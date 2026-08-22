@@ -18,7 +18,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
-        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen 
+        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage
     } = useGameScreen(gameState, localColor, playersProfile);
 
     return (    
@@ -42,6 +42,20 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                         <CardView key={`opponent-card-${index}`} card={card} faction={isLocalRed ? 'blue' : 'red'} isFlipped={true} />
                     ))}
                 </div>
+
+                {/* Sub-05.2: Desconexión */}
+                {disconnectTimer !== null && disconnectTimer > 0 && (
+                    <div className={styles.disconnectBanner}>
+                        El oponente se ha desconectado. Esperando reconexión... <strong>({disconnectTimer}s)</strong>
+                    </div>
+                )}
+
+                {/* Sub-05.2: Reconexión */}
+                {reconnectMessage && (
+                    <div className={styles.reconnectBanner}>
+                        El oponente se ha reconectado.
+                    </div>
+                )}
             </div>
 
             {/* Zona Central: Tablero + Carta Neutral */}

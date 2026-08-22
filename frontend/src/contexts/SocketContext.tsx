@@ -1,5 +1,7 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import { Socket, io } from "socket.io-client";
+import type { ReconnectPayload } from "../../../shared";
+import { SocketEvents } from "../../../shared";
 
 interface SocketContextState {
     socket: Socket | null;
@@ -21,6 +23,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
         socket.on('connect', () => {
             console.log('Connected to server');
             setIsConnected(true);
+
+            const savedSession = localStorage.getItem('onitama_session');
+
+            if (savedSession) {
+                const { roomId, originalSocketId } = JSON.parse(savedSession);
+                const payload: ReconnectPayload = { roomId, originalSocketId };
+                socket.emit(SocketEvents.RECONNECT_ATTEMPT, payload);
+            }
         });
 
         socket.on('disconnect', () => {
@@ -28,11 +38,22 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
             setIsConnected(false);
         });
 
+        //Sub-05.2: Reconexión
+        socket.on(SocketEvents.RECONNECT_FAILED, () => {
+            localStorage.removeItem('onitama_session');
+        })
+
+        socket.on(SocketEvents.ERROR, (data: { message: string }) => {
+            console.error('Error from server:', data.message);
+        });
+
 
         return () => {
             socket.disconnect();
             socket.off('connect');
             socket.off('disconnect');
+            socket.off(SocketEvents.RECONNECT_FAILED);
+            socket.off(SocketEvents.ERROR);
         };
 
     }, [socket]);
