@@ -28,6 +28,11 @@ export const useGameScreen = (
     //Sub-05.3: Temporizador de juego
     const [timeRemaining, setTimeRemaining] = useState<{ red: number; blue: number }>({ red: 0, blue: 0 });
 
+    //Sub-05.4: Empate
+    const [drawOfferReceived, setDrawOfferReceived] = useState<boolean>(false);
+    const [drawOfferSent, setDrawOfferSent] = useState<boolean>(false);
+    const [drawRejectedMessage, setDrawRejectedMessage] = useState<boolean>(false);
+
     //Perfiles y nombres
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
     const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
@@ -87,6 +92,47 @@ export const useGameScreen = (
             socket.off(SocketEvents.TIME_TICK);
         };
     }, [socket]);
+
+    //Sub-05.4
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on(SocketEvents.OFFER_DRAW, () => setDrawOfferReceived(true));
+
+        socket.on(SocketEvents.REJECT_DRAW, () => {
+            setDrawOfferSent(false);
+            setDrawRejectedMessage(true);
+            setTimeout(() => setDrawRejectedMessage(false), 4000);
+        });
+
+        return () => {
+            socket.off(SocketEvents.OFFER_DRAW);
+            socket.off(SocketEvents.REJECT_DRAW);
+        }
+    }, [socket]);
+
+    let gameResult: 'win' | 'lose' | 'draw' = 'lose';
+
+    if (gameState.winner === localColor) {
+        gameResult = 'win';
+    } else if (gameState.winner === 'draw') {
+        gameResult = 'draw';
+    }
+
+    const handleOfferDraw = () => {
+        setDrawOfferSent(true);
+        socket?.emit(SocketEvents.OFFER_DRAW);
+    };
+
+    const handleAcceptDraw = () => {
+        setDrawOfferReceived(false);
+        socket?.emit(SocketEvents.ACCEPT_DRAW);
+    };
+
+    const handleRejectDraw = () => {
+        setDrawOfferReceived(false);
+        socket?.emit(SocketEvents.REJECT_DRAW);
+    };
 
     //Destinos Válidos
     const validTargets = useMemo(() => {
@@ -151,7 +197,8 @@ export const useGameScreen = (
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
         validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, 
-        disconnectTimer, reconnectMessage, isConnected, timeRemaining
+        disconnectTimer, reconnectMessage, isConnected, timeRemaining,
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult
     };
 
 }

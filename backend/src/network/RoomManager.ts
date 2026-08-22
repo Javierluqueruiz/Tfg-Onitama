@@ -183,4 +183,21 @@ export class RoomManager {
             this.gameTimers.delete(roomId);
         }
     }
+
+    //Sub-05.4
+    public static resolveDraw(roomId: string): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room || room.gameState.status === 'finished') return null;
+
+        const updatedState: GameState = {
+            ...room.gameState,
+            status: 'finished',
+            winner: 'draw'
+        };
+
+        room.gameState = updatedState;
+        this.activeRooms.set(roomId, room); 
+
+        return updatedState;
+    }
 }

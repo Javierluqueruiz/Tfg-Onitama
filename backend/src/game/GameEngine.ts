@@ -25,8 +25,8 @@ export class GameEngine {
             cards: deckResult.cards,
             winner: null,
             timeRemaining: {
-                red: 30,
-                blue: 30
+                red: 600,
+                blue: 600
             },
         };
 

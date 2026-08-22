@@ -9,6 +9,10 @@ export enum SocketEvents {
     PLAYER_MOVE = 'player_move',
     SURRENDER = 'surrender',
     RECONNECT_ATTEMPT = 'reconnect_attempt',
+    OFFER_DRAW = 'offer_draw',
+    ACCEPT_DRAW = 'accept_draw',
+    REJECT_DRAW = 'reject_draw',
+    
 
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',

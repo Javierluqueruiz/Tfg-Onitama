@@ -18,8 +18,10 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
-        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining
+        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult
     } = useGameScreen(gameState, localColor, playersProfile);
+
 
     return (    
         <div className={styles.screenContainer}>
@@ -29,6 +31,22 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                     {isMyTurn ? 'Tu Turno' : 'Turno del Rival'}
                 </div>
             </div>
+
+            {drawRejectedMessage && (
+                <div className={styles.toastError}>
+                    El oponente ha rechazado tu oferta de empate. La partida continúa.
+                </div>
+            )}
+
+            {drawOfferReceived && ( 
+                <div className={styles.drawBanner}>
+                    <p>Tu oponente ha ofrecido un empate. ¿Aceptas?</p>
+                    <div className={styles.drawActions}>
+                        <button className={styles.btnAccept} onClick={handleAcceptDraw}>Aceptar</button>
+                        <button className={styles.btnReject} onClick={handleRejectDraw}>Rechazar</button>
+                    </div>
+                </div>
+            )}
 
             {/* Zona del Jugador Rival */}
             <div className={styles.playerZone}>
@@ -116,6 +134,16 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             </div>
 
             <div className={styles.gameControls}>
+                {gameState.status !== 'finished' && (
+                    <button
+                        className={styles.btnOfferDraw}
+                        onClick={handleOfferDraw}
+                        disabled={drawOfferSent || drawOfferReceived || isGameOver}
+                    >
+                        {drawOfferSent ? 'Oferta de Empate Enviada' : 'Ofrecer Empate'}
+                    </button>
+                )}
+
                 {gameState.status === 'finished' ? (
                     <button 
                         className={styles.btnExit}
@@ -136,7 +164,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             
 
             {gameState.status === 'finished' && isGameOver && isModalOpen && (
-                <GameOverModal isWinner={isWinner} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
+                <GameOverModal result={gameResult} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
             )}
         </div>
     );

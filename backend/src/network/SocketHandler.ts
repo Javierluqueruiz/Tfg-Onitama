@@ -181,6 +181,7 @@ export function registerSocketEvents(io: Server) {
 
         });
 
+        //Sub-05.2: Intento de reconexión
         socket.on(SocketEvents.RECONNECT_ATTEMPT, (payload: ReconnectPayload) => {
             try {
                 const room = RoomManager.reconnectPlayer(
@@ -205,6 +206,44 @@ export function registerSocketEvents(io: Server) {
                 socket.emit(SocketEvents.ERROR, { message: 'Error al procesar el intento de reconexión: ' + error.message });
             }
         })
+
+        //Sub-05.4
+        socket.on(SocketEvents.OFFER_DRAW, () => {
+            const room = RoomManager.getRoomBySocketId(socket.id);
+
+            if (room) {
+                socket.to(room.roomId).emit(SocketEvents.OFFER_DRAW);
+            }
+        });
+
+
+        socket.on(SocketEvents.REJECT_DRAW, () => {
+            const room = RoomManager.getRoomBySocketId(socket.id);
+
+            if (room) {
+                socket.to(room.roomId).emit(SocketEvents.REJECT_DRAW);
+            }
+        });
+
+        socket.on(SocketEvents.ACCEPT_DRAW, () => {
+            const room = RoomManager.getRoomBySocketId(socket.id);
+
+            if (!room || room.gameState.status === 'finished') {
+                return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala o el juego ya ha terminado.' });
+            }
+
+            try {
+                const finalState = RoomManager.resolveDraw(room.roomId);
+
+                if (finalState) {
+                    io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
+                    RoomManager.stopGameTimer(room.roomId);
+                    RoomManager.deleteRoom(room.roomId);
+                }
+            } catch (error) {
+                socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la aceptación del empate.' });
+            }
+        });
     });
 
 }
