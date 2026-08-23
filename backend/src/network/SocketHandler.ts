@@ -148,8 +148,8 @@ export function registerSocketEvents(io: Server) {
 
 
         socket.on('disconnect', () => {
-            console.log(`Usuario desconectado: ${socket.id}`);
-
+            console.log(`Usuario desconectado: ${socket.id}`)
+            const timeLimit = RoomManager.DISCONNECT_TIMEOUT_MS; // 30 segundos
             //Sub-05.2
             const room = RoomManager.getRoomBySocketId(socket.id);
 
@@ -157,7 +157,7 @@ export function registerSocketEvents(io: Server) {
 
             io.to(room.roomId).emit(SocketEvents.OPPONENT_DISCONNECTED, {
                 message: 'El oponente se ha desconectado. Esperando reconexión...',
-                timeLimit: 30000 // 30 segundos
+                timeLimit: timeLimit // 30 segundos
             });
 
             const timer = setTimeout(() => {
@@ -174,7 +174,7 @@ export function registerSocketEvents(io: Server) {
                 } catch (error) {
                     socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la rendición por desconexión.' });
                 }
-            }, 30000); // 30 segundos
+            }, timeLimit); // 30 segundos
 
             RoomManager.setDisconnectTimer(room.roomId, timer);
             console.log(RoomManager.getActiveRooms());
@@ -244,6 +244,14 @@ export function registerSocketEvents(io: Server) {
                 socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la aceptación del empate.' });
             }
         });
+
+        // EVENTO OCULTO PARA TESTING
+        if (process.env.VITEST) {
+            socket.on('DEBUG_SET_TIMEOUT', (payload: { timeout: number }) => {
+                RoomManager.DISCONNECT_TIMEOUT_MS = payload.timeout;
+                console.log(`[DEBUG] Timeout del servidor cambiado a: ${payload.timeout}ms`);
+            });
+        }
     });
 
 }

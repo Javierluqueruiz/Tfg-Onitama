@@ -22,6 +22,8 @@ export class RoomManager {
     //Sub-05.3
     private static gameTimers: Map<string, NodeJS.Timeout> = new Map();
 
+    public static DISCONNECT_TIMEOUT_MS = 30000; 
+
     public static getActiveRooms(): Map<string, RoomSession> {
         return this.activeRooms;
     }
