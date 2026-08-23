@@ -1,4 +1,4 @@
-import { Board, Card, PlayerColor, Position } from "../../../shared/types";
+import { Board, Card, PlayerColor, Position } from "../../../shared";
 
 
 export class MoveArbitrator {

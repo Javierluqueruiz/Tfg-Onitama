@@ -1,0 +1,55 @@
+/* PlayerZone.tsx */
+.cardsRow {
+    display: flex;
+    gap: 20px;
+}
+
+.playerZone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+/* --- DISEÑO RESPONSIVO PARA MÓVILES --- */
+@media (max-width: 768px) {
+        /* Reducimos ligeramente el tamaño de las cartas */
+    .cardsRow {
+        gap: 10px;
+        transform: scale(0.85);
+        transform-origin: center;
+    }
+}
+
+/* NetworkStatus.tsx */
+
+/* Sub-05.2 */
+.disconnectBanner {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ffeeba;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+  animation: pulse 2s infinite;
+}
+
+.reconnectBanner {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { opacity: 1; }
+}

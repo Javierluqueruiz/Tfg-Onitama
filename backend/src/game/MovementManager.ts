@@ -1,4 +1,4 @@
-import { Board, Piece, Position } from '../../../shared/types';
+import { Board, Piece, Position } from '../../../shared';
 
 export interface MoveResult {
     newBoard: Board;

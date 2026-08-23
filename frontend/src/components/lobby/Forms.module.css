@@ -1,0 +1,54 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.title {margin: 0; color: #2c3e50;}
+
+.label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: left;
+    font-size: 18px;
+    font-weight: bold;
+    color: #7f8c8d;
+}
+
+.input {
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+
+.inputCode {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.btnSubmit {
+    padding: 15px;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.btnCreate { background-color: #0f8941; }
+.btnJoin { background: #b05b10; }
+
+.btnBack {
+    padding: 10px;
+    background: transparent;
+    color: black;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    background-color: #f0f0f0;
+    border-radius: 6px;
+}

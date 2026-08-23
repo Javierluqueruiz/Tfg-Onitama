@@ -1,4 +1,4 @@
-import { Board, BoardRow, Piece } from '../../../shared/types';
+import { Board, BoardRow, Piece } from '../../../shared';
 
 export class BoardGenerator {
 

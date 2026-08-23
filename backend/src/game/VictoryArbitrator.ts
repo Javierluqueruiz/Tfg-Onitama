@@ -1,4 +1,4 @@
-import { Board, PlayerColor } from "../../../shared/types";
+import { Board, PlayerColor } from "../../../shared";
 
 export class VictoryArbitrator {
 

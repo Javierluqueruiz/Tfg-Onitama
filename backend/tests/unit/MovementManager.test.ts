@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { MovementManager } from "./MovementManager";
-import { GameEngine } from "./GameEngine";
+import { MovementManager } from "../../src/game/MovementManager";
+import { GameEngine } from "../../src/game/GameEngine";
 import { Board } from "../../../shared/types";
-import { BoardGenerator } from "./BoardGenerator";
+import { BoardGenerator } from "../../src/game/BoardGenerator";
 
 describe('FEAT-03 : Desplazamiento de piezas', () => {
 

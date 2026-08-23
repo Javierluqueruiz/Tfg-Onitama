@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
-import { VictoryArbitrator } from './VictoryArbitrator';
+import { VictoryArbitrator } from '../../src/game/VictoryArbitrator';
 import { Board } from '../../../shared/types';
-import { BoardGenerator } from './BoardGenerator';
+import { BoardGenerator } from '../../src/game/BoardGenerator';
 import { table } from 'node:console';
 
 describe('FEAT-09: Detección de condiciones de victoria', () => {
