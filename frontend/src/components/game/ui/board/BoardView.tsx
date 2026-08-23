@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Board, PlayerColor, Position } from '../../../../shared';
+import type { Board, PlayerColor, Position } from '../../../../../../shared';
 import styles from './BoardView.module.css';
 
 interface BoardViewProps {

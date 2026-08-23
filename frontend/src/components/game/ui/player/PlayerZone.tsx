@@ -1,8 +1,9 @@
 import React from 'react';
-import styles from './GameScreen.module.css';
-import type { Card } from '../../../../shared';
+import styles from './PlayerZone.module.css';
+import type { Card } from '../../../../../../shared';
 import { PlayerInfo } from './PlayerInfo';
-import { CardView } from './CardView';
+import { CardView } from '../cards/CardView';
+import { NetworkStatus } from './NetworkStatus';
 
 interface PlayerZoneProps {
     isOpponent?: boolean; // Define si es el rival para invertir el orden
@@ -69,23 +70,12 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
 
     // Extraemos los banners de desconexión
     const renderNetworkStatus = () => (
-        <>
-            {!isOpponent && !isConnected && (
-                <div className={styles.disconnectBanner}>
-                    Conexión perdida. Intentando reconectar...
-                </div>
-            )}
-            {isOpponent && disconnectTimer !== null && disconnectTimer > 0 && (
-                <div className={styles.disconnectBanner}>
-                    El oponente se ha desconectado. Esperando reconexión... <strong>({disconnectTimer}s)</strong>
-                </div>
-            )}
-            {isOpponent && reconnectMessage && (
-                <div className={styles.reconnectBanner}>
-                    El oponente se ha reconectado.
-                </div>
-            )}
-        </>
+        <NetworkStatus
+            isOpponent={isOpponent}
+            isConnected={isConnected}
+            disconnectTimer={disconnectTimer}
+            reconnectMessage={reconnectMessage}
+        />
     );
 
     return (

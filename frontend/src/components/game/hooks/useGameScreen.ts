@@ -25,7 +25,6 @@ export const useGameScreen = (
     const isLocalRed = localColor === 'red';
     const isMyTurn = currentTurn === localColor;
     const isGameOver = winner !== null;
-    const isWinner = winner === localColor;
 
     //Perfiles y nombres
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
@@ -104,7 +103,7 @@ export const useGameScreen = (
 
 
     return {
-        ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
+        ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
         validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult

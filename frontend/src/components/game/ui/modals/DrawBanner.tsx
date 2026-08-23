@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './GameScreen.module.css';
+import styles from './Modals.module.css';
 
 interface DrawBannerProps {
     drawOfferReceived: boolean;

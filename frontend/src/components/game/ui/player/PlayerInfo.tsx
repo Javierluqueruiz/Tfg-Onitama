@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './PlayerInfo.module.css';
-import { formatTime } from './hooks/useNetwork';
+import { formatTime } from '../../hooks/useNetwork';
 
 interface PlayerInfoProps {
     playerName: string;

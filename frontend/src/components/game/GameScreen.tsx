@@ -1,13 +1,12 @@
 import { type GameState, type PlayerColor, type PlayerProfile } from '../../../../shared';
-import { BoardView } from './BoardView';
-import { CardView } from './CardView';
-import { PlayerInfo } from './PlayerInfo';
+import { BoardView } from './ui/board/BoardView';
+import { CardView } from './ui/cards/CardView';
 import styles from './GameScreen.module.css';
 import { useGameScreen } from './hooks/useGameScreen';
-import { GameOverModal } from './GameOverModal';
-import { GameControls } from './GameControls';
-import { DrawBanner } from './DrawBanner';
-import { PlayerZone } from './PlayerZone';
+import { GameOverModal } from './ui/modals/GameOverModal';
+import { GameControls } from './ui/layout/GameControls';
+import { DrawBanner } from './ui/modals/DrawBanner';
+import { PlayerZone } from './ui/player/PlayerZone';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -18,7 +17,7 @@ interface GameScreenProps {
 export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
 
     const { 
-        board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
+        board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
@@ -50,7 +49,9 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
 
             {/* Zona Central: Tablero + Carta Neutral */}
             <div className={styles.centerZone}>
-                <div style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
+                <div
+                    className={styles.boardWrapper} 
+                    style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
                     <BoardView 
                         board={board} 
                         isReversed={isLocalRed}

@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./GameScreen.module.css";
+import styles from "./Layout.module.css";
 
 interface GameControlsProps {
     status: string;
