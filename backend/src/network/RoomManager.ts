@@ -234,7 +234,7 @@ export class RoomManager {
                 newRoom.players.red = guestProfile;
             }
 
-            //queue.pop();
+            
             return {
                 matchFound: true,
                 roomId: newRoom.roomId,
