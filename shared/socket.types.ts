@@ -12,8 +12,10 @@ export enum SocketEvents {
     OFFER_DRAW = 'offer_draw',
     ACCEPT_DRAW = 'accept_draw',
     REJECT_DRAW = 'reject_draw',
+    //Sub-06.1
+    JOIN_QUEUE = 'join_queue',
+    LEAVE_QUEUE = 'leave_queue',
     
-
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
     ERROR = 'error',
@@ -23,9 +25,11 @@ export enum SocketEvents {
     OPPONENT_RECONNECTED = 'opponent_reconnected',
     RECONNECT_SUCCESS = 'reconnect_success',
     RECONNECT_FAILED = 'reconnect_failed',
-    TIME_TICK = 'time_tick'
-
-
+    TIME_TICK = 'time_tick',
+    //Sub-06.1
+    QUEUE_JOINED = 'queue_joined',
+    QUEUE_LEFT = 'queue_left',
+    MATCH_FOUND = 'match_found',
 }
 
 //Primera versión de la interfaz del perfil del jugador.
@@ -47,4 +51,19 @@ export interface RoomSession {
 export interface ReconnectPayload {
     roomId: string;
     originalSocketId: string;
+}
+
+
+//Sub-06.1
+//Modos de juego
+export type GameMode = 'casual' | 'normal' | 'fast';
+
+export interface JoinQueuePayload {
+    mode: GameMode;
+}
+
+export interface MatchFoundPayload {
+    roomId: string;
+    roomCode: string;
+    mode: GameMode;
 }
