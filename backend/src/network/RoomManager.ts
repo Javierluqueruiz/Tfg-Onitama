@@ -221,21 +221,20 @@ export class RoomManager {
         this.leaveQueue(socketId); 
 
         const queue = this.matchmakingQueue[mode];
-
         if (queue.length > 0) {
             const opponentId = queue.shift()!; // Jugador más antiguo
 
             const hostProfile: PlayerProfile = { socketId: opponentId, name: 'Invitado 1' };
             const guestProfile: PlayerProfile = { socketId, name: 'Invitado 2' };
-
             const newRoom = this.createRoom(hostProfile);
-
+            
             if (newRoom.players.red?.socketId === opponentId) {
                 newRoom.players.blue = guestProfile;
             } else {
                 newRoom.players.red = guestProfile;
             }
 
+            //queue.pop();
             return {
                 matchFound: true,
                 roomId: newRoom.roomId,

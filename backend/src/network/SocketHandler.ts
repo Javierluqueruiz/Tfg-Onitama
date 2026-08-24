@@ -253,7 +253,7 @@ export function registerSocketEvents(io: Server) {
             const { mode } = data;
 
             const result = RoomManager.joinQueue(socket.id, mode);
-
+            console.log(`Jugador ${socket.id} se ha unido a la cola de emparejamiento en modo ${mode}. Resultado:`, result);
             if (result.matchFound && result.roomId && result.roomCode ) {
 
                 socket.join(result.roomId);
@@ -269,16 +269,17 @@ export function registerSocketEvents(io: Server) {
                 });
 
                 const room = RoomManager.getRoomById(result.roomId);
+                
                 if (room) {
                     room.gameState = room.gameEngine.createNewGame(room.roomId);
-
+                    
                     if (mode === 'normal') {
                         room.gameState.timeRemaining = { red: 600, blue: 600 };
                     } else if (mode === 'fast') {
                         room.gameState.timeRemaining = { red: 300, blue: 300 };
                     }
-
-                    io.to(result.roomId).emit(SocketEvents.GAME_START, room.gameState);
+                    console.log(room.gameState.roomId);
+                    io.to(result.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
 
                     if (mode !== 'casual') {
                         RoomManager.startGameTimer(room.roomId,
