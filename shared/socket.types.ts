@@ -41,6 +41,7 @@ export interface PlayerProfile {
 export interface RoomSession {
     roomId: string;
     roomCode: string;
+    mode: GameMode;
     players: {
         RED: PlayerProfile | null;
         BLUE: PlayerProfile | null;

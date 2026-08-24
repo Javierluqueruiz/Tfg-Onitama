@@ -36,10 +36,10 @@ export const useLobby = () => {
     }, [socket]);
 
     //Todos los handle
-    const handleCreateRoom = () => {
+    const handleCreateRoom = (mode: GameMode) => {
         if (!playerName.trim()) return setErrorMsg('El nombre del jugador no puede estar vacío.');
         setErrorMsg(null);
-        socket?.emit(SocketEvents.CREATE_ROOM, { hostName: playerName });
+        socket?.emit(SocketEvents.CREATE_ROOM, { hostName: playerName, mode });
     };
 
     const handleJoinRoom = () => {

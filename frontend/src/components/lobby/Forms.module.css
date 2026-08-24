@@ -52,3 +52,35 @@
     background-color: #f0f0f0;
     border-radius: 6px;
 }
+
+
+/* Nuevos estilos */
+.modeSelection {
+    margin: 1.5rem 0;
+    text-align: center;
+}
+.modeButtonsRow {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+.modeBtn {
+    flex: 1;
+    padding: 10px;
+    background-color: transparent;
+    border: 2px solid #576574;
+    color: #c8d6e5;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+.modeBtn:hover {
+    border-color: #8395a7;
+    color: white;
+}
+/* Tu paleta de colores activa para los modos */
+.activeFast { background-color: #e17055; border-color: #e17055; color: white; }
+.activeNormal { background-color: #0984e3; border-color: #0984e3; color: white; }
+.activeCasual { background-color: #00b894; border-color: #00b894; color: white; }

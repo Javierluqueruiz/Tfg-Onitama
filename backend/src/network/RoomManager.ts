@@ -7,6 +7,7 @@ export interface RoomSession {
     gameEngine: GameEngine;
     gameState: GameState;
     roomCode: string;
+    mode: GameMode;
     players: {
         red: PlayerProfile | null;
         blue: PlayerProfile | null;
@@ -51,7 +52,7 @@ export class RoomManager {
         return roomCode;
     }
 
-    public static createRoom(hostProfile: PlayerProfile): RoomSession { 
+    public static createRoom(hostProfile: PlayerProfile, mode: GameMode): RoomSession { 
         const roomCode = this.generateUniqueRoomCode();
 
 
@@ -66,6 +67,7 @@ export class RoomManager {
             gameEngine: new GameEngine(),
             gameState: null as unknown as GameState, // Inicialmente null, se establecerá cuando se cree un nuevo juego.
             roomCode,
+            mode,
             players: {
                 red: isHostRed ? hostProfile : null,
                 blue: isHostRed ? null : hostProfile
@@ -226,7 +228,7 @@ export class RoomManager {
 
             const hostProfile: PlayerProfile = { socketId: opponentId, name: 'Invitado 1' };
             const guestProfile: PlayerProfile = { socketId, name: 'Invitado 2' };
-            const newRoom = this.createRoom(hostProfile);
+            const newRoom = this.createRoom(hostProfile, mode);
             
             if (newRoom.players.red?.socketId === opponentId) {
                 newRoom.players.blue = guestProfile;

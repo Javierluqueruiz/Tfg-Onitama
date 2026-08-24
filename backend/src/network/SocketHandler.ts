@@ -9,13 +9,13 @@ export function registerSocketEvents(io: Server) {
         console.log(`Usuario conectado: ${socket.id}`);
 
         //CREAR LA SALA
-        socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string } ) => {
+        socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string, mode: GameMode } ) => {
             const hostProfile: PlayerProfile = {
                 socketId: socket.id,
                 name: data.hostName
             }
 
-            const room = RoomManager.createRoom(hostProfile);
+            const room = RoomManager.createRoom(hostProfile, data.mode);
 
             socket.join(room.roomId);
                 
@@ -68,22 +68,31 @@ export function registerSocketEvents(io: Server) {
                 const initialState = engine.createNewGame(roomId);
                 room.gameState = initialState;
 
+                if (room.mode === 'normal') {
+                    room.gameState.timeRemaining = { red: 600, blue: 600 };
+                } else if (room.mode === 'fast') {
+                    room.gameState.timeRemaining = { red: 300, blue: 300 };
+                } 
+
                 const playersMapping = {
                     red: room.players.red,
                     blue: room.players.blue
                 }
 
                 io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState, players: playersMapping });
-                RoomManager.startGameTimer(roomId,
-                    (timeRemaining) => {
-                        io.to(roomId).emit(SocketEvents.TIME_TICK, { timeRemaining });
-                    },
+                if (room.mode !== 'casual') {
+                    RoomManager.startGameTimer(roomId,
+                        (timeRemaining) => {
+                            io.to(roomId).emit(SocketEvents.TIME_TICK, { timeRemaining });
+                        },
 
-                    (finalState) => {
-                        io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
-                        RoomManager.deleteRoom(roomId);
-                    }
-                );
+                        (finalState) => {
+                            io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
+                            RoomManager.deleteRoom(roomId);
+                        }
+                    );
+                }
+                
                 console.log('Partida iniciada en la sala:', roomId);
             }
 
