@@ -1,6 +1,6 @@
 import { describe, beforeAll, it, expect } from 'vitest';
 import { BoardGenerator } from '../../src/game/BoardGenerator';
-import { Board } from '../../../shared/types';
+import { Board } from '../../../shared/index';
 import { before } from 'node:test';
 
 describe('FEAT-01: BoardGenerator', () => {

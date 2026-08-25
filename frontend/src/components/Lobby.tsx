@@ -4,13 +4,15 @@ import { JoinRoom } from './lobby/JoinRoom';
 import { WaitingRoom } from './lobby/WaitingRoom';
 import styles from './lobby/Lobby.module.css';
 import { useLobby } from './useLobby';
+import type { GameMode } from '../../../shared';
+import { MatchmakingRoom } from './lobby/MatchmakingRoom';
 
 export const Lobby: React.FC =  () => {
     const {
         isConnected, currentScreen, setCurrentScreen,
         playerName, setPlayerName, joinCode, setJoinCode, 
         createdRoomCode, errorMsg, setErrorMsg,
-        handleCreateRoom, handleJoinRoom
+        handleCreateRoom, handleJoinRoom, startMatchmaking, selectMode, setSelectMode
     } = useLobby();
 
     return (
@@ -39,7 +41,27 @@ export const Lobby: React.FC =  () => {
                                 setErrorMsg(null);
                                 setCurrentScreen('JOIN');
                             }}
+                            onStartMatchmaking={(mode: GameMode) => {
+                                setErrorMsg(null);
+                                startMatchmaking(mode);
+                            }}
                             isConnected={isConnected}
+                        />
+                    )}
+
+                    {/* ---PANTALLA: MATCHMAKING --- */}
+                    {currentScreen === 'MATCHMAKING' && selectMode && (
+                        <MatchmakingRoom
+                            mode = {selectMode}
+                            onCancel={() => {
+                                setErrorMsg(null);
+                                setSelectMode(null);
+                                setCurrentScreen('MAIN');
+                            }}
+                            onMatchFound={(roomId: string, roomCode: string) => {
+                                console.log(`Partida encontrada! Room ID: ${roomId}, Room Code: ${roomCode}`);
+                                setErrorMsg(null);
+                            }}
                         />
                     )}
 

@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { PlayerProfile, SocketEvents, ReconnectPayload } from "../../../shared";
+import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 
 export function registerSocketEvents(io: Server) {
@@ -9,13 +9,13 @@ export function registerSocketEvents(io: Server) {
         console.log(`Usuario conectado: ${socket.id}`);
 
         //CREAR LA SALA
-        socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string } ) => {
+        socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string, mode: GameMode } ) => {
             const hostProfile: PlayerProfile = {
                 socketId: socket.id,
                 name: data.hostName
             }
 
-            const room = RoomManager.createRoom(hostProfile);
+            const room = RoomManager.createRoom(hostProfile, data.mode);
 
             socket.join(room.roomId);
                 
@@ -68,22 +68,31 @@ export function registerSocketEvents(io: Server) {
                 const initialState = engine.createNewGame(roomId);
                 room.gameState = initialState;
 
+                if (room.mode === 'normal') {
+                    room.gameState.timeRemaining = { red: 600, blue: 600 };
+                } else if (room.mode === 'fast') {
+                    room.gameState.timeRemaining = { red: 300, blue: 300 };
+                } 
+
                 const playersMapping = {
                     red: room.players.red,
                     blue: room.players.blue
                 }
 
                 io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState, players: playersMapping });
-                RoomManager.startGameTimer(roomId,
-                    (timeRemaining) => {
-                        io.to(roomId).emit(SocketEvents.TIME_TICK, { timeRemaining });
-                    },
+                if (room.mode !== 'casual') {
+                    RoomManager.startGameTimer(roomId,
+                        (timeRemaining) => {
+                            io.to(roomId).emit(SocketEvents.TIME_TICK, { timeRemaining });
+                        },
 
-                    (finalState) => {
-                        io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
-                        RoomManager.deleteRoom(roomId);
-                    }
-                );
+                        (finalState) => {
+                            io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
+                            RoomManager.deleteRoom(roomId);
+                        }
+                    );
+                }
+                
                 console.log('Partida iniciada en la sala:', roomId);
             }
 
@@ -149,6 +158,9 @@ export function registerSocketEvents(io: Server) {
 
         socket.on('disconnect', () => {
             console.log(`Usuario desconectado: ${socket.id}`)
+            //Sub-06.1
+            RoomManager.leaveQueue(socket.id);
+            
             const timeLimit = RoomManager.DISCONNECT_TIMEOUT_MS; // 30 segundos
             //Sub-05.2
             const room = RoomManager.getRoomBySocketId(socket.id);
@@ -245,13 +257,56 @@ export function registerSocketEvents(io: Server) {
             }
         });
 
-        // EVENTO OCULTO PARA TESTING
-        if (process.env.VITEST) {
-            socket.on('DEBUG_SET_TIMEOUT', (payload: { timeout: number }) => {
-                RoomManager.DISCONNECT_TIMEOUT_MS = payload.timeout;
-                console.log(`[DEBUG] Timeout del servidor cambiado a: ${payload.timeout}ms`);
-            });
-        }
-    });
+        //Sub-06.1: Cola de emparejamiento
+        socket.on(SocketEvents.JOIN_QUEUE, (data: { mode: GameMode }) => {
+            const { mode } = data;
 
+            const result = RoomManager.joinQueue(socket.id, mode);
+            console.log(`Jugador ${socket.id} se ha unido a la cola de emparejamiento en modo ${mode}. Resultado:`, result);
+            if (result.matchFound && result.roomId && result.roomCode ) {
+
+                socket.join(result.roomId);
+                const opponentSocket = io.sockets.sockets.get(result.opponentId!);
+                if (opponentSocket) {
+                    opponentSocket.join(result.roomId);
+                }
+
+                io.to(result.roomId).emit(SocketEvents.MATCH_FOUND, { 
+                    roomId: result.roomId, 
+                    roomCode: result.roomCode,
+                    mode: mode 
+                });
+
+                const room = RoomManager.getRoomById(result.roomId);
+                
+                if (room) {
+                    room.gameState = room.gameEngine.createNewGame(room.roomId);
+                    
+                    if (mode === 'normal') {
+                        room.gameState.timeRemaining = { red: 600, blue: 600 };
+                    } else if (mode === 'fast') {
+                        room.gameState.timeRemaining = { red: 300, blue: 300 };
+                    }
+                    console.log(room.gameState.roomId);
+                    io.to(result.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
+
+                    if (mode !== 'casual') {
+                        RoomManager.startGameTimer(room.roomId,
+                            (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
+                            (finalState) => io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
+                        );
+                    }
+                }
+            
+            } else {
+                socket.emit(SocketEvents.QUEUE_JOINED);
+            }
+        });
+
+        socket.on(SocketEvents.LEAVE_QUEUE, () => {
+            RoomManager.leaveQueue(socket.id);
+            socket.emit(SocketEvents.QUEUE_LEFT);
+        });
+
+    })
 }

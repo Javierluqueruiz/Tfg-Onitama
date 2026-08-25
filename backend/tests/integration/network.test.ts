@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it} from 
 
 import { RoomManager } from "../../src/network/RoomManager";
 import { registerSocketEvents } from "../../src/network/SocketHandler";
-import { SocketEvents, PlayerColor } from "../../../shared/index";
+import { SocketEvents, PlayerColor, GameMode } from "../../../shared/index";
 
 import { Server } from 'socket.io';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
@@ -625,4 +625,182 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
         expect(RoomManager.roomExists(activeRoomId)).toBe(false);
     });
+});
+
+
+describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
+    let ioServer: Server;
+    let httpServer: any;
+    let port: number;
+
+    let clientA: ClientSocket;
+    let clientB: ClientSocket;
+    
+    beforeAll(async () => {
+        httpServer = createServer();
+        ioServer = new Server(httpServer);
+        
+        // Registramos tus eventos reales del backend
+        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
+
+        await new Promise<void>((resolve) => {
+            httpServer.listen(0, () => {
+                port = (httpServer.address() as any).port;
+                resolve();
+            });
+        });
+    });
+
+    afterAll(() => {
+        ioServer.close();
+        httpServer.close();
+    });
+
+    beforeEach(async (done) => {
+        clientA = ioClient(`http://localhost:${port}`);
+        clientB = ioClient(`http://localhost:${port}`);
+
+        await new Promise<void>((resolve) => {
+                let connectedClients = 0;
+            const checkDone = () => {
+                connectedClients++;
+                if (connectedClients === 2) {
+                    resolve();
+                }
+            };
+
+            clientA.on('connect', checkDone);
+            clientB.on('connect', checkDone);
+
+        });
+    });
+
+    afterEach(() => {
+        clientA.disconnect();
+        clientB.disconnect();
+    });
+
+    it('Sub-06.1: Debe colocar al jugador en la cola y emitir QUEUE_JOINED si está vacía', () => {
+        return new Promise<void>((resolve) => {
+            clientA.on(SocketEvents.QUEUE_JOINED, () => {
+                expect(true).toBe(true);
+                resolve();
+            });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'casual'});
+        });
+    });
+
+    it('Sub-06.2: Debe emparejar a dos jugadores en el mismo modo y emitir MATCH_FOUND y GAME_START a ambos', () => {
+        return new Promise<void>((resolve) => {
+            let matchesFound = 0;
+            let expectedRoomId = '';
+            
+
+            const handleMatchFound = (payload: any) => {
+                expect(payload).toHaveProperty('roomId');
+                expect(payload).toHaveProperty('roomCode');
+                expect(payload.mode).toBe('normal');
+
+                if (matchesFound === 0) {
+                    expectedRoomId = payload.roomId;
+                } else {
+                    expect(payload.roomId).toBe(expectedRoomId);
+                }
+
+                matchesFound++;
+            };
+
+            const handleGameStart = (payload: any) => {
+                expect(payload).toHaveProperty('gameState');
+                expect(payload.gameState).toHaveProperty('roomId');
+                expect(payload.gameState.roomId).toBe(expectedRoomId);
+                expect(payload.gameState.timeRemaining.red).toBe(600);
+                
+                if (matchesFound === 2) {
+                    resolve();
+                }
+            };
+
+            clientA.on(SocketEvents.MATCH_FOUND, handleMatchFound);
+            clientA.on(SocketEvents.GAME_START, handleGameStart);
+
+            clientB.on(SocketEvents.MATCH_FOUND, handleMatchFound);
+            clientB.on(SocketEvents.GAME_START, handleGameStart);
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+
+            setTimeout(() => {
+                clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+            }, 100);
+        })
+    });
+
+    it('Su-06.3: No debe emparejar a jugadores de diferentes modos', () => {
+        return new Promise<void>((resolve, reject) => {
+            let matchFound = false;
+
+            const failTest = () => { matchFound = true; reject(new Error('Se emparejaron jugadores de diferentes modos.')); };
+            clientA.on(SocketEvents.MATCH_FOUND, failTest);
+            clientB.on(SocketEvents.MATCH_FOUND, failTest);
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'casual' });
+            setTimeout(() => {
+                clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+            }, 100);
+
+            setTimeout(() => {
+                if (!matchFound) {
+                    expect(true).toBe(true);
+                    resolve();
+                }
+            }, 300);
+        });
+    });
+
+    it('Sub-06.4: Debe permitir a un jugador abandonar la cola y emitir QUEUE_LEFT', () => {
+        return new Promise<void>((resolve, reject) => {
+            clientB.on(SocketEvents.MATCH_FOUND, () => {
+                reject(new Error('Jugador B se emparejó con Jugador A a pesar de que A abandonó la cola.'));
+            });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'fast' });
+
+            clientA.on(SocketEvents.QUEUE_JOINED, () => {
+                clientA.emit(SocketEvents.LEAVE_QUEUE);
+            });
+
+            clientA.on(SocketEvents.QUEUE_LEFT, () => {
+                clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'fast' });
+
+                clientB.on(SocketEvents.QUEUE_JOINED, () => {
+                    setTimeout(() => resolve(), 100);
+                });
+            });
+        });
+    });
+
+    it('Sub-06.5: Debe limpiar la cola si un jugador se desconecta mientras está en ella', () => {
+        return new Promise<void>((resolve, reject) => {
+            
+            clientB.on(SocketEvents.MATCH_FOUND, () => {
+                reject(new Error('Jugador B se emparejó con Jugador A a pesar de que A se desconectó.'));
+            });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+
+            clientA.on(SocketEvents.QUEUE_JOINED, () => {
+                clientA.disconnect();
+
+                setTimeout(() => {
+                    clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+
+                    clientB.on(SocketEvents.QUEUE_JOINED, () => {
+                        setTimeout(() => resolve(), 100);
+                    });
+                });
+            });
+        });
+    });
+
 });

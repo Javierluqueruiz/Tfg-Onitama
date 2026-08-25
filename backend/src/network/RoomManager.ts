@@ -1,4 +1,4 @@
-import { GameState, PlayerProfile, SocketEvents } from "../../../shared";
+import { GameMode, GameState, PlayerProfile, SocketEvents } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 import { Server } from 'socket.io';
 
@@ -7,6 +7,7 @@ export interface RoomSession {
     gameEngine: GameEngine;
     gameState: GameState;
     roomCode: string;
+    mode: GameMode;
     players: {
         red: PlayerProfile | null;
         blue: PlayerProfile | null;
@@ -24,14 +25,21 @@ export class RoomManager {
 
     public static DISCONNECT_TIMEOUT_MS = 30000; 
 
+    //Sub-06.1
+    private static matchmakingQueue: Record<GameMode, string[]> = {
+        casual: [],
+        normal: [],
+        fast: []
+    };
+
     public static getActiveRooms(): Map<string, RoomSession> {
         return this.activeRooms;
     }
 
-    public static createRoom(hostProfile: PlayerProfile): RoomSession { 
+    private static generateUniqueRoomCode(): string {
         let roomCode: string = '';
         let isUnique: boolean = false;
-    
+        
         do {
             roomCode = Math.random().toString(36).substring(2,7).toUpperCase();
 
@@ -40,6 +48,12 @@ export class RoomManager {
                 isUnique = true;
             }
         } while (!isUnique);
+
+        return roomCode;
+    }
+
+    public static createRoom(hostProfile: PlayerProfile, mode: GameMode): RoomSession { 
+        const roomCode = this.generateUniqueRoomCode();
 
 
         //Genera un id de sala aleatorio. Se puede investigar otras formas de generar ids.
@@ -53,6 +67,7 @@ export class RoomManager {
             gameEngine: new GameEngine(),
             gameState: null as unknown as GameState, // Inicialmente null, se establecerá cuando se cree un nuevo juego.
             roomCode,
+            mode,
             players: {
                 red: isHostRed ? hostProfile : null,
                 blue: isHostRed ? null : hostProfile
@@ -202,4 +217,43 @@ export class RoomManager {
 
         return updatedState;
     }
+
+    //Sub-06.1
+    public static joinQueue(socketId: string, mode: GameMode): {matchFound: boolean, roomId?: string, roomCode?: string, opponentId?: string} {
+        this.leaveQueue(socketId); 
+
+        const queue = this.matchmakingQueue[mode];
+        if (queue.length > 0) {
+            const opponentId = queue.shift()!; // Jugador más antiguo
+
+            const hostProfile: PlayerProfile = { socketId: opponentId, name: 'Invitado 1' };
+            const guestProfile: PlayerProfile = { socketId, name: 'Invitado 2' };
+            const newRoom = this.createRoom(hostProfile, mode);
+            
+            if (newRoom.players.red?.socketId === opponentId) {
+                newRoom.players.blue = guestProfile;
+            } else {
+                newRoom.players.red = guestProfile;
+            }
+
+            
+            return {
+                matchFound: true,
+                roomId: newRoom.roomId,
+                roomCode: newRoom.roomCode,
+                opponentId
+            };
+        } else {
+            queue.push(socketId);
+            return { matchFound: false };
+        }
+    }
+
+    public static leaveQueue(socketId: string): void {
+        const modes: GameMode[] = ['casual', 'normal', 'fast'];
+        for (const mode of modes) {
+            this.matchmakingQueue[mode] = this.matchmakingQueue[mode].filter(id => id !== socketId);
+        }
+    }
+
 }

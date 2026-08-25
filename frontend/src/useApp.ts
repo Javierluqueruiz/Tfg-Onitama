@@ -13,6 +13,7 @@ export const useApp = () => {
         if (!socket) return;
    
         socket.on(SocketEvents.GAME_START, (data: { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } }) => {
+            console.log('Partida iniciada:', data.gameState);
             localStorage.setItem('onitama_session', JSON.stringify({
                 roomId: data.gameState.roomId,
                 originalSocketId: socket.id
