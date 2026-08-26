@@ -371,6 +371,25 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
             clientSocket1.emit('create_room', 'Player1');
         });
     });
+
+    it('Sub-04.4: Debe capturar la latencia de red mediante un ciclo de ping-pong', async () => {
+        const pingPromise = new Promise<number>((resolve) => {
+            const clientTimeStamp = Date.now();
+
+            clientSocket1.once(SocketEvents.PONG, (serverTimeStamp: number) => {
+                const latency = Date.now() - clientTimeStamp;
+                resolve(latency);
+            });
+
+            clientSocket1.emit(SocketEvents.PING, clientTimeStamp);
+        });
+
+        const latency = await pingPromise;
+        
+        expect(latency).toBeDefined();
+        expect(typeof latency).toBe('number');
+        expect(latency).toBeGreaterThanOrEqual(0);
+    });
 });
 
 

@@ -59,6 +59,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
             socket.disconnect();
         };
 
+        
+
         window.addEventListener('online', handleNetworkRecover);
         window.addEventListener('offline', handleOffline);
 
@@ -70,6 +72,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
             socket.off(SocketEvents.ERROR);
             window.removeEventListener('online', handleNetworkRecover);
             window.removeEventListener('offline', handleOffline);
+            
         };
 
     }, [socket]);
