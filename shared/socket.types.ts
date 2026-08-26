@@ -15,7 +15,9 @@ export enum SocketEvents {
     //Sub-06.1
     JOIN_QUEUE = 'join_queue',
     LEAVE_QUEUE = 'leave_queue',
-    
+    //Sub-04.4
+    PING = 'ping',
+
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
     ERROR = 'error',
@@ -30,6 +32,8 @@ export enum SocketEvents {
     QUEUE_JOINED = 'queue_joined',
     QUEUE_LEFT = 'queue_left',
     MATCH_FOUND = 'match_found',
+    //Sub-04.4
+    PONG = 'pong',
 }
 
 //Primera versión de la interfaz del perfil del jugador.

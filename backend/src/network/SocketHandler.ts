@@ -135,6 +135,11 @@ export function registerSocketEvents(io: Server) {
             }
         });
 
+        //Sub-04.4: Ping-Pong
+        socket.on(SocketEvents.PING, ( timestamp: number ) => {
+            socket.emit(SocketEvents.PONG, timestamp);
+        });
+
         //Sub-05.1
         socket.on(SocketEvents.SURRENDER, () => {
             const room = RoomManager.getRoomBySocketId(socket.id);
