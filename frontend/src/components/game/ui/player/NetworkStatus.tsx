@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './PlayerZone.module.css'
-import { useApp } from '../../../../useApp';
+import { useSocket } from '../../../../contexts/SocketContext';
+import { SocketEvents } from '../../../../../../shared';
 
 
 interface NetworkStatusProps {
@@ -12,15 +13,33 @@ interface NetworkStatusProps {
 
 export const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOpponent, isConnected, disconnectTimer, reconnectMessage }) => 
     {
-        const ping = useApp().ping;
+        const { socket } = useSocket(); // Solo extraemos el socket, NO el ping
+        const [ping, setPing] = useState<number>(0);
 
-        let statusColor = '#4ade80'; // Verde (Buena)
-  
-        if (ping > 200) {
-            statusColor = '#f87171'; // Rojo (Mala)
-        } else if (ping > 100) {
-            statusColor = '#fbbf24'; // Amarillo (Regular)
-        }
+        // Efecto aislado SOLO para calcular el ping de este componente
+        useEffect(() => {
+            if (!socket || isOpponent || !isConnected) return;
+            
+            const interval = setInterval(() => {
+                socket.emit(SocketEvents.PING, Date.now());
+            }, 2000);
+
+            const handlePong = (clientTimestamp: number) => {
+                setPing(Date.now() - clientTimestamp);
+            };
+
+            socket.on(SocketEvents.PONG, handlePong);
+
+            return () => {
+                clearInterval(interval);
+                socket.off(SocketEvents.PONG, handlePong);
+            };
+        }, [socket, isOpponent, isConnected]);
+
+        // Determinar color
+        let statusColor = '#4ade80';
+        if (ping > 200) statusColor = '#f87171';
+        else if (ping > 100) statusColor = '#fbbf24';
 
     return (
         <>
