@@ -256,4 +256,16 @@ export class RoomManager {
         }
     }
 
+    //Sub-05.5: Rematch
+    public static resetGameForRematch(roomId: string): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room) return null;
+
+        this.stopGameTimer(roomId);
+
+        room.gameState = room.gameEngine.createNewGame(roomId);
+
+        return room.gameState;
+    }
+
 }

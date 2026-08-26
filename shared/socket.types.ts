@@ -18,6 +18,11 @@ export enum SocketEvents {
     //Sub-04.4
     PING = 'ping',
 
+    //Sub-05.5
+    OFFER_REMATCH = 'offer_rematch',
+    ACCEPT_REMATCH = 'accept_rematch',
+    REJECT_REMATCH = 'reject_rematch',
+
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
     ERROR = 'error',
@@ -34,6 +39,10 @@ export enum SocketEvents {
     MATCH_FOUND = 'match_found',
     //Sub-04.4
     PONG = 'pong',
+
+    //Sub-05.5
+    REMATCH_OFFERED = 'rematch_offered',
+    REMATCH_REJECTED = 'rematch_rejected',
 }
 
 //Primera versión de la interfaz del perfil del jugador.

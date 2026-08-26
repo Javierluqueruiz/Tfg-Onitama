@@ -7,6 +7,7 @@ import { GameOverModal } from './ui/modals/GameOverModal';
 import { GameControls } from './ui/layout/GameControls';
 import { DrawBanner } from './ui/modals/DrawBanner';
 import { PlayerZone } from './ui/player/PlayerZone';
+import { RematchBanner } from './ui/modals/RematchBanner';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -21,7 +22,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
-        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch
     } = useGameScreen(gameState, localColor, playersProfile);
 
 
@@ -107,6 +108,16 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 onSurrender={handleSurrender}
                 onExit={handleExit}
             />
+
+            {/* NUEVO: Banner de Revancha que flota sobre el tablero finalizado */}
+            {gameState.status === 'finished' && isGameOver && !isModalOpen && (
+                <RematchBanner 
+                    rematchState={rematch.rematchState}
+                    onOfferRematch={rematch.offerRematch}
+                    onAcceptRematch={rematch.acceptRematch}
+                    onRejectRematch={rematch.rejectRematch}
+                />
+            )}
 
         
             {gameState.status === 'finished' && isGameOver && isModalOpen && (
