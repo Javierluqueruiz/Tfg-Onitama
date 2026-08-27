@@ -353,6 +353,24 @@ export function registerSocketEvents(io: Server) {
             }    
         });
 
+        //Sub-07.1: Chat
+        socket.on(SocketEvents.SEND_MESSAGE, (messageData: { message: string }) => {
+            console.log(messageData.message);
+            const room = RoomManager.getRoomBySocketId(socket.id);
+            if (room) {
+                const name = room.players.red?.socketId === socket.id ? room.players.red.name : room.players.blue?.name;
+                const chatMessage = {
+                    socketId: socket.id,
+                    name: name || 'Desconocido',
+                    message: messageData.message,
+                    timestamp: Date.now()
+                };
+                 
+                RoomManager.addChatMessage(room.roomId, chatMessage);
+                io.to(room.roomId).emit(SocketEvents.CHAT_UPDATE, chatMessage);
+            }
+        });
+
     })
 
 

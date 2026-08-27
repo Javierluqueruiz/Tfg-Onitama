@@ -8,6 +8,7 @@ import { GameControls } from './ui/layout/GameControls';
 import { DrawBanner } from './ui/modals/DrawBanner';
 import { PlayerZone } from './ui/player/PlayerZone';
 import { RematchBanner } from './ui/modals/RematchBanner';
+import { ChatBox } from './ui/chat/ChatBox';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -76,13 +77,16 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 </div>
             </div>
 
+            <div className={styles.chatArea}>
+                <ChatBox />
+            </div>
+
              <DrawBanner
                 drawOfferReceived={drawOfferReceived}
                 drawRejectedMessage={drawRejectedMessage}
                 onAcceptDraw={handleAcceptDraw}
                 onRejectDraw={handleRejectDraw}
             />
-
 
             {/* Zona del Jugador Local */}
             <PlayerZone 
