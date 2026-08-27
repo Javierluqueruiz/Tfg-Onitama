@@ -88,3 +88,43 @@
 .sendButton:hover {
   background-color: #1976D2;
 }
+
+/* Sub-07.2: Mute Button */
+.chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #333;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.muteButton {
+  background-color: transparent;
+  color: #ccc;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.muteButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.muteButton.muted {
+  background-color: #f44336;
+  color: white;
+  border-color: #f44336;
+}
+
+.messageSender {
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 2px;
+}
+

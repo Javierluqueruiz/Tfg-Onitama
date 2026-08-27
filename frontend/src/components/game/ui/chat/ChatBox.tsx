@@ -8,6 +8,9 @@ export const ChatBox: React.FC = () => {
     const [messages, setMessages] = React.useState<ChatMessage[]>([]);
     const [inputValue, setInputValue] = React.useState('');
 
+    //Sub-07.2
+    const [isMuted, setIsMuted] = React.useState(false);
+
     //Referencia para hacer scroll automático al final del chat.
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -27,7 +30,11 @@ export const ChatBox: React.FC = () => {
 
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'nearest'
+         });
     }, [messages]);
     
     const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,14 +52,31 @@ export const ChatBox: React.FC = () => {
 
     return ( 
         <div className={styles.chatContainer}>
+            <div className={styles.chatHeader}>
+                <span>Chat de Sala</span>
+                <button 
+                    className={`${styles.muteButton} ${isMuted ? styles.muted : ''}`}
+                    onClick={() => setIsMuted(!isMuted)}
+                    title={isMuted ? 'Desmutear rival' : 'Mutear rival'}
+                >
+                    {isMuted ? '🔇' : '🔊'}
+                </button>
+            </div>
             <div className={styles.messagesArea}>
                 {messages.map((msg, index) => {
                     const isOwnMessage = socket?.id === msg.socketId;
+                    if (isMuted && !isOwnMessage) {
+                        return null; // No renderizar mensajes del rival si está silenciado.
+                    }
+
                     return (
                         <div 
                             key={index} 
                             className={`${styles.message} ${isOwnMessage ? styles.ownMessage : styles.opponentMessage}`}
                         >
+                            <span className={styles.messageSender}>
+                                {isOwnMessage ? 'Tú' : msg.name}
+                            </span>
                             <div className={styles.messageBubble}>
                                 {msg.message}
                             </div>
