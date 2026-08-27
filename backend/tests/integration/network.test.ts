@@ -483,8 +483,8 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         clientSocket1.emit(SocketEvents.SURRENDER);
 
         await Promise.all([client1UpdatePromise, client2UpdatePromise]);
-        expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
-        expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+        //expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
+        //expect(RoomManager.roomExists(activeRoomId)).toBe(false);
     });
 
     it('Sub-05.2a: Debe manejar la desconexión de un jugador y notificar al oponente, finalizando la partida si no se reconecta', async () => {
@@ -641,8 +641,56 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         clientSocket2.emit(SocketEvents.ACCEPT_DRAW);
         await Promise.all([client1UpdatePromise, client2UpdatePromise]);
 
-        expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
-        expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+        //expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
+        //expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+    });
+
+    it('Sub-05.5a: Debe notificar el rechazo de una revancha y eliminar la sala', async () => {
+                
+        const offerPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.REMATCH_OFFERED, () => {
+                clientSocket2.emit(SocketEvents.REJECT_REMATCH);
+                resolve();
+            });
+        });
+
+        const rejectPromise = new Promise<void>((resolve) => {
+            clientSocket1.on(SocketEvents.REMATCH_REJECTED, () => {
+                console.log("Revancha rechazada");
+                resolve();
+            });
+        });
+
+        clientSocket1.emit(SocketEvents.OFFER_REMATCH);
+
+        await Promise.all([offerPromise, rejectPromise]);
+
+        const room = RoomManager.getRoomById(activeRoomId);
+        expect(room).toBeUndefined();
+    });
+
+    it('Sub-05.5b: Debe permitir la aceptación de una revancha y reiniciar el juego', async () => {
+        const gameStartPromise1 = new Promise<any>((resolve, reject) => {
+            clientSocket1.on(SocketEvents.GAME_START, (data) => resolve(data));
+        });
+
+        const gameStartPromise2 = new Promise<any>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.GAME_START, (data) => resolve(data));
+        });
+
+        clientSocket2.on(SocketEvents.REMATCH_OFFERED, () => {
+            clientSocket2.emit(SocketEvents.ACCEPT_REMATCH);
+        });
+
+        clientSocket1.emit(SocketEvents.OFFER_REMATCH);
+
+        const [data1, data2] = await Promise.all([gameStartPromise1, gameStartPromise2]);
+
+        expect(data1.gameState).toBeDefined();
+        expect(data2.gameState).toBeDefined();
+
+        expect(data1.gameState.status).not.toBe('finished');
+        expect(data2.gameState.status).not.toBe('finished');
     });
 });
 

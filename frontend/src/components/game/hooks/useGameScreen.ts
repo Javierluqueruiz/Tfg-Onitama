@@ -3,6 +3,7 @@ import { type Card, type Position, type PlayerColor, type GameState, SocketEvent
 import { useSocket } from '../../../contexts/SocketContext';
 import { useNetwork } from './useNetwork';
 import { useDrawNegotiation } from './useDrawNegotiation';
+import { useRematchNegotiation } from './useRematchNegotiation';
 
 
 
@@ -12,6 +13,7 @@ export const useGameScreen = (
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
 ) => {
     const { socket, isConnected } = useSocket();
+    const rematch = useRematchNegotiation(socket);
 
     const networkState = useNetwork(socket, gameState.status);
     const drawNegotiationState = useDrawNegotiation(socket);
@@ -106,7 +108,7 @@ export const useGameScreen = (
         ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch
     };
 
 }

@@ -113,7 +113,7 @@ export function registerSocketEvents(io: Server) {
                 
                 if (newState.status === 'finished') {
                     RoomManager.stopGameTimer(room.roomId);
-                    RoomManager.deleteRoom(room.roomId);
+                    // RoomManager.deleteRoom(room.roomId);
                 } 
 
             } catch (error: any) {
@@ -153,7 +153,7 @@ export function registerSocketEvents(io: Server) {
                 if (updatedGameState) {
                     io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: updatedGameState });
                     RoomManager.stopGameTimer(room.roomId); 
-                    RoomManager.deleteRoom(room.roomId);
+                    //RoomManager.deleteRoom(room.roomId);
                 }
             } catch (error) {
                 socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la rendición.' });
@@ -255,7 +255,7 @@ export function registerSocketEvents(io: Server) {
                 if (finalState) {
                     io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
                     RoomManager.stopGameTimer(room.roomId);
-                    RoomManager.deleteRoom(room.roomId);
+                    // RoomManager.deleteRoom(room.roomId);
                 }
             } catch (error) {
                 socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la aceptación del empate.' });
@@ -313,5 +313,47 @@ export function registerSocketEvents(io: Server) {
             socket.emit(SocketEvents.QUEUE_LEFT);
         });
 
+        //Sub-05.5: Rematch
+        socket.on(SocketEvents.OFFER_REMATCH, () => {
+            console.log(`Jugador ${socket.id} ha ofrecido una revancha.`);
+            const roomId = RoomManager.getRoomBySocketId(socket.id)?.roomId;
+            console.log(`Room ID para la revancha: ${roomId}`);
+            if (roomId) {
+                socket.to(roomId).emit(SocketEvents.REMATCH_OFFERED);
+            }
+        });
+
+        socket.on(SocketEvents.REJECT_REMATCH, () => {
+            const roomId = RoomManager.getRoomBySocketId(socket.id)?.roomId;
+            if (roomId) {
+                socket.to(roomId).emit(SocketEvents.REMATCH_REJECTED);
+                RoomManager.deleteRoom(roomId);
+            }
+        });
+
+        socket.on(SocketEvents.ACCEPT_REMATCH, () => {
+            const room  = RoomManager.getRoomBySocketId(socket.id);
+            if (room) {
+                const newGameState = RoomManager.resetGameForRematch(room.roomId);
+
+                if (newGameState) {
+
+                    io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: newGameState, players: room.players });
+
+                    if (room.mode !== 'casual') {
+                        RoomManager.startGameTimer(room.roomId,
+                            (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
+                            (finalState) => {
+                                io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
+                                RoomManager.deleteRoom(room.roomId);
+                            }
+                        );
+                    }
+                }
+            }    
+        });
+
     })
+
+
 }
