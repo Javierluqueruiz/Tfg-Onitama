@@ -68,6 +68,26 @@
     color: #e74c3c;
 }
 
+/* Sub-07.1: Chat*/
+.chatArea {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100; /* Asegura que esté por encima de elementos secundarios, pero por debajo de los modales */
+}
+
+/* Opcional: Ocultar o colapsar en pantallas muy pequeñas (móviles) para que no tape el tablero */
+@media (max-width: 768px) {
+  .chatArea {
+    position: relative;
+    bottom: auto;
+    right: auto;
+    margin-top: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
 
 
 

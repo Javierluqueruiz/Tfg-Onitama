@@ -23,6 +23,9 @@ export enum SocketEvents {
     ACCEPT_REMATCH = 'accept_rematch',
     REJECT_REMATCH = 'reject_rematch',
 
+    //Sub-07.1
+    SEND_MESSAGE = 'send_message',
+
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
     ERROR = 'error',
@@ -43,6 +46,9 @@ export enum SocketEvents {
     //Sub-05.5
     REMATCH_OFFERED = 'rematch_offered',
     REMATCH_REJECTED = 'rematch_rejected',
+
+    //Sub-07.1
+    CHAT_UPDATE = 'chat_update',
 }
 
 //Primera versión de la interfaz del perfil del jugador.
@@ -80,4 +86,12 @@ export interface MatchFoundPayload {
     roomId: string;
     roomCode: string;
     mode: GameMode;
+}
+
+//Sub-07.1
+export interface ChatMessage {
+    socketId: string;
+    name: string;
+    message: string;
+    timestamp: number;
 }

@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it} from 
 
 import { RoomManager } from "../../src/network/RoomManager";
 import { registerSocketEvents } from "../../src/network/SocketHandler";
-import { SocketEvents, PlayerColor, GameMode } from "../../../shared/index";
+import { SocketEvents, PlayerColor, GameMode, ChatMessage } from "../../../shared/index";
 
 import { Server } from 'socket.io';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
@@ -870,4 +870,115 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
         });
     });
 
+});
+
+
+describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
+    let ioServer: Server;
+    let httpServer: any;
+    let port: number;
+    
+    let clientSocket1: ClientSocket;
+    let clientSocket2: ClientSocket;
+    let activeRoomId: string;
+    let client1Color: PlayerColor;
+    let client2Color: PlayerColor;
+
+    beforeAll(async () => {
+        httpServer = createServer();
+        ioServer = new Server(httpServer);
+        
+        // Registramos tus eventos reales del backend
+        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
+
+        await new Promise<void>((resolve) => {
+            httpServer.listen(0, () => {
+                port = (httpServer.address() as any).port;
+                resolve();
+            });
+        });
+    });
+
+    afterAll(() => {
+        ioServer.close();
+        httpServer.close();
+    });
+
+    beforeEach(async () => {
+        RoomManager['activeRooms'].clear();
+
+        clientSocket1 = ioClient(`http://localhost:${port}`);
+        clientSocket2 = ioClient(`http://localhost:${port}`);
+
+        //Creamos una sala y unimos ambos jugadores antes de cada test
+        await new Promise<void>((resolve) => {
+            clientSocket1.on('connect', () => {
+                clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1'});
+            });
+
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
+            });
+
+            clientSocket1.on(SocketEvents.GAME_START, (data) => {
+                activeRoomId = data.gameState.roomId;
+                client1Color = data.players.red.socketId === clientSocket1.id ? 'red' : 'blue';
+                client2Color = data.players.red.socketId === clientSocket2.id ? 'red' : 'blue';
+                resolve();
+            });
+        });
+    });
+
+    afterEach(() => {
+        clientSocket1.disconnect();
+        clientSocket2.disconnect();
+    });
+
+    it('Sub-07.1 y Sub-07.2: Debe propagar el mensaje del jugador a todos los jugadores de la sala', (done: (error?: any) => void) => {
+        const testMessage = "¡Hola, oponente!";
+
+        clientSocket2.on(SocketEvents.CHAT_UPDATE, (message: ChatMessage) => {
+            try {
+                expect(message.message).toBe(testMessage);
+
+                expect(message.socketId).toBe(clientSocket1.id);
+                expect(message.name).toBe('Player1');
+                expect(message.timestamp).toBeDefined();
+                expect(typeof message.timestamp).toBe('number');
+
+                done();
+            } catch (error) {
+                done(error);
+            }
+        });
+
+        clientSocket1.emit(SocketEvents.SEND_MESSAGE, { message: testMessage });
+    });
+
+    it('Sub-07.1: Debe mantener un historial de chat limitado a 50 mensajes por sala', (done: (error?: any) => void) => {
+        const totalMessages = 55;
+        const maxMessages = 50;
+        let receivedCount = 0;
+
+        clientSocket2.on(SocketEvents.CHAT_UPDATE, (message: ChatMessage) => {
+            receivedCount++;
+
+            if (receivedCount === totalMessages) {
+                try {
+                    const room = RoomManager.getRoomById(activeRoomId);
+                    expect(room).toBeDefined();
+                    expect(room!.chatHistory.length).toBe(maxMessages);
+                    expect(room!.chatHistory[0].message).toBe(`Mensaje ${totalMessages - maxMessages + 1}`);   
+                    expect(room!.chatHistory[maxMessages - 1].message).toBe(`Mensaje ${totalMessages}`);
+                    done();
+                } catch (error) {
+                    done(error);
+                }
+            }
+        });
+
+        for (let i = 0; i < totalMessages; i++) {
+            clientSocket1.emit(SocketEvents.SEND_MESSAGE, { message: `Mensaje ${i + 1}` });
+        }
+    });
 });

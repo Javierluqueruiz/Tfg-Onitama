@@ -1,4 +1,4 @@
-import { GameMode, GameState, PlayerProfile, SocketEvents } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, SocketEvents } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 import { Server } from 'socket.io';
 
@@ -8,6 +8,7 @@ export interface RoomSession {
     gameState: GameState;
     roomCode: string;
     mode: GameMode;
+    chatHistory: ChatMessage[];
     players: {
         red: PlayerProfile | null;
         blue: PlayerProfile | null;
@@ -68,6 +69,7 @@ export class RoomManager {
             gameState: null as unknown as GameState, // Inicialmente null, se establecerá cuando se cree un nuevo juego.
             roomCode,
             mode,
+            chatHistory: [],
             players: {
                 red: isHostRed ? hostProfile : null,
                 blue: isHostRed ? null : hostProfile
@@ -268,4 +270,14 @@ export class RoomManager {
         return room.gameState;
     }
 
+    //Sub-07.1: Chat
+    public static addChatMessage(roomId: string, message: ChatMessage): void {
+        const room = this.getRoomById(roomId);
+        if (room) {
+            if (room.chatHistory.length >= 50) {
+                room.chatHistory.shift();
+            }
+            room.chatHistory.push(message);
+        }
+    }
 }
