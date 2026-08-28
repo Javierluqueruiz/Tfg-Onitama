@@ -9,6 +9,7 @@ import { DrawBanner } from './ui/modals/DrawBanner';
 import { PlayerZone } from './ui/player/PlayerZone';
 import { RematchBanner } from './ui/modals/RematchBanner';
 import { ChatBox } from './ui/chat/ChatBox';
+import './theme.css';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -28,7 +29,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
 
 
     return (    
-        <div className={styles.screenContainer}>
+        <div className={`${styles.screenContainer} gameTheme`}>
             <div className={styles.header}>
                 <h2 className={styles.title}>Sala de Juego</h2>
                 <div className={`${styles.turnIndicator} ${isMyTurn ? styles.turnRed : styles.turnBlue}`}>
