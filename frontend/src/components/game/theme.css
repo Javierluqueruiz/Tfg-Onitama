@@ -1,0 +1,29 @@
+/*Variables css para los componentes de la interfaz de juego*/
+
+.gameTheme {
+    --game-wood: #c7b280;
+    --game-wood-deep: #8d7549;
+    --game-wood-shadow: #6b5636;
+
+    --game-paper: #f6efdc;
+    --game-paper-soft: #efe6d0;
+
+    --game-ink: #2c2417;
+    --game-ink-soft: #5b4c34;
+    --game-ink-faint: #8a7c62;
+
+    --game-jade: #3f6d57;
+    --game-jade-soft: rgba(118, 179, 150, 0.859);
+
+    --game-red: #a8503a;
+    --game-red-soft: rgba(168, 80, 58, 0.16);
+
+    --game-blue: #3a5f74;
+    --game-blue-soft: rgba(58, 95, 116, 0.16);
+
+    --game-line: #c79a4b;
+    --game-line-soft: rgba(199, 154, 75, 0.35);
+
+    --game-shadow-soft: 0 8px 18px -10px rgba(60, 44, 15, 0.5);
+    --game-shadow-panel: inset 0 2px 6px rgba(0, 0, 0, 0.25), 0 10px 22px -12px rgba(43, 30, 10, 0.5);
+}

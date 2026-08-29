@@ -1,70 +1,89 @@
 .boardContainer {
+    --cell-size: clamp(46px, 15vw, 80px);
     display: grid;
-    grid-template-columns: repeat(5, 80px);
-    grid-template-rows: repeat(5, 80px);
-    gap: 5px;
-    background-color: #bdc3c7;
+    grid-template-columns: repeat(5, var(--cell-size));
+    grid-template-rows: repeat(5, var(--cell-size));
+    gap: clamp(3px, 1vw, 5px);
+    background: var(--game-wood-deep);
     padding: 10px;
     border-radius: 10px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 0 3px var(--game-ink), 0 10px 22px -12px rgba(43, 30, 10, 0.6)
 }
 
 .cell {
-    background-color: #ecf0f1;
+    background: var(--game-paper);
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 5px;
-    font-size: 24px;
-    font-weight: bold;
+    position: relative;
+    /*font-size: 24px;*/
+    box-shadow: inset 0 0 0 1px rgba(44, 35, 23, 0.14);
     transition: background-color 0.2s, ease;
 }
 
 .cell:hover {
-    background-color: #e0e6ed;
+    background: var(--game-paper-soft);
     cursor: pointer;
 }
 
 .piece {
+    position: absolute;
+    inset: 5px;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    width: 80%;
-    height: 80%;
-    border-radius: 50%;
-    color: white;
-    font-size: 12px;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
-.pieceRed {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+.pieceIcon {
+    width: 76%;
+    height: 90%;
+    fill: currentColor;
+    filter: drop-shadow(0 2px 2px rgba(35, 26, 14, 0.45));
 }
 
-.pieceBlue {
-    background: linear-gradient(135deg, #3498db, #2980b9);
-}
-
-.master {
-    border: 3px solid #f1c40f;
-    font-weight: 900;
+.master .pieceIcon {
+    width: 86%;
+    height: 98%;
 }
 
 .student {
-    border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.pieceIcon .sheen {
+    fill: rgba(255, 255, 255, 0.4);
+}
+
+.pieceIcon .plintShadow {
+    fill: rgba(0, 0, 0, 0.2);
+}
+
+.pieceRed {
+    color: var(--game-red);
+}
+
+.pieceBlue {
+    color: var(--game-blue);
 }
 
 .emptyCell {
-    color: #bdc3c7;
-    font-size: 24px;
+    color: var(--game-ink-faint);
+    font-size: 22px;
 }
 
 /*Selección de piezas*/
-.selectedPiece {
-    box-shadow: 0 0 0 4px #f1c40f;
+.selectedPiece::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    border: 2px solid var(--game-line);
+    box-shadow: 0 0 8px var(--game-line-soft);
+}
+
+.selectedPiece .pieceIcon {
+    filter: drop-shadow(0 2px 2px rgba(35, 26, 14, 0.45));
     transform: scale(1.1);
-    z-index: 2; 
 }
 
 .clicablePiece {
@@ -72,23 +91,46 @@
     transition: transform 0.2s ease, filter 0.2s ease;
 }
 
-.validTarget {
-    background-color: rgba(46, 204, 113, 0.3) !important;
-    border: 2px dashed #2ecc71 !important;
+.clicablePiece:hover .pieceIcon {
+    transform: scale(1.12) translateY(-2px);
+}
+
+.validMove::after {
+    content: '';
+    position: absolute;
+    width: 26%;
+    height: 26%;
+    border-radius: 50%;
+    background: var(--game-jade);
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.validCapture::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    border: 4px solid var(--game-jade);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.validMove,
+.validCapture {
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-.validTarget:hover {
-    background-color: rgba(46, 204, 113, 0.6) !important;
-    transform: scale(1.05);
+.validMove:hover::after,
+.validCapture:hover::after {
+    opacity: 0.8;
 }
-
 
 /*Último movimiento*/
 .lastMove{
-    background-color: rgba(241, 196, 15, 0.15) !important;
-    border: 2px solid rgba(241, 196, 15, 0.4);
+    background-color: var(--game-jade-soft) !important;
+    box-shadow: inset 0 0 0 2px var(--game-line) !important;
 }
 
 .clickablePiece:hover {

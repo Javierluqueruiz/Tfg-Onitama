@@ -3,9 +3,9 @@
 /*Sub-05.4*/
 /* Notificación flotante de rechazo (Arriba a la derecha o centro) */
 .toastError {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  background: var(--game-paper);
+  color: var(--game-red);
+  border: 1px solid var(--game-red-soft);
   padding: 1rem 1.5rem;
   border-radius: 8px;
   position: absolute;
@@ -13,25 +13,25 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: var(--game-shadow-soft);
   animation: slideDownFade 0.3s ease-out;
 }
 
 /* Banner de propuesta recibida */
 .drawBanner {
-  background-color: #e2e3e5;
-  color: #383d41;
-  border: 1px solid #d6d8db;
+  background-color: var(--game-paper);
+  color: var(--game-ink);
+  border: 1px solid var(--game-line-soft);
   padding: 1.2rem;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
   text-align: center;
-  font-weight: 500;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  font-weight: 600;
+  box-shadow: var(--game-shadow-soft);
 }
 
 .drawBanner p {
@@ -46,33 +46,35 @@
 }
 
 .btnAccept {
-  background-color: #28a745;
-  color: white;
+  background: var(--game-jade);
+  color: var(--game-paper);
   border: none;
   padding: 0.5rem 1.2rem;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.1s ease;
 }
 
 .btnAccept:hover {
-  background-color: #218838;
+  background-color: #345a48;
+  transform: translateY(-1px);
 }
 
 .btnReject {
-  background-color: #dc3545;
-  color: white;
-  border: none;
+  background: var(--game-paper);
+  color: var(--game-red);
+  border: 1px solid var(--game-red-soft);
   padding: 0.5rem 1.2rem;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.1s ease;
 }
 
 .btnReject:hover {
-  background-color: #c82333;
+  background: var(--game-red-soft);
+  transform: translateY(-1px);
 }
 
 /* Animación para el Toast */
@@ -89,7 +91,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(15, 23, 42, 0.75);
+    background-color: rgba(44, 36, 23, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -103,8 +105,8 @@
 }
 
 .victoryModal {
-    background-color: white;
-    padding: 40px;
+    background: var(--game-paper);
+    padding: 0;
     border-radius: 16px;
     overflow: hidden;
     text-align: center;
@@ -121,20 +123,20 @@
 
 .modalHeader {
     padding: 30px 20px;
-    color: white;
+    color: var(--game-paper);
     border-radius: 12px;
 }
 
 .modalHeaderWin {
-    background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+    background: linear-gradient(135deg, var(--game-jade) 0%, #345a48 100%);
 }
 
 .modalHeaderLose {
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    background: linear-gradient(135deg, var(--game-red) 0%, #8a4230 100%);
 }
 
 .modalHeaderDraw {
-    background-color: #6c757d;
+    background: linear-gradient(135deg, var(--game-wood-deep) 0%, var(--game-wood-shadow) 100%);
 }
 
 
@@ -148,12 +150,12 @@
 
 .modalBody {
     padding: 30px;
-    background-color: #fdfbf7;
+    background: var(--game-paper);
 }
 
 .modalMessage {
     font-size: 18px;
-    color: #475569;
+    color: var(--game-ink-soft);
     margin: 0 0 25px 0;
     line-height: 1.5;
 }
@@ -168,49 +170,91 @@
 
 .btnExit {
     padding: 14px 28px;
-    background-color: #1e293b;
-    color: white;
+    background: var(--game-ink);
+    color: var(--game-paper);
     border: none;
     border-radius: 8px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: var(--game-shadow-soft);
 }
 
 .btnExit:hover {
-    background-color: #334155;
+    background: var(--game-ink-soft);
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
-
-.btnRematch {
-    padding: 14px 28px;
-    background-color: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
 
 .rematchBanner {
-    background-color: #e0f2fe;
-    color: #0369a1;
-    border: 1px solid #bae6fd;
+    background: var(--game-paper);
+    color: var(--game-ink);
+    border: 1px solid var(--game-line-soft);
     padding: 1.2rem;
-    border-radius: 8px;
+    border-radius: 10px;
     margin-bottom: 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
     text-align: center;
-    font-weight: 500;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    font-weight: 600;
+    box-shadow: 0 2px 4px var(--game-shadow-soft);
   }
+
+.rematchTitle {
+  color: var(--game-ink);
+  margin: 0;
+}
+
+.rematchTitleReceived {
+    color: var(--game-jade);
+    margin: 0;
+}
+
+.rematchText {
+    color: var(--game-ink-soft);
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.btnRematchOffer {
+    background: var(--game-line);
+    color: var(--game-ink);
+    border: none;
+    padding: 0.6rem 1.3rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btnRematchOffer:hover {
+    background: #b98a3d;
+    transform: translateY(-1px);
+}
+
+.rematchWaiting {
+    color: var(--game-line);
+    font-weight: 700;
+}
+
+.rematchIcon {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
+.rematchRejected {
+    color: var(--game-red);
+    font-weight: 700;
+}
+
+.rematchButtons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+}

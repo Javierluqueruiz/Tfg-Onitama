@@ -20,10 +20,19 @@ export const useDrawNegotiation = (socket: Socket | null) => {
                 setDrawRejectedMessage(true);
                 setTimeout(() => setDrawRejectedMessage(false), 4000);
             });
-    
+
+            const handleGameStart = () => {
+                setDrawOfferReceived(false);
+                setDrawOfferSent(false);
+                setDrawRejectedMessage(false);
+            };
+
+            socket.on(SocketEvents.GAME_START, handleGameStart);
+
             return () => {
                 socket.off(SocketEvents.OFFER_DRAW);
                 socket.off(SocketEvents.REJECT_DRAW);
+                socket.off(SocketEvents.GAME_START, handleGameStart);
             }
         }, [socket]);
     
