@@ -13,8 +13,10 @@ const SocketContext = createContext<SocketContextState>({
     isConnected: false,
 })
 
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+
 export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ children }) => {
-    const [socket, setSocket] = useState<Socket>(() => io('http://localhost:3000', { autoConnect: false }));
+    const [socket, setSocket] = useState<Socket>(() => io(SOCKET_URL, { autoConnect: false }));
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {

@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io'
 import { registerSocketEvents } from './network/SocketHandler';
 
+const PORT = process.env.PORT || 3000;
 const app = express();
 //app.use(cors());
 const server = http.createServer(app);
@@ -20,7 +21,7 @@ const io = new Server(server, {
 
 registerSocketEvents(io);
 
-server.listen(3000, () => {
-    console.log('Servidor escuchando en el puerto 3000');
+server.listen(PORT, () => {
+    console.log(`Servidor escuchando en el puerto ${PORT}`);
 })
 
