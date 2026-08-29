@@ -5,6 +5,9 @@ import { registerSocketEvents } from './network/SocketHandler';
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 //app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
