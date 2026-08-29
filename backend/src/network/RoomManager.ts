@@ -264,8 +264,13 @@ export class RoomManager {
         if (!room) return null;
 
         this.stopGameTimer(roomId);
-
         room.gameState = room.gameEngine.createNewGame(roomId);
+
+        if (room.mode === 'normal') {
+            room.gameState.timeRemaining = { red: 600, blue: 600 };
+        } else if (room.mode === 'fast') {
+            room.gameState.timeRemaining = { red: 300, blue: 300 };
+        } 
 
         return room.gameState;
     }

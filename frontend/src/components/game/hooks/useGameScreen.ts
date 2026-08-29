@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile } from '../../../../../shared';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useNetwork } from './useNetwork';
@@ -45,6 +45,23 @@ export const useGameScreen = (
     } else if (gameState.winner === 'draw') {
         gameResult = 'draw';
     }
+
+    
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleGameStart = () => {
+            setIsModalOpen(true);
+            setSelectedCard(null);
+            setSelectedPiece(null);
+        };
+
+        socket.on(SocketEvents.GAME_START, handleGameStart);
+
+        return () => {
+            socket.off(SocketEvents.GAME_START, handleGameStart);
+        };
+    }, [socket]);
 
     //Destinos Válidos
     const validTargets = useMemo(() => {

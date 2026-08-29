@@ -64,6 +64,22 @@ export const useNetwork = (socket: Socket | null, gameStateStatus: string) => {
         };
     }, [socket]);
 
+    useEffect(() => {
+    if (!socket) return;
+
+    const handleGameStart = (data: { gameState: { timeRemaining: { red: number; blue: number } } }) => {
+        setTimeRemaining(data.gameState.timeRemaining ?? { red: 0, blue: 0 });
+        setDisconnectTimer(null);
+        setReconnectMessage(false);
+    };
+
+    socket.on(SocketEvents.GAME_START, handleGameStart);
+
+    return () => {
+        socket.off(SocketEvents.GAME_START, handleGameStart);
+    };
+}, [socket]);
+
     return {
         disconnectTimer,
         reconnectMessage,
