@@ -2,81 +2,88 @@
 /* --- Contenedor de los controles de partida --- */
 .gameControls {
   display: flex;
-  justify-content: flex-end; /* Alineamos el botón a la derecha */
+  justify-content: flex-start; /* Alineamos el botón a la derecha */
   align-items: center;
   width: 100%;
   max-width: 600px; /* Ajústalo al ancho máximo de tu tablero */
   margin: 0 auto 1rem auto;
   padding: 0 1rem;
-  gap: 90%;
+  gap: 18px;
 }
 
 /* Sub-05.1 */
 /* --- Botón de Rendición (Surrender) --- */
-.btnSurrender {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #dc3545; /* Rojo clásico para acciones destructivas */
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
+.btnSurrender,
+.btnExit,
+.btnOfferDraw {
+  padding: 10px 20px;
+  border: 1px solid var(--game-line-soft);
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  box-shadow: var(--game-shadow-soft);
+}
+
+.btnSurrender {
+  background: var(--game-paper);
+  color: var(--game-red);
+  border-color: var(--game-red-soft);
 }
 
 /* Efecto al pasar el ratón */
 .btnSurrender:hover:not(:disabled) {
-  background-color: #c82333;
+  background: var(--game-red-soft);
   transform: translateY(-1px);
 }
 
 /* Efecto al hacer clic */
 .btnSurrender:active:not(:disabled) {
-  background-color: #bd2130;
   transform: translateY(1px);
 }
 
 /* Estado deshabilitado (cuando la partida ya ha terminado) */
 .btnSurrender:disabled {
-  background-color: #e9ecef;
-  color: #6c757d;
+  background: var(--game-paper-soft);
+  color: var(--game-ink-faint);
   cursor: not-allowed;
   box-shadow: none;
   opacity: 0.7;
 }
 
 .btnExit {
-    padding: 14px 28px;
-    background-color: #1e293b;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background: var(--game-ink);
+    color: var(--game-paper);
 }
 
 .btnExit:hover {
-    background-color: #334155;
+    background: var(--game-ink-soft);
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
 /* Sub-05.4 */
 .btnOfferDraw {
-  background-color: #3f56be;
-  color: white;
-  border: none;
-  padding: 0.5rem 1.2rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  background: var(--game-paper);
+  color: var(--game-ink);
+}
+
+.btnOfferDraw:hover:not(:disabled) {
+  background: var(--game-paper-soft);
+}
+
+.btnOfferDraw:disabled {
+  color: var(--game-ink-faint);
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .gameControls {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
 }

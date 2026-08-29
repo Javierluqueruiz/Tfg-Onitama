@@ -13,11 +13,10 @@
 
 /* --- DISEÑO RESPONSIVO PARA MÓVILES --- */
 @media (max-width: 768px) {
-        /* Reducimos ligeramente el tamaño de las cartas */
     .cardsRow {
-        gap: 10px;
-        transform: scale(0.85);
-        transform-origin: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
     }
 }
 
@@ -25,26 +24,26 @@
 
 /* Sub-05.2 */
 .disconnectBanner {
-  background-color: #fff3cd;
-  color: #856404;
+  background: var(--game-line-soft);
+  color: var(--game-ink);
   padding: 1rem;
   margin-bottom: 1rem;
-  border: 1px solid #ffeeba;
-  border-radius: 6px;
+  border: 1px solid var(--game-line);
+  border-radius: 8px;
   text-align: center;
-  font-weight: 500;
+  font-weight: 600;
   animation: pulse 2s infinite;
 }
 
 .reconnectBanner {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: var(--game-jade-soft);
+  color: var(--game-ink);
   padding: 1rem;
   margin-bottom: 1rem;
-  border: 1px solid #c3e6cb;
-  border-radius: 6px;
+  border: 1px solid var(--game-jade);
+  border-radius: 8px;
   text-align: center;
-  font-weight: 500;
+  font-weight: 600;
   animation: pulse 2s infinite;
 }
 

@@ -1,8 +1,9 @@
 .boardContainer {
+    --cell-size: clamp(46px, 15vw, 80px);
     display: grid;
-    grid-template-columns: repeat(5, 80px);
-    grid-template-rows: repeat(5, 80px);
-    gap: 5px;
+    grid-template-columns: repeat(5, var(--cell-size));
+    grid-template-rows: repeat(5, var(--cell-size));
+    gap: clamp(3px, 1vw, 5px);
     background: var(--game-wood-deep);
     padding: 10px;
     border-radius: 10px;
@@ -128,7 +129,7 @@
 
 /*Último movimiento*/
 .lastMove{
-    background-color: var(--game-line-soft) !important;
+    background-color: var(--game-jade-soft) !important;
     box-shadow: inset 0 0 0 2px var(--game-line) !important;
 }
 

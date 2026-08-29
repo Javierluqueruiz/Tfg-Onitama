@@ -71,7 +71,7 @@ export const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOpponent, isConn
                             transition: 'background-color 0.3s ease'
                         }} 
                     />
-                    <span style={{ fontSize: '0.85rem', color: '#000000', fontFamily: 'monospace' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--game-ink-soft)', fontFamily: 'monospace' }}>
                         {ping > 0 ? `${ping} ms` : 'Calculando...'}
                     </span>
                 </div>
