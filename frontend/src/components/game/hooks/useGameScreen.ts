@@ -12,7 +12,7 @@ export const useGameScreen = (
         localColor: PlayerColor | null, 
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
 ) => {
-    const { socket, isConnected } = useSocket();
+    const { socket, isConnected, isReconnecting, lastError } = useSocket();
     const rematch = useRematchNegotiation(socket);
 
     const networkState = useNetwork(socket, gameState.status);
@@ -63,7 +63,7 @@ export const useGameScreen = (
 
     //Gestión de Eventos
     const handleCellClick = (position: Position) => {
-        if (isGameOver || !isMyTurn) return;
+        if (isGameOver || !isMyTurn || isReconnecting) return;
 
         const clickedCell = board[position.y][position.x];
 
@@ -110,7 +110,7 @@ export const useGameScreen = (
         ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, isReconnecting, lastError
     };
 
 }

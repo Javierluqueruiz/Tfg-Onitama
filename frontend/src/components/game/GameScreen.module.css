@@ -50,6 +50,22 @@
   z-index: 100; /* Asegura que esté por encima de elementos secundarios, pero por debajo de los modales */
 }
 
+.errorToast {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--game-paper);
+    color: var(--game-red);
+    border: 1px solid var(--game-red-soft);
+    padding: 0.9rem 1.4rem;
+    border-radius: 8px;
+    box-shadow: var(--game-shadow-soft);
+    z-index: 1000;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
 /* Opcional: Ocultar o colapsar en pantallas muy pequeñas (móviles) para que no tape el tablero */
 @media (max-width: 768px) {
   .chatArea {
