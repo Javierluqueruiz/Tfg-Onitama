@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { VictoryArbitrator } from '../../src/game/VictoryArbitrator';
-import { Board } from '../../../shared/types';
+import { Board } from '../../../shared/index';
 import { BoardGenerator } from '../../src/game/BoardGenerator';
 import { table } from 'node:console';
 

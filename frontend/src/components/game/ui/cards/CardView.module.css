@@ -1,0 +1,118 @@
+.cardContainer {
+    width: 140px;
+    background: var(--game-paper);
+    border-radius: 8px;
+    box-shadow: var(--game-shadow-soft);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    border: 2px solid var(--game-line-soft);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cardContainer:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.55);
+}
+
+.cardTitle {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--game-ink);
+    margin: 0 0 12px 0;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.miniGrid {
+    display: grid;
+    grid-template-columns: repeat(5, 20px);
+    grid-template-rows: repeat(5, 20px);
+    gap: 2px;
+    background:var(--game-wood);
+    padding: 4px;
+    border-radius: 4px;
+
+}
+
+.gridCell {
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 2px;
+}
+
+.centerPiece {
+    background: var(--game-ink);
+}
+
+.validMove {
+    background: var(--game-jade);
+}
+
+.redFaction::before,
+.blueFaction::before,
+.neutralFaction::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.redFaction::before {
+    background: var(--game-red);
+}
+
+.blueFaction::before {
+    background: var(--game-blue);
+}
+
+.neutralFaction::before {
+    background: var(--game-ink-faint);
+}
+
+.flipped {
+    transform: rotate(180deg);
+}
+
+.flipped:hover {
+    transform: rotate(180deg) translateY(-5px);
+    box-shadow: var(--game-shadow-soft);
+}
+
+@keyframes floatingCard {
+    0% { transform: translateY(-10px); box-shadow: 0 12px 25px rgba(199, 154, 75, 0.35); }
+    50% { transform: translateY(-14px); box-shadow: 0 16px 30px rgba(199, 154, 75, 0.55); }
+    100% { transform: translateY(-10px); box-shadow: 0 12px 25px rgba(199, 154, 75, 0.35); }
+}
+
+.selected {
+    animation: floatingCard 2s infinite ease-in-out;
+    z-index: 10;
+    border: 2px solid var(--game-line);
+}
+
+@media (max-width: 768px) {
+    .cardContainer {
+        width: 104px;
+        padding: 8px;
+    }
+    .cardTitle {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+    .miniGrid {
+        grid-template-columns: repeat(5, 15px);
+        grid-template-rows: repeat(5, 15px);
+    }
+    .gridCell {
+        width: 15px;
+        height: 15px;
+    }
+}

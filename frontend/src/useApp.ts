@@ -13,24 +13,52 @@ export const useApp = () => {
         if (!socket) return;
    
         socket.on(SocketEvents.GAME_START, (data: { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } }) => {
-            console.log('¡Partida iniciada! Estado inicial recibido:', data.gameState);
+            console.log('Partida iniciada:', data.gameState);
+            localStorage.setItem('onitama_session', JSON.stringify({
+                roomId: data.gameState.roomId,
+                originalSocketId: socket.id
+            }));
             setGameState(data.gameState);
             setPlayersProfile(data.players);
+
             if (socket.id === data.players.red.socketId) {
                 setLocalColor('red');
             } else if (socket.id === data.players.blue.socketId) {
                 setLocalColor('blue');
             }
         });
+
+        socket.on(SocketEvents.RECONNECT_SUCCESS, (data: { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } }) => {
+            localStorage.setItem('onitama_session', JSON.stringify({
+                roomId: data.gameState.roomId,
+                originalSocketId: socket.id
+            }));
+            setGameState(data.gameState);
+            setPlayersProfile(data.players);
+
+            if (socket.id === data.players.red.socketId) {
+                setLocalColor('red');
+            } else if (socket.id === data.players.blue.socketId) {
+                setLocalColor('blue');
+            }
+        })
    
         socket.on(SocketEvents.GAME_UPDATE, (data: { gameState: GameState }) => {
             console.log('Actualización del estado del juego recibida:', data.gameState);
             setGameState(data.gameState);
+
+            if (data.gameState.status === 'finished') {
+                localStorage.removeItem('onitama_session');
+            }
         });
+
+        
+
    
         return () => {
             socket.off(SocketEvents.GAME_START); 
             socket.off(SocketEvents.GAME_UPDATE);
+            socket.off(SocketEvents.RECONNECT_SUCCESS); 
         };
     }, [socket]);
 
@@ -38,6 +66,6 @@ export const useApp = () => {
     return {
         gameState,
         localColor,
-        playersProfile
+        playersProfile,
     };
 };

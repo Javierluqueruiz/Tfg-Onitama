@@ -1,14 +1,17 @@
 import React from 'react';
 import styles from './PlayerInfo.module.css';
+import { formatTime } from '../../hooks/useNetwork';
 
 interface PlayerInfoProps {
     playerName: string;
     color: 'red' | 'blue';
     isActive: boolean;
+    timeLeft?: number;
 }
 
-export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, color, isActive }) => {
+export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, color, isActive, timeLeft }) => {
     const isRed = color === 'red';
+    const isLowTime = timeLeft !== undefined && timeLeft <= 30;
 
     const activeClass = isActive ?
         (isRed ? styles.activeRed : styles.activeBlue) : '';
@@ -26,6 +29,12 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, color, isAct
                 <p className={`${styles.status} ${isActive ? styles.statusActive : ''}`}>
                         {isActive ? 'Turno Activo' : 'Esperando...'}
                 </p>
+                {timeLeft !== undefined && timeLeft > 0 && (
+                    <span className={`${styles.timer} ${isLowTime ? styles.lowTime : ''}`}>
+                    {formatTime(timeLeft)}
+                    </span>
+                )}
+                
             </div>
         </div>
     )

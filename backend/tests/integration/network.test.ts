@@ -1,8 +1,8 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it} from 'vitest';
 
 import { RoomManager } from "../../src/network/RoomManager";
 import { registerSocketEvents } from "../../src/network/SocketHandler";
-import { SocketEvents } from "../../../shared";
+import { SocketEvents, PlayerColor, GameMode, ChatMessage } from "../../../shared/index";
 
 import { Server } from 'socket.io';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
@@ -20,7 +20,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
         io = new Server(httpServer);
 
         // ¡Inyectamos tu código real del enrutador!
-        registerSocketEvents(io);
+        registerSocketEvents(io); // Pasamos true para habilitar el modo de prueba
 
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
@@ -370,5 +370,615 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
             clientSocket1.emit('create_room', 'Player1');
         });
+    });
+
+    it('Sub-04.4: Debe capturar la latencia de red mediante un ciclo de ping-pong', async () => {
+        const pingPromise = new Promise<number>((resolve) => {
+            const clientTimeStamp = Date.now();
+
+            clientSocket1.once(SocketEvents.PONG, (serverTimeStamp: number) => {
+                const latency = Date.now() - clientTimeStamp;
+                resolve(latency);
+            });
+
+            clientSocket1.emit(SocketEvents.PING, clientTimeStamp);
+        });
+
+        const latency = await pingPromise;
+        
+        expect(latency).toBeDefined();
+        expect(typeof latency).toBe('number');
+        expect(latency).toBeGreaterThanOrEqual(0);
+    });
+});
+
+
+describe('FEAT-05: Resoluciones alternativas de partida', () => {
+    let ioServer: Server;
+    let httpServer: any;
+    let port: number;
+    
+    let clientSocket1: ClientSocket;
+    let clientSocket2: ClientSocket;
+    let activeRoomId: string;
+    let client1Color: PlayerColor;
+    let client2Color: PlayerColor;
+
+    beforeAll(async () => {
+        httpServer = createServer();
+        ioServer = new Server(httpServer);
+        
+        // Registramos tus eventos reales del backend
+        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
+
+        await new Promise<void>((resolve) => {
+            httpServer.listen(0, () => {
+                port = (httpServer.address() as any).port;
+                resolve();
+            });
+        });
+    });
+
+    afterAll(() => {
+        ioServer.close();
+        httpServer.close();
+    });
+
+    beforeEach(async () => {
+        RoomManager['activeRooms'].clear();
+
+        clientSocket1 = ioClient(`http://localhost:${port}`);
+        clientSocket2 = ioClient(`http://localhost:${port}`);
+
+        //Creamos una sala y unimos ambos jugadores antes de cada test
+        await new Promise<void>((resolve) => {
+            clientSocket1.on('connect', () => {
+                clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1'});
+            });
+
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
+            });
+
+            clientSocket1.on(SocketEvents.GAME_START, (data) => {
+                activeRoomId = data.gameState.roomId;
+                client1Color = data.players.red.socketId === clientSocket1.id ? 'red' : 'blue';
+                client2Color = data.players.red.socketId === clientSocket2.id ? 'red' : 'blue';
+                resolve();
+            });
+        });
+    });
+
+    afterEach(() => {
+        clientSocket1.disconnect();
+        clientSocket2.disconnect();
+    });
+
+    it('Sub-05,1: Debe permitir a un jugador rendirse y notificar al oponente, finalizando la partida', async () => {
+        //Preparar las promesas antes de emitir la rendición
+        const client1UpdatePromise = new Promise<void>((resolve, reject) => {
+            clientSocket1.on(SocketEvents.GAME_UPDATE, (data) => {
+                try {
+                    expect(data.gameState.status).toBe('finished');
+                    expect(data.gameState.winner).toBe(client2Color); 
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        const client2UpdatePromise = new Promise<void>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.GAME_UPDATE, (data) => {
+                try {
+                    expect(data.gameState.status).toBe('finished');
+                    expect(data.gameState.winner).toBe(client2Color);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        clientSocket1.emit(SocketEvents.SURRENDER);
+
+        await Promise.all([client1UpdatePromise, client2UpdatePromise]);
+        //expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
+        //expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+    });
+
+    it('Sub-05.2a: Debe manejar la desconexión de un jugador y notificar al oponente, finalizando la partida si no se reconecta', async () => {
+        RoomManager.DISCONNECT_TIMEOUT_MS = 1000; // Reducimos el tiempo de espera para la prueba
+        
+        const client2DisconnectedPromise = new Promise<void>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.OPPONENT_DISCONNECTED, (data) => {
+                try {
+                    expect(data.message).toBe('El oponente se ha desconectado. Esperando reconexión...');
+                    expect(data.timeLimit).toBe(1000);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        const client2VictoryPromise = new Promise<void>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.GAME_UPDATE, (data) => {
+                try {
+                    expect(data.gameState.status).toBe('finished');
+                    expect(data.gameState.winner).toBe(client2Color);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        clientSocket1.disconnect();
+
+        await Promise.all([client2DisconnectedPromise, client2VictoryPromise]);
+
+        expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
+        expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+
+        clientSocket2.emit('DEBUG_SET_TIMEOUT', { timeout: 30000 });
+
+    });
+
+    it('Sub-05.2b: Debe permitir la reconexión de un jugador dentro del tiempo límite y continuar la partida', async () => {
+        RoomManager.DISCONNECT_TIMEOUT_MS = 2000; // Reducimos el tiempo de espera para la prueba
+
+        const disconnectWarningPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.OPPONENT_DISCONNECTED, () => resolve());
+        });
+
+        const oldSocketId = clientSocket1.id;
+        clientSocket1.disconnect();
+        await disconnectWarningPromise;
+
+        const newClientSocket1 = ioClient(`http://localhost:${port}`);
+
+        const reconnectSuccessPromise = new Promise<void>((resolve, reject) => {
+            newClientSocket1.on(SocketEvents.RECONNECT_SUCCESS, (data) => {
+                try {
+                    expect(data.gameState).toBeDefined();
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        const opponentNotifiedPromise = new Promise<void>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.OPPONENT_RECONNECTED, () => resolve());
+        });
+
+        newClientSocket1.emit(SocketEvents.RECONNECT_ATTEMPT, { 
+            roomId: activeRoomId, 
+            originalSocketId: oldSocketId });
+
+        await Promise.all([reconnectSuccessPromise, opponentNotifiedPromise]);
+
+        newClientSocket1.disconnect();
+    });
+
+    it('Sub-05.3: Debe finalizar la partida y otorgar la victoria al oponente si el temporizador de juego llega a cero', async () => {
+        const room = RoomManager.getRoomById(activeRoomId);
+
+        const activeColor = room!.gameState.currentTurn;
+        
+        const timeOutVictoryPromise = new Promise<void>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.GAME_UPDATE, (data) => {
+                try {
+                    expect(data.gameState.status).toBe('finished');
+                    const expectedWInner = activeColor === client2Color ? client1Color : client2Color;
+                    expect(data.gameState.winner).toBe(expectedWInner);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        room!.gameState.timeRemaining[activeColor] = 1; // Forzamos que el tiempo restante sea 1 segundo
+
+        await timeOutVictoryPromise;
+
+        expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+    });
+        
+    it('Sub-05.4a: Debe permitir a un jugador ofrecer empate y que el oponente lo rechace, continuando la partida', async () => {
+        const offerDrawPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.OFFER_DRAW, () => resolve());
+        });
+
+        const rejectDrawPromise = new Promise<void>((resolve) => {
+            clientSocket1.on(SocketEvents.REJECT_DRAW, () => resolve());
+        });
+
+        clientSocket1.emit(SocketEvents.OFFER_DRAW);
+        await offerDrawPromise;
+
+        clientSocket2.emit(SocketEvents.REJECT_DRAW);
+        await rejectDrawPromise;
+
+        expect(RoomManager.getRoomById(activeRoomId)).toBeDefined();
+        expect(RoomManager.roomExists(activeRoomId)).toBe(true);
+    });
+
+    it('Sub-05.4b: Debe permitir a un jugador ofrecer empate y que el oponente lo acepte, finalizando la partida en empate', async () => {
+        const offerDrawPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.OFFER_DRAW, () => resolve());
+        });
+
+        const client1UpdatePromise = new Promise<void>((resolve, reject) => {
+            clientSocket1.on(SocketEvents.GAME_UPDATE, (data) => {
+                try {
+                    expect(data.gameState.status).toBe('finished');
+                    expect(data.gameState.winner).toBe('draw');
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        const client2UpdatePromise = new Promise<void>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.GAME_UPDATE, (data) => {
+                try {
+                    expect(data.gameState.status).toBe('finished');
+                    expect(data.gameState.winner).toBe('draw');
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        clientSocket1.emit(SocketEvents.OFFER_DRAW);
+        await offerDrawPromise;
+
+        clientSocket2.emit(SocketEvents.ACCEPT_DRAW);
+        await Promise.all([client1UpdatePromise, client2UpdatePromise]);
+
+        //expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
+        //expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+    });
+
+    it('Sub-05.5a: Debe notificar el rechazo de una revancha y eliminar la sala', async () => {
+                
+        const offerPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.REMATCH_OFFERED, () => {
+                clientSocket2.emit(SocketEvents.REJECT_REMATCH);
+                resolve();
+            });
+        });
+
+        const rejectPromise = new Promise<void>((resolve) => {
+            clientSocket1.on(SocketEvents.REMATCH_REJECTED, () => {
+                console.log("Revancha rechazada");
+                resolve();
+            });
+        });
+
+        clientSocket1.emit(SocketEvents.OFFER_REMATCH);
+
+        await Promise.all([offerPromise, rejectPromise]);
+
+        const room = RoomManager.getRoomById(activeRoomId);
+        expect(room).toBeUndefined();
+    });
+
+    it('Sub-05.5b: Debe permitir la aceptación de una revancha y reiniciar el juego', async () => {
+        const gameStartPromise1 = new Promise<any>((resolve, reject) => {
+            clientSocket1.on(SocketEvents.GAME_START, (data) => resolve(data));
+        });
+
+        const gameStartPromise2 = new Promise<any>((resolve, reject) => {
+            clientSocket2.on(SocketEvents.GAME_START, (data) => resolve(data));
+        });
+
+        clientSocket2.on(SocketEvents.REMATCH_OFFERED, () => {
+            clientSocket2.emit(SocketEvents.ACCEPT_REMATCH);
+        });
+
+        clientSocket1.emit(SocketEvents.OFFER_REMATCH);
+
+        const [data1, data2] = await Promise.all([gameStartPromise1, gameStartPromise2]);
+
+        expect(data1.gameState).toBeDefined();
+        expect(data2.gameState).toBeDefined();
+
+        expect(data1.gameState.status).not.toBe('finished');
+        expect(data2.gameState.status).not.toBe('finished');
+    });
+});
+
+
+describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
+    let ioServer: Server;
+    let httpServer: any;
+    let port: number;
+
+    let clientA: ClientSocket;
+    let clientB: ClientSocket;
+    
+    beforeAll(async () => {
+        httpServer = createServer();
+        ioServer = new Server(httpServer);
+        
+        // Registramos tus eventos reales del backend
+        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
+
+        await new Promise<void>((resolve) => {
+            httpServer.listen(0, () => {
+                port = (httpServer.address() as any).port;
+                resolve();
+            });
+        });
+    });
+
+    afterAll(() => {
+        ioServer.close();
+        httpServer.close();
+    });
+
+    beforeEach(async (done) => {
+        clientA = ioClient(`http://localhost:${port}`);
+        clientB = ioClient(`http://localhost:${port}`);
+
+        await new Promise<void>((resolve) => {
+                let connectedClients = 0;
+            const checkDone = () => {
+                connectedClients++;
+                if (connectedClients === 2) {
+                    resolve();
+                }
+            };
+
+            clientA.on('connect', checkDone);
+            clientB.on('connect', checkDone);
+
+        });
+    });
+
+    afterEach(() => {
+        clientA.disconnect();
+        clientB.disconnect();
+    });
+
+    it('Sub-06.1: Debe colocar al jugador en la cola y emitir QUEUE_JOINED si está vacía', () => {
+        return new Promise<void>((resolve) => {
+            clientA.on(SocketEvents.QUEUE_JOINED, () => {
+                expect(true).toBe(true);
+                resolve();
+            });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'casual'});
+        });
+    });
+
+    it('Sub-06.2: Debe emparejar a dos jugadores en el mismo modo y emitir MATCH_FOUND y GAME_START a ambos', () => {
+        return new Promise<void>((resolve) => {
+            let matchesFound = 0;
+            let expectedRoomId = '';
+            
+
+            const handleMatchFound = (payload: any) => {
+                expect(payload).toHaveProperty('roomId');
+                expect(payload).toHaveProperty('roomCode');
+                expect(payload.mode).toBe('normal');
+
+                if (matchesFound === 0) {
+                    expectedRoomId = payload.roomId;
+                } else {
+                    expect(payload.roomId).toBe(expectedRoomId);
+                }
+
+                matchesFound++;
+            };
+
+            const handleGameStart = (payload: any) => {
+                expect(payload).toHaveProperty('gameState');
+                expect(payload.gameState).toHaveProperty('roomId');
+                expect(payload.gameState.roomId).toBe(expectedRoomId);
+                expect(payload.gameState.timeRemaining.red).toBe(600);
+                
+                if (matchesFound === 2) {
+                    resolve();
+                }
+            };
+
+            clientA.on(SocketEvents.MATCH_FOUND, handleMatchFound);
+            clientA.on(SocketEvents.GAME_START, handleGameStart);
+
+            clientB.on(SocketEvents.MATCH_FOUND, handleMatchFound);
+            clientB.on(SocketEvents.GAME_START, handleGameStart);
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+
+            setTimeout(() => {
+                clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+            }, 100);
+        })
+    });
+
+    it('Su-06.3: No debe emparejar a jugadores de diferentes modos', () => {
+        return new Promise<void>((resolve, reject) => {
+            let matchFound = false;
+
+            const failTest = () => { matchFound = true; reject(new Error('Se emparejaron jugadores de diferentes modos.')); };
+            clientA.on(SocketEvents.MATCH_FOUND, failTest);
+            clientB.on(SocketEvents.MATCH_FOUND, failTest);
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'casual' });
+            setTimeout(() => {
+                clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+            }, 100);
+
+            setTimeout(() => {
+                if (!matchFound) {
+                    expect(true).toBe(true);
+                    resolve();
+                }
+            }, 300);
+        });
+    });
+
+    it('Sub-06.4: Debe permitir a un jugador abandonar la cola y emitir QUEUE_LEFT', () => {
+        return new Promise<void>((resolve, reject) => {
+            clientB.on(SocketEvents.MATCH_FOUND, () => {
+                reject(new Error('Jugador B se emparejó con Jugador A a pesar de que A abandonó la cola.'));
+            });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'fast' });
+
+            clientA.on(SocketEvents.QUEUE_JOINED, () => {
+                clientA.emit(SocketEvents.LEAVE_QUEUE);
+            });
+
+            clientA.on(SocketEvents.QUEUE_LEFT, () => {
+                clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'fast' });
+
+                clientB.on(SocketEvents.QUEUE_JOINED, () => {
+                    setTimeout(() => resolve(), 100);
+                });
+            });
+        });
+    });
+
+    it('Sub-06.5: Debe limpiar la cola si un jugador se desconecta mientras está en ella', () => {
+        return new Promise<void>((resolve, reject) => {
+            
+            clientB.on(SocketEvents.MATCH_FOUND, () => {
+                reject(new Error('Jugador B se emparejó con Jugador A a pesar de que A se desconectó.'));
+            });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+
+            clientA.on(SocketEvents.QUEUE_JOINED, () => {
+                clientA.disconnect();
+
+                setTimeout(() => {
+                    clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
+
+                    clientB.on(SocketEvents.QUEUE_JOINED, () => {
+                        setTimeout(() => resolve(), 100);
+                    });
+                });
+            });
+        });
+    });
+
+});
+
+
+describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
+    let ioServer: Server;
+    let httpServer: any;
+    let port: number;
+    
+    let clientSocket1: ClientSocket;
+    let clientSocket2: ClientSocket;
+    let activeRoomId: string;
+    let client1Color: PlayerColor;
+    let client2Color: PlayerColor;
+
+    beforeAll(async () => {
+        httpServer = createServer();
+        ioServer = new Server(httpServer);
+        
+        // Registramos tus eventos reales del backend
+        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
+
+        await new Promise<void>((resolve) => {
+            httpServer.listen(0, () => {
+                port = (httpServer.address() as any).port;
+                resolve();
+            });
+        });
+    });
+
+    afterAll(() => {
+        ioServer.close();
+        httpServer.close();
+    });
+
+    beforeEach(async () => {
+        RoomManager['activeRooms'].clear();
+
+        clientSocket1 = ioClient(`http://localhost:${port}`);
+        clientSocket2 = ioClient(`http://localhost:${port}`);
+
+        //Creamos una sala y unimos ambos jugadores antes de cada test
+        await new Promise<void>((resolve) => {
+            clientSocket1.on('connect', () => {
+                clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1'});
+            });
+
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
+            });
+
+            clientSocket1.on(SocketEvents.GAME_START, (data) => {
+                activeRoomId = data.gameState.roomId;
+                client1Color = data.players.red.socketId === clientSocket1.id ? 'red' : 'blue';
+                client2Color = data.players.red.socketId === clientSocket2.id ? 'red' : 'blue';
+                resolve();
+            });
+        });
+    });
+
+    afterEach(() => {
+        clientSocket1.disconnect();
+        clientSocket2.disconnect();
+    });
+
+    it('Sub-07.1 y Sub-07.2: Debe propagar el mensaje del jugador a todos los jugadores de la sala', (done: (error?: any) => void) => {
+        const testMessage = "¡Hola, oponente!";
+
+        clientSocket2.on(SocketEvents.CHAT_UPDATE, (message: ChatMessage) => {
+            try {
+                expect(message.message).toBe(testMessage);
+
+                expect(message.socketId).toBe(clientSocket1.id);
+                expect(message.name).toBe('Player1');
+                expect(message.timestamp).toBeDefined();
+                expect(typeof message.timestamp).toBe('number');
+
+                done();
+            } catch (error) {
+                done(error);
+            }
+        });
+
+        clientSocket1.emit(SocketEvents.SEND_MESSAGE, { message: testMessage });
+    });
+
+    it('Sub-07.1: Debe mantener un historial de chat limitado a 50 mensajes por sala', (done: (error?: any) => void) => {
+        const totalMessages = 55;
+        const maxMessages = 50;
+        let receivedCount = 0;
+
+        clientSocket2.on(SocketEvents.CHAT_UPDATE, (message: ChatMessage) => {
+            receivedCount++;
+
+            if (receivedCount === totalMessages) {
+                try {
+                    const room = RoomManager.getRoomById(activeRoomId);
+                    expect(room).toBeDefined();
+                    expect(room!.chatHistory.length).toBe(maxMessages);
+                    expect(room!.chatHistory[0].message).toBe(`Mensaje ${totalMessages - maxMessages + 1}`);   
+                    expect(room!.chatHistory[maxMessages - 1].message).toBe(`Mensaje ${totalMessages}`);
+                    done();
+                } catch (error) {
+                    done(error);
+                }
+            }
+        });
+
+        for (let i = 0; i < totalMessages; i++) {
+            clientSocket1.emit(SocketEvents.SEND_MESSAGE, { message: `Mensaje ${i + 1}` });
+        }
     });
 });

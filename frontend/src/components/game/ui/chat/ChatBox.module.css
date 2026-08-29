@@ -1,0 +1,144 @@
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  height: 400px;
+  background: var(--game-paper);
+  border-radius: 10px;
+  box-shadow: var(--game-shadow-soft);
+  overflow: hidden;
+  border: 1px solid var(--game-line-soft);
+}
+
+.messagesArea {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+}
+
+.ownMessage {
+  align-self: flex-end;
+}
+
+.opponentMessage {
+  align-self: flex-start;
+}
+
+.messageBubble {
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.ownMessage .messageBubble {
+  background: var(--game-jade-soft);
+  color: var(--game-ink);
+  border-bottom-right-radius: 2px;
+}
+
+.opponentMessage .messageBubble {
+  background: var(--game-wood);
+  color: var(--game-ink);
+  border-bottom-left-radius: 2px;
+}
+
+.messageTime {
+  font-size: 0.7rem;
+  color: var(--game-ink-faint);
+  margin-top: 4px;
+  text-align: right;
+}
+
+.inputArea {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid var(--game-line-soft);
+  background: var(--game-paper-soft);
+}
+
+.chatInput {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--game-line-soft);
+  border-radius: 6px;
+  outline: none;
+  background: var(--game-paper);
+  color: var(--game-ink);
+}
+
+.chatInput:focus {
+  border-color: var(--game-line);
+  box-shadow: 0 0 2px var(--game-line-soft);
+}
+
+.sendButton {
+  margin-left: 8px;
+  padding: 8px 16px;
+  background: var(--game-ink);
+  color: var(--game-paper);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.sendButton:hover {
+  background-color: var(--game-ink-soft);
+}
+
+/* Sub-07.2: Mute Button */
+.chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background-color: var(--game-wood-deep);
+  color: var(--game-paper);
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.muteButton {
+  background-color: transparent;
+  color: var(--game-paper);
+  border: 1px solid rgba(246, 239, 220, 0.5);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.muteButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.muteButton.muted {
+  background: var(--game-red);
+  color: var(--game-paper);
+  border-color: var(--game-red);
+}
+
+.messageSender {
+    font-size: 0.75rem;
+    color: var(--game-ink-faint);
+    margin-bottom: 2px;
+}
+
+@media (max-width: 768px) {
+    .chatContainer {
+        width: min(300px, 88vw);
+        height: 320px;
+    }
+}

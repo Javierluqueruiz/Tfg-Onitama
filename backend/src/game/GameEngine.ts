@@ -23,7 +23,11 @@ export class GameEngine {
             currentTurn: deckResult.firstTurn,
             board, 
             cards: deckResult.cards,
-            winner: null
+            winner: null,
+            timeRemaining: {
+                red: 600,
+                blue: 600
+            },
         };
 
         return this.gameState;

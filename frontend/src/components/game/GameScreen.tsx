@@ -1,10 +1,15 @@
 import { type GameState, type PlayerColor, type PlayerProfile } from '../../../../shared';
-import { BoardView } from './BoardView';
-import { CardView } from './CardView';
-import { PlayerInfo } from './PlayerInfo';
+import { BoardView } from './ui/board/BoardView';
+import { CardView } from './ui/cards/CardView';
 import styles from './GameScreen.module.css';
-import { useGameScreen } from './useGameScreen';
-import { GameOverModal } from './GameOverModal';
+import { useGameScreen } from './hooks/useGameScreen';
+import { GameOverModal } from './ui/modals/GameOverModal';
+import { GameControls } from './ui/layout/GameControls';
+import { DrawBanner } from './ui/modals/DrawBanner';
+import { PlayerZone } from './ui/player/PlayerZone';
+import { RematchBanner } from './ui/modals/RematchBanner';
+import { ChatBox } from './ui/chat/ChatBox';
+import './theme.css';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -15,38 +20,41 @@ interface GameScreenProps {
 export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
 
     const { 
-        board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
+        board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
-        validTargets, handleCellClick, handleExit 
+        validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch
     } = useGameScreen(gameState, localColor, playersProfile);
 
+
     return (    
-        <div className={styles.screenContainer}>
-            <div className={styles.header}>
+        <div className={`${styles.screenContainer} gameTheme`}>
+            {/*<div className={styles.header}>
                 <h2 className={styles.title}>Sala de Juego</h2>
                 <div className={`${styles.turnIndicator} ${isMyTurn ? styles.turnRed : styles.turnBlue}`}>
                     {isMyTurn ? 'Tu Turno' : 'Turno del Rival'}
                 </div>
-            </div>
-
+            </div>*/}
+        
+           
             {/* Zona del Jugador Rival */}
-            <div className={styles.playerZone}>
-                <PlayerInfo
-                    playerName={`Rival: ${opponentName}`}
-                    color={isLocalRed ? 'blue' : 'red'}
-                    isActive={!isMyTurn}
-                />
-                <div className={styles.cardsRow}>
-                    {opponentCards.map((card, index) => (
-                        <CardView key={`opponent-card-${index}`} card={card} faction={isLocalRed ? 'blue' : 'red'} isFlipped={true} />
-                    ))}
-                </div>
-            </div>
+            <PlayerZone 
+                isOpponent={true}
+                playerName={`Rival: ${opponentName}`}
+                color={isLocalRed ? 'blue' : 'red'}
+                isActive={!isMyTurn}
+                timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
+                cards={opponentCards}
+                disconnectTimer={disconnectTimer}
+                reconnectMessage={reconnectMessage}
+            />
 
             {/* Zona Central: Tablero + Carta Neutral */}
             <div className={styles.centerZone}>
-                <div style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
+                <div
+                    className={styles.boardWrapper} 
+                    style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
                     <BoardView 
                         board={board} 
                         isReversed={isLocalRed}
@@ -70,30 +78,56 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 </div>
             </div>
 
-            {/* Zona del Jugador Local */}
-            <div className={styles.playerZone}>
-                <div className={styles.cardsRow}>
-                    {myCards.map((card, index) => {
-                        const isCardSelected = selectedCard?.name === card.name;
-                        return (
-                            <CardView 
-                                key={`my-card-${index}`} 
-                                card={card} 
-                                faction={isLocalRed ? 'red' : 'blue'} 
-                                isSelected={isCardSelected} 
-                                onClick={() => setSelectedCard(card)} 
-                            />
-                        )
-                    })}
-                </div>
-                <PlayerInfo
-                    playerName={`Jugador: ${localName}`}
-                    color={isLocalRed ? 'red' : 'blue'}
-                    isActive={isMyTurn}
-                />
+            <div className={styles.chatArea}>
+                <ChatBox />
             </div>
 
-            {isGameOver && <GameOverModal isWinner={isWinner} onExit={handleExit} />}
+            <DrawBanner
+                drawOfferReceived={drawOfferReceived}
+                drawRejectedMessage={drawRejectedMessage}
+                onAcceptDraw={handleAcceptDraw}
+                onRejectDraw={handleRejectDraw}
+            />
+
+            {/* Zona del Jugador Local */}
+            <PlayerZone 
+                isOpponent={false}
+                playerName={`Jugador: ${localName}`}
+                color={isLocalRed ? 'red' : 'blue'}
+                isActive={isMyTurn}
+                timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
+                cards={myCards}
+                selectedCard={selectedCard}
+                onSelectCard={setSelectedCard}
+                isGameOver={isGameOver}
+                isConnected={isConnected}
+                disconnectTimer={disconnectTimer}
+            />
+
+            <GameControls
+                status={gameState.status}
+                isGameOver={isGameOver}
+                drawOfferSent={drawOfferSent}
+                drawOfferReceived={drawOfferReceived}
+                onOfferDraw={handleOfferDraw}
+                onSurrender={handleSurrender}
+                onExit={handleExit}
+            />
+
+            {/* NUEVO: Banner de Revancha que flota sobre el tablero finalizado */}
+            {gameState.status === 'finished' && isGameOver && !isModalOpen && (
+                <RematchBanner 
+                    rematchState={rematch.rematchState}
+                    onOfferRematch={rematch.offerRematch}
+                    onAcceptRematch={rematch.acceptRematch}
+                    onRejectRematch={rematch.rejectRematch}
+                />
+            )}
+
+        
+            {gameState.status === 'finished' && isGameOver && isModalOpen && (
+                <GameOverModal result={gameResult} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
+            )}
         </div>
     );
 };

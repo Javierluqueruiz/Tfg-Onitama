@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { Board, Card, GameState } from "../../../shared/types";
+import { Board, Card, GameState } from "../../../shared/index";
 import { MoveArbitrator } from "../../src/game/MoveArbitrator";
 import { GameEngine } from "../../src/game/GameEngine";
 
@@ -31,6 +31,10 @@ describe('FEAT-08: Alternar el turno entre los jugadores', () => {
         currentTurn: currentPlayer,
         status: 'in_progress',
         winner: null,
+        timeRemaining: {
+            red: 600,
+            blue: 600
+        }
     });
 
     it('Debe alternar el turno de rojo a azul en condiciones normales', () => {

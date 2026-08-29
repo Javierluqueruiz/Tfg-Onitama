@@ -1,6 +1,7 @@
 type RedPlayer = 'red';
 type BluePlayer = 'blue';
 export type PlayerColor = RedPlayer | BluePlayer;
+export type Winner = PlayerColor | 'draw' | null;
 
 type StudentPiece = 'student';
 type MasterPiece = 'master';
@@ -43,9 +44,13 @@ export interface GameState {
         blue: [Card, Card];
         neutral: Card;
     };
-    winner: PlayerColor | null;
+    winner: Winner;
     lastMove?: {
         from : Position;
         to: Position;
+    };
+    timeRemaining: {
+        red: number;
+        blue: number;
     };
 }

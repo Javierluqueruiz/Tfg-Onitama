@@ -1,0 +1,54 @@
+/* PlayerZone.tsx */
+.cardsRow {
+    display: flex;
+    gap: 20px;
+}
+
+.playerZone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+/* --- DISEÑO RESPONSIVO PARA MÓVILES --- */
+@media (max-width: 768px) {
+    .cardsRow {
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+/* NetworkStatus.tsx */
+
+/* Sub-05.2 */
+.disconnectBanner {
+  background: var(--game-line-soft);
+  color: var(--game-ink);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--game-line);
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+.reconnectBanner {
+  background-color: var(--game-jade-soft);
+  color: var(--game-ink);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--game-jade);
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { opacity: 1; }
+}

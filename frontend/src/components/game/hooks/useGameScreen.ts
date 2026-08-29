@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react';
-import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile } from '../../../../shared';
-import { useSocket } from '../../contexts/SocketContext';
+import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile } from '../../../../../shared';
+import { useSocket } from '../../../contexts/SocketContext';
+import { useNetwork } from './useNetwork';
+import { useDrawNegotiation } from './useDrawNegotiation';
+import { useRematchNegotiation } from './useRematchNegotiation';
 
 
 
@@ -9,17 +12,22 @@ export const useGameScreen = (
         localColor: PlayerColor | null, 
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
 ) => {
-    const { socket } = useSocket();
+    const { socket, isConnected } = useSocket();
+    const rematch = useRematchNegotiation(socket);
+
+    const networkState = useNetwork(socket, gameState.status);
+    const drawNegotiationState = useDrawNegotiation(socket);
+
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);
     const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
 
     //Estado global
+    const [isModalOpen, setIsModalOpen] = useState(true);
     const {board, currentTurn, cards, winner, lastMove} = gameState;
     const isLocalRed = localColor === 'red';
     const isMyTurn = currentTurn === localColor;
     const isGameOver = winner !== null;
-    const isWinner = winner === localColor;
-    
+
     //Perfiles y nombres
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
     const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
@@ -30,6 +38,14 @@ export const useGameScreen = (
     const neutralCard = cards.neutral;
     const boardRotation = isLocalRed ? 'rotate(180deg)' : 'rotate(0deg)';
 
+    let gameResult: 'win' | 'lose' | 'draw' = 'lose';
+
+    if (gameState.winner === localColor) {
+        gameResult = 'win';
+    } else if (gameState.winner === 'draw') {
+        gameResult = 'draw';
+    }
+
     //Destinos Válidos
     const validTargets = useMemo(() => {
         if (!selectedCard || !selectedPiece) return [];
@@ -38,10 +54,12 @@ export const useGameScreen = (
         return selectedCard.moves.map(move => ({
             x: selectedPiece.x + move.x * multiplier,
             y: selectedPiece.y + move.y * multiplier    
-        })).filter(pos => 
-            pos.x >= 0 && pos.x < 5 && pos.y >= 0 && pos.y < 5
-        );
-    }, [selectedCard, selectedPiece, isLocalRed]);
+        })).filter(pos => {
+            if (pos.x < 0 || pos.x >= 5 || pos.y < 0 || pos.y >= 5) return false;
+            const destCell = board[pos.y][pos.x];
+            return !destCell || destCell.color !== localColor; // vacía o pieza rival (captura)
+        });
+    }, [selectedCard, selectedPiece, isLocalRed, board, localColor]);
 
     //Gestión de Eventos
     const handleCellClick = (position: Position) => {
@@ -72,16 +90,28 @@ export const useGameScreen = (
         }
     };
 
+    const handleSurrender = () => {
+        if (!isGameOver) {
+            const confirmSurrender = window.confirm("¿Estás seguro de que deseas abandonar la partida? Tu oponente ganará automáticamente.");
+            if (confirmSurrender) {
+                socket?.emit(SocketEvents.SURRENDER);
+            }
+        }
+    };
+
     const handleExit = () => {
         socket?.emit(SocketEvents.LEAVE_ROOM);
         window.location.reload();
     };
 
+
+
     return {
-        board, currentTurn, isLocalRed, isMyTurn, isGameOver, isWinner,
+        ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleExit
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch
     };
 
 }
+

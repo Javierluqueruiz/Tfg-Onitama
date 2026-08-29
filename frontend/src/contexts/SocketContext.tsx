@@ -1,5 +1,7 @@
 import { createContext, useState, useContext, useEffect } from "react";
 import { Socket, io } from "socket.io-client";
+import type { ReconnectPayload } from "../../../shared";
+import { SocketEvents } from "../../../shared";
 
 interface SocketContextState {
     socket: Socket | null;
@@ -11,8 +13,10 @@ const SocketContext = createContext<SocketContextState>({
     isConnected: false,
 })
 
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
+
 export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ children }) => {
-    const [socket, setSocket] = useState<Socket>(() => io('http://localhost:3000', { autoConnect: false }));
+    const [socket, setSocket] = useState<Socket>(() => io(SOCKET_URL, { autoConnect: false }));
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
@@ -21,6 +25,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
         socket.on('connect', () => {
             console.log('Connected to server');
             setIsConnected(true);
+
+            const savedSession = localStorage.getItem('onitama_session');
+
+            if (savedSession) {
+                const { roomId, originalSocketId } = JSON.parse(savedSession);
+                const payload: ReconnectPayload = { roomId, originalSocketId };
+                socket.emit(SocketEvents.RECONNECT_ATTEMPT, payload);
+            }
         });
 
         socket.on('disconnect', () => {
@@ -28,11 +40,41 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
             setIsConnected(false);
         });
 
+        //Sub-05.2: Reconexión
+        socket.on(SocketEvents.RECONNECT_FAILED, () => {
+            localStorage.removeItem('onitama_session');
+        })
+
+        socket.on(SocketEvents.ERROR, (data: { message: string }) => {
+            console.error('Error from server:', data.message);
+        });
+
+        const handleNetworkRecover = () => {
+            if (socket.disconnected) {
+                socket.connect();
+            }
+        };
+
+        const handleOffline = () => {
+            console.warn('Conexión a Internet perdida. Intentando reconectar...');
+            setIsConnected(false);
+            socket.disconnect();
+        };
+
+        
+
+        window.addEventListener('online', handleNetworkRecover);
+        window.addEventListener('offline', handleOffline);
 
         return () => {
             socket.disconnect();
             socket.off('connect');
             socket.off('disconnect');
+            socket.off(SocketEvents.RECONNECT_FAILED);
+            socket.off(SocketEvents.ERROR);
+            window.removeEventListener('online', handleNetworkRecover);
+            window.removeEventListener('offline', handleOffline);
+            
         };
 
     }, [socket]);

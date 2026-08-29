@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { SocketEvents } from '../../../shared';
+import { SocketEvents, type GameMode } from '../../../shared';
 import { useSocket } from '../contexts/SocketContext';
 
-type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITING';
+type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITING' | 'MATCHMAKING';
 
 export const useLobby = () => {
     const { socket, isConnected } = useSocket();
 
     //Todos los estados
     const [currentScreen, setCurrentScreen] = useState<MenuScreen>('MAIN');
+    const [selectMode, setSelectMode] = useState<GameMode | null>(null);
     const [playerName, setPlayerName] = useState<string>('');
     const [joinCode, setJoinCode] = useState<string>('');
     const [createdRoomCode, setCreatedRoomCode] = useState<string>('');
@@ -35,10 +36,10 @@ export const useLobby = () => {
     }, [socket]);
 
     //Todos los handle
-    const handleCreateRoom = () => {
+    const handleCreateRoom = (mode: GameMode) => {
         if (!playerName.trim()) return setErrorMsg('El nombre del jugador no puede estar vacío.');
         setErrorMsg(null);
-        socket?.emit(SocketEvents.CREATE_ROOM, { hostName: playerName });
+        socket?.emit(SocketEvents.CREATE_ROOM, { hostName: playerName, mode });
     };
 
     const handleJoinRoom = () => {
@@ -51,10 +52,18 @@ export const useLobby = () => {
         });
     };
 
+    const startMatchmaking = (mode: GameMode) => {
+        setErrorMsg(null);
+        setSelectMode(mode);
+        setCurrentScreen('MATCHMAKING');
+    };
+    console.log(`Selecting mode: ${selectMode}, current screen: ${currentScreen}`);
+
     return {
         isConnected,
         currentScreen,
         setCurrentScreen,
+        selectMode,
         playerName,
         setPlayerName,
         joinCode,
@@ -63,6 +72,8 @@ export const useLobby = () => {
         errorMsg,
         setErrorMsg,
         handleCreateRoom,
-        handleJoinRoom
+        handleJoinRoom,
+        startMatchmaking,
+        setSelectMode
     };
 };

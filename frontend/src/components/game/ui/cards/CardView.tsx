@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Card } from '../../../../shared';
+import type { Card } from '../../../../../../shared';
 import styles from './CardView.module.css';
 
 interface CardViewProps {
