@@ -64,3 +64,7 @@ jobs:
       - name: Build (incluye comprobación de tipos)
         working-directory: ./frontend
         run: npm run build
+
+      - name: Run tests
+        working-directory: ./frontend
+        run: npm test
