@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { SocketEvents } from "../../../../../shared/index";
+import type { Socket } from "socket.io-client";
 
-export const useRematchNegotiation = (socket: any) => {
+export const useRematchNegotiation = (socket: Socket | null) => {
     const [rematchState, setRematchState] = useState<'none' | 'offered' | 'received' | 'rejected'>('none');
     const [timesOffered, setTimesOffered] = useState(0);
     useEffect(() => {
@@ -29,17 +30,17 @@ export const useRematchNegotiation = (socket: any) => {
     }, [socket]);
 
     const offerRematch = () => {
-        socket.emit(SocketEvents.OFFER_REMATCH);
+        socket?.emit(SocketEvents.OFFER_REMATCH);
         setTimesOffered(prev => prev + 1);
         setRematchState('offered');
     };
 
     const acceptRematch = () => {
-        socket.emit(SocketEvents.ACCEPT_REMATCH);
+        socket?.emit(SocketEvents.ACCEPT_REMATCH);
     };
 
     const rejectRematch = () => {
-        socket.emit(SocketEvents.REJECT_REMATCH);
+        socket?.emit(SocketEvents.REJECT_REMATCH);
         setRematchState('rejected');
     };
 
