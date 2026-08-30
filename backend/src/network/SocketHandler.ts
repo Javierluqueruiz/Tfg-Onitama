@@ -1,6 +1,7 @@
 import { Server, Socket } from "socket.io";
 import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../../shared";
 import { RoomManager } from "./RoomManager";
+import { GameEngine } from "../game/GameEngine";
 
 export function registerSocketEvents(io: Server) {
 
@@ -61,40 +62,36 @@ export function registerSocketEvents(io: Server) {
             }
 
             //INICIAR EL JUEGO
-            const engine = room.gameEngine;
+            const initialState = GameEngine.createNewGame(roomId);
+            room.gameState = initialState;
 
-            if (engine) {
+            if (room.mode === 'normal') {
+                room.gameState.timeRemaining = { red: 600, blue: 600 };
+            } else if (room.mode === 'fast') {
+                room.gameState.timeRemaining = { red: 300, blue: 300 };
+            } 
 
-                const initialState = engine.createNewGame(roomId);
-                room.gameState = initialState;
-
-                if (room.mode === 'normal') {
-                    room.gameState.timeRemaining = { red: 600, blue: 600 };
-                } else if (room.mode === 'fast') {
-                    room.gameState.timeRemaining = { red: 300, blue: 300 };
-                } 
-
-                const playersMapping = {
-                    red: room.players.red,
-                    blue: room.players.blue
-                }
-
-                io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState, players: playersMapping });
-                if (room.mode !== 'casual') {
-                    RoomManager.startGameTimer(roomId,
-                        (timeRemaining) => {
-                            io.to(roomId).emit(SocketEvents.TIME_TICK, { timeRemaining });
-                        },
-
-                        (finalState) => {
-                            io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
-                            RoomManager.deleteRoom(roomId);
-                        }
-                    );
-                }
-                
-                console.log('Partida iniciada en la sala:', roomId);
+            const playersMapping = {
+                red: room.players.red,
+                blue: room.players.blue
             }
+
+            io.to(roomId).emit(SocketEvents.GAME_START, { gameState: initialState, players: playersMapping });
+            if (room.mode !== 'casual') {
+                RoomManager.startGameTimer(roomId,
+                    (timeRemaining) => {
+                        io.to(roomId).emit(SocketEvents.TIME_TICK, { timeRemaining });
+                    },
+
+                    (finalState) => {
+                        io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
+                        RoomManager.deleteRoom(roomId);
+                    }
+                );
+            }
+            
+            console.log('Partida iniciada en la sala:', roomId);
+            
 
         });
 
@@ -110,7 +107,7 @@ export function registerSocketEvents(io: Server) {
             }
 
             try {
-                const newState = room.gameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
+                const newState = GameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
                 room.gameState = newState;
 
                 io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: newState });
@@ -120,9 +117,10 @@ export function registerSocketEvents(io: Server) {
                     // RoomManager.deleteRoom(room.roomId);
                 } 
 
-            } catch (error: any) {
-                console.warn(`Jugada invalida rechazada: ${error.message}`);
-                socket.emit(SocketEvents.ERROR, { message: error.message });
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'Error desconocido';
+                console.warn(`Jugada invalida rechazada: ${message}`);
+                socket.emit(SocketEvents.ERROR, { message });
             }
         });
 
@@ -159,7 +157,7 @@ export function registerSocketEvents(io: Server) {
                     RoomManager.stopGameTimer(room.roomId); 
                     //RoomManager.deleteRoom(room.roomId);
                 }
-            } catch (error) {
+            } catch {
                 socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la rendición.' });
             }
         });
@@ -192,7 +190,7 @@ export function registerSocketEvents(io: Server) {
                         RoomManager.clearDisconnectTimer(room.roomId);
                         console.log(RoomManager.getActiveRooms());
                     }
-                } catch (error) {
+                } catch {
                     socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la rendición por desconexión.' });
                 }
             }, timeLimit); // 30 segundos
@@ -223,8 +221,9 @@ export function registerSocketEvents(io: Server) {
                 } else {
                     socket.emit(SocketEvents.RECONNECT_FAILED);
                 }
-            } catch (error: any) {
-                socket.emit(SocketEvents.ERROR, { message: 'Error al procesar el intento de reconexión: ' + error.message });
+            } catch (error) {
+                const message = error instanceof Error ? error.message : 'Error desconocido';
+                socket.emit(SocketEvents.ERROR, { message: 'Error al procesar el intento de reconexión: ' + message });
             }
         })
 
@@ -261,7 +260,7 @@ export function registerSocketEvents(io: Server) {
                     RoomManager.stopGameTimer(room.roomId);
                     // RoomManager.deleteRoom(room.roomId);
                 }
-            } catch (error) {
+            } catch {
                 socket.emit(SocketEvents.ERROR, { message: 'Error al procesar la aceptación del empate.' });
             }
         });
@@ -289,7 +288,7 @@ export function registerSocketEvents(io: Server) {
                 const room = RoomManager.getRoomById(result.roomId);
                 
                 if (room) {
-                    room.gameState = room.gameEngine.createNewGame(room.roomId);
+                    room.gameState = GameEngine.createNewGame(room.roomId);
                     
                     if (mode === 'normal') {
                         room.gameState.timeRemaining = { red: 600, blue: 600 };

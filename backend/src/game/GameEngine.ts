@@ -7,12 +7,12 @@ import { VictoryArbitrator } from "./VictoryArbitrator";
 
 export class GameEngine {
 
-    public createNewGame(roomId: string): GameState {
+    public static createNewGame(roomId: string): GameState {
         const board = BoardGenerator.createInitialBoard();
         const deckResult = DeckManager.drawInitialCards();
 
         return {
-            roomId, 
+            roomId,
             status: 'waiting',
             currentTurn: deckResult.firstTurn,
             board,
@@ -26,7 +26,7 @@ export class GameEngine {
     }
 
     //FEAT-08: Alternar el turno entre los jugadores
-    public switchTurn(currentState: GameState): GameState {
+    public static switchTurn(currentState: GameState): GameState {
 
         const newState: GameState = {
             ...currentState,
@@ -35,13 +35,11 @@ export class GameEngine {
                 blue: [...currentState.cards.blue],
                 neutral: { ...currentState.cards.neutral }
             }
-        } ;
+        };
 
         newState.currentTurn = currentState.currentTurn === 'red' ? 'blue' : 'red';
 
-        //Preparamos los datos para realizar la validación de movimientos válidos (FEAT-07)
         const handCards: [Card, Card] = newState.currentTurn === 'red' ? newState.cards.red : newState.cards.blue;
-
         const hasValidMove: boolean = MoveArbitrator.hasValidMoves(newState.board, newState.currentTurn, handCards as [Card, Card]);
 
         if (!hasValidMove) {
@@ -55,7 +53,7 @@ export class GameEngine {
     }
 
     //Flujo de turno completo
-    public processTurn(state: GameState, from: Position, to: Position, cardName: string): GameState {
+    public static processTurn(state: GameState, from: Position, to: Position, cardName: string): GameState {
         const newState: GameState = { ...state };
 
         //FEAT-06: Validar movimiento
@@ -64,7 +62,7 @@ export class GameEngine {
 
         if (!cardUsed) throw new Error(`La carta ${cardName} no está en la mano del jugador ${newState.currentTurn}`);
 
-        MoveArbitrator.validateMove(newState.board, from, to, newState.currentTurn,cardUsed);
+        MoveArbitrator.validateMove(newState.board, from, to, newState.currentTurn, cardUsed);
 
         //FEAT-03/04: Ejecución del movimiento
         newState.board = MovementManager.movePiece(newState.board, from, to).newBoard;
@@ -83,7 +81,7 @@ export class GameEngine {
         newState.cards = DeckManager.playCard(newState.cards, newState.currentTurn, cardName);
 
         //FEAT-08: Cambio de turno y detección de bloqueos
-        const finalState =  this.switchTurn(newState);
+        const finalState = this.switchTurn(newState);
         finalState.lastMove = { from, to };
         return finalState;
     }

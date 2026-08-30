@@ -1,10 +1,8 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile, SocketEvents } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
-import { Server } from 'socket.io';
 
 export interface RoomSession {
     roomId: string;
-    gameEngine: GameEngine;
     gameState: GameState;
     roomCode: string;
     mode: GameMode;
@@ -38,17 +36,11 @@ export class RoomManager {
     }
 
     private static generateUniqueRoomCode(): string {
-        let roomCode: string = '';
-        let isUnique: boolean = false;
+        let roomCode: string;
         
         do {
             roomCode = Math.random().toString(36).substring(2,7).toUpperCase();
-
-            const existingRoom = this.getRoomByCode(roomCode);
-            if (!existingRoom) {
-                isUnique = true;
-            }
-        } while (!isUnique);
+        } while (this.getRoomByCode(roomCode));
 
         return roomCode;
     }
@@ -65,7 +57,6 @@ export class RoomManager {
         //Crea una sala con un nuevo GameEngine.
         const newRoom: RoomSession = {
             roomId,
-            gameEngine: new GameEngine(),
             gameState: null as unknown as GameState, // Inicialmente null, se establecerá cuando se cree un nuevo juego.
             roomCode,
             mode,
@@ -264,7 +255,7 @@ export class RoomManager {
         if (!room) return null;
 
         this.stopGameTimer(roomId);
-        room.gameState = room.gameEngine.createNewGame(roomId);
+        room.gameState = GameEngine.createNewGame(roomId);
 
         if (room.mode === 'normal') {
             room.gameState.timeRemaining = { red: 600, blue: 600 };
