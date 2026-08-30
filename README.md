@@ -1,5 +1,3 @@
-# tfg
-Repositorio para el TFG
 # Onitama
 
 [![CI - Motor Onitama](https://github.com/Javierluqueruiz/Tfg-Onitama/actions/workflows/ci.yml/badge.svg)](https://github.com/Javierluqueruiz/Tfg-Onitama/actions/workflows/ci.yml)
