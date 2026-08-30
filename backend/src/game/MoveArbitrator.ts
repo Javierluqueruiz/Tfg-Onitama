@@ -1,4 +1,4 @@
-import { Board, Card, PlayerColor, Position, isOutOfBounds } from "../../../shared";
+import { Board, Card, PlayerColor, Position, isOutOfBounds, getCellAt } from "../../../shared";
 
 
 export class MoveArbitrator {
@@ -16,8 +16,8 @@ export class MoveArbitrator {
             return `[FEAT-06] Movimiento Ilegal: Las casillas están fuera de los límites del tablero.`;
         }
 
-        const pieceToMove = board[from.y][from.x];
-        const pieceDestination = board[to.y][to.x];
+        const pieceToMove = getCellAt(board, from);
+        const pieceDestination = getCellAt(board, to);
 
         //1. ¿Existe una pieza en el origen?
         if (!pieceToMove){

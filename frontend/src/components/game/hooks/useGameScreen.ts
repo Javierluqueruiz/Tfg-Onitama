@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile } from '../../../../../shared';
+import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile, getCellAt } from '../../../../../shared';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useNetwork } from './useNetwork';
 import { useDrawNegotiation } from './useDrawNegotiation';
 import { useRematchNegotiation } from './useRematchNegotiation';
 import { useGameReconnection } from './useGameReconnection';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
-
+import { getValidTargets } from '../logic/getValidTargets';
 
 export const useGameScreen = (
         gameState: GameState, 
@@ -56,25 +56,17 @@ export const useGameScreen = (
     });
 
     //Destinos Válidos
-    const validTargets = useMemo(() => {
-        if (!selectedCard || !selectedPiece) return [];
-        const multiplier = isLocalRed ? -1 : 1;
-
-        return selectedCard.moves.map(move => ({
-            x: selectedPiece.x + move.x * multiplier,
-            y: selectedPiece.y + move.y * multiplier    
-        })).filter(pos => {
-            if (pos.x < 0 || pos.x >= 5 || pos.y < 0 || pos.y >= 5) return false;
-            const destCell = board[pos.y][pos.x];
-            return !destCell || destCell.color !== localColor; // vacía o pieza rival (captura)
-        });
-    }, [selectedCard, selectedPiece, isLocalRed, board, localColor]);
+    //Destinos Válidos
+    const validTargets = useMemo(
+        () => getValidTargets(board, selectedCard, selectedPiece, localColor, isLocalRed),
+        [selectedCard, selectedPiece, isLocalRed, board, localColor]
+    );  
 
     //Gestión de Eventos
     const handleCellClick = (position: Position) => {
         if (isGameOver || !isMyTurn || isReconnecting) return;
 
-        const clickedCell = board[position.y][position.x];
+        const clickedCell = getCellAt(board, position);
 
         if (clickedCell && clickedCell.color === localColor) {
             if (!selectedCard) {

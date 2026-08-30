@@ -14,6 +14,7 @@ export interface Piece {
 
 export type Cell = Piece | null;
 
+// board[y][x] — el primer índice es la fila (y), el segundo la columna (x)
 export type BoardRow = [Cell, Cell, Cell, Cell, Cell];
 export type Board = [BoardRow, BoardRow, BoardRow, BoardRow, BoardRow];
 

@@ -1,4 +1,4 @@
-import { Board, Piece, Position, isOutOfBounds } from '../../../shared';
+import { Board, Piece, Position, isOutOfBounds, getCellAt, setCellAt } from '../../../shared';
 
 export interface MoveResult {
     newBoard: Board;
@@ -23,17 +23,17 @@ export class MovementManager {
         const newBoard: Board = board.map(row => [...row]) as Board;
 
         //3. Validar que haya una pieza en la posición de origen
-        const pieceToMove = newBoard[from.y][from.x];
+        const pieceToMove = getCellAt(newBoard, from);
 
         if (!pieceToMove) {
             throw new Error(`[FEAT-03] No hay pieza en la posición de origen (${from.x}, ${from.y})`);
         }
 
-        const capturedPiece = newBoard[to.y][to.x]; 
+        const capturedPiece = getCellAt(newBoard, to); 
 
         //4. Mover la pieza
-        newBoard[to.y][to.x] = pieceToMove; 
-        newBoard[from.y][from.x] = null;
+        setCellAt(newBoard, to, pieceToMove);
+        setCellAt(newBoard, from, null);
 
         return {
             newBoard,
