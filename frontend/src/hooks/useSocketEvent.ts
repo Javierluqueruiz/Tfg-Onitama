@@ -4,10 +4,12 @@ import type { Socket } from 'socket.io-client';
 export function useSocketEvent<T = unknown>(
     socket: Socket | null,
     event: string,
-    handler: (payolad: T) => void
-) : void {
+    handler: (payload: T) => void
+): void {
     const handlerRef = useRef(handler);
-    handlerRef.current = handler;
+    useEffect(() => {
+        handlerRef.current = handler;
+    });
 
     useEffect(() => {
         if (!socket) return;

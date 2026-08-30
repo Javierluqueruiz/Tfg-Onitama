@@ -1,33 +1,25 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SocketEvents } from "../../../../../shared/index";
 import type { Socket } from "socket.io-client";
+import { useSocketEvent } from "../../../hooks/useSocketEvent";
 
 export const useRematchNegotiation = (socket: Socket | null) => {
     const [rematchState, setRematchState] = useState<'none' | 'offered' | 'received' | 'rejected'>('none');
     const [timesOffered, setTimesOffered] = useState(0);
-    useEffect(() => {
-        if (!socket) return;
 
-        const handleOffered = () => {
-            console.log(`Jugador ${socket.id} ha ofrecido una revancha.`);
-            setRematchState('received');
-        };
-        const handleRejected = () => {
-            console.log(`Jugador ${socket.id} ha rechazado la solicitud de revancha.`);
-            setRematchState('rejected');
-        };
-        const handleGameStart = () => setRematchState('none');
+    useSocketEvent(socket, SocketEvents.REMATCH_OFFERED, () => {
+        console.log(`Jugador ${socket?.id} ha ofrecido una revancha.`);
+        setRematchState('received');
+    });
 
-        socket.on(SocketEvents.REMATCH_OFFERED, handleOffered);
-        socket.on(SocketEvents.REMATCH_REJECTED, handleRejected);
-        socket.on(SocketEvents.GAME_START, handleGameStart);
+    useSocketEvent(socket, SocketEvents.REMATCH_REJECTED, () => {
+        console.log(`Jugador ${socket?.id} ha rechazado la solicitud de revancha.`);
+        setRematchState('rejected');
+    });
 
-        return () => {
-            socket.off(SocketEvents.REMATCH_OFFERED, handleOffered);
-            socket.off(SocketEvents.REMATCH_REJECTED, handleRejected);
-            socket.off(SocketEvents.GAME_START, handleGameStart);
-        };
-    }, [socket]);
+    useSocketEvent(socket, SocketEvents.GAME_START, () => {
+        setRematchState('none');
+    });
 
     const offerRematch = () => {
         socket?.emit(SocketEvents.OFFER_REMATCH);

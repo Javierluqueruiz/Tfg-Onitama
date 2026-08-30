@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { SocketEvents, type GameMode } from '../../../../../shared';
 import { useSocket } from '../../../contexts/SocketContext';
+import { useSocketEvent } from '../../../hooks/useSocketEvent';
 
 type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITING' | 'MATCHMAKING';
 
@@ -14,20 +15,11 @@ export const useLobby = () => {
     const [joinCode, setJoinCode] = useState<string>('');
     const [createdRoomCode, setCreatedRoomCode] = useState<string>('');
 
-    //Todos los effects
-    useEffect(() => {
-        if (!socket) return;
-
-        socket.on(SocketEvents.ROOM_CREATED, (data: { roomCode: string }) => {
-            setCreatedRoomCode(data.roomCode)
-            setCurrentScreen('WAITING');
-            setErrorMsg(null);
-        });
-
-        return () => {
-            socket.off(SocketEvents.ROOM_CREATED);
-        };
-    }, [socket, setErrorMsg]);
+    useSocketEvent(socket, SocketEvents.ROOM_CREATED, (data: { roomCode: string }) => {
+        setCreatedRoomCode(data.roomCode);
+        setCurrentScreen('WAITING');
+        setErrorMsg(null);
+    });
 
     //Todos los handle
     const handleCreateRoom = (mode: GameMode) => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { SocketEvents } from '../../../../../shared';
 import type { Socket } from 'socket.io-client';
+import { useSocketEvent } from '../../../hooks/useSocketEvent';
 
 export const useNetwork = (socket: Socket | null, gameStateStatus: string) => {
 
@@ -19,66 +20,39 @@ export const useNetwork = (socket: Socket | null, gameStateStatus: string) => {
     }, [gameStateStatus]);
 
     //Sub-05.2: Gestión de eventos de desconexión y reconexión del oponente
-    useEffect(() => {
-        if (!socket) return;
+    useSocketEvent(socket, SocketEvents.OPPONENT_DISCONNECTED, (data: { timeLimit: number }) => {
+        setDisconnectTimer(data.timeLimit / 1000);
+        setReconnectMessage(false);
+    });
 
-        socket?.on(SocketEvents.OPPONENT_DISCONNECTED, (data: { timeLimit: number }) => {
-            setDisconnectTimer(data.timeLimit / 1000);
-            setReconnectMessage(false);
-        });
+    useSocketEvent(socket, SocketEvents.OPPONENT_RECONNECTED, () => {
+        setDisconnectTimer(null);
+        setReconnectMessage(true);
 
-        socket?.on(SocketEvents.OPPONENT_RECONNECTED, () => {
-            setDisconnectTimer(null);
-            setReconnectMessage(true);
-
-            setTimeout(() => setReconnectMessage(false), 3000);
-        });
-
-        return () => {
-            socket?.off(SocketEvents.OPPONENT_DISCONNECTED);
-            socket?.off(SocketEvents.OPPONENT_RECONNECTED);
-        };
-    }, [socket]);
+        setTimeout(() => setReconnectMessage(false), 3000);
+    });
 
     //Sub-05.2: Temporizador de desconexión
     useEffect(() => {
-            if (disconnectTimer === null || disconnectTimer <= 0) return;
-    
-            const interval = setInterval(() => {
-                setDisconnectTimer((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
-            }, 1000);
-    
-            return () => clearInterval(interval);
+        if (disconnectTimer === null || disconnectTimer <= 0) return;
+
+        const interval = setInterval(() => {
+            setDisconnectTimer((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(interval);
     }, [disconnectTimer])
 
     //Sub-05.3: Gestión del temporizador de juego
-    useEffect(() => {
-        if (!socket) return;
+    useSocketEvent(socket, SocketEvents.TIME_TICK, (data: { timeRemaining: { red: number; blue: number } }) => {
+        setTimeRemaining(data.timeRemaining);
+    });
 
-        socket.on(SocketEvents.TIME_TICK, (data: { timeRemaining: { red: number; blue: number } }) => {
-            setTimeRemaining(data.timeRemaining);
-        });
-
-        return () => {
-            socket.off(SocketEvents.TIME_TICK);
-        };
-    }, [socket]);
-
-    useEffect(() => {
-    if (!socket) return;
-
-    const handleGameStart = (data: { gameState: { timeRemaining: { red: number; blue: number } } }) => {
+    useSocketEvent(socket, SocketEvents.GAME_START, (data: { gameState: { timeRemaining: { red: number; blue: number } } }) => {
         setTimeRemaining(data.gameState.timeRemaining ?? { red: 0, blue: 0 });
         setDisconnectTimer(null);
         setReconnectMessage(false);
-    };
-
-    socket.on(SocketEvents.GAME_START, handleGameStart);
-
-    return () => {
-        socket.off(SocketEvents.GAME_START, handleGameStart);
-    };
-}, [socket]);
+    });
 
     return {
         disconnectTimer,
