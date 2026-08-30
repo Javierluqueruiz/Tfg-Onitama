@@ -1,4 +1,4 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, Winner } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 
 export interface RoomSession {
@@ -54,7 +54,6 @@ export class RoomManager {
 
         const isHostRed = Math.random() < 0.5;
 
-        //Crea una sala con un nuevo GameEngine.
         const newRoom: RoomSession = {
             roomId,
             gameState: null as unknown as GameState, // Inicialmente null, se establecerá cuando se cree un nuevo juego.
@@ -100,24 +99,24 @@ export class RoomManager {
         }  
     }
 
-    //Sub-05.1
-    public static surrenderGame(roomId: string, surrenderingPlayerSocketId: string): GameState | null {
-        const room = this.getRoomById(roomId);
-        if (!room) return null;
-
-        const isRed = room.players.red?.socketId === surrenderingPlayerSocketId;
-        const winner = isRed ? 'blue' : 'red';
-
-        const updatedState: GameState = {
+    private static finishGame(room: RoomSession, winner: Winner): GameState {
+        room.gameState = {
             ...room.gameState,
             status: 'finished',
             winner: winner
         };
-        
-        room.gameState = updatedState;
-        this.activeRooms.set(roomId, room); // Actualiza la sala con el nuevo estado del juego
+        return room.gameState;
+    }
 
-        return updatedState;
+    //Sub-05.1
+    public static surrenderGame(roomId: string, surrenderingPlayerSocketId: string): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room || room.gameState.status === 'finished') return null;
+
+        const isRed = room.players.red?.socketId === surrenderingPlayerSocketId;
+        const winner = isRed ? 'blue' : 'red';
+
+        return this.finishGame(room, winner);
     }
     
     //SUB-05.2: Desconexión
@@ -199,16 +198,7 @@ export class RoomManager {
         const room = this.getRoomById(roomId);
         if (!room || room.gameState.status === 'finished') return null;
 
-        const updatedState: GameState = {
-            ...room.gameState,
-            status: 'finished',
-            winner: 'draw'
-        };
-
-        room.gameState = updatedState;
-        this.activeRooms.set(roomId, room); 
-
-        return updatedState;
+        return this.finishGame(room, 'draw');
     }
 
     //Sub-06.1
