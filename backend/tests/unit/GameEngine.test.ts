@@ -39,12 +39,11 @@ describe('FEAT-08: Alternar el turno entre los jugadores', () => {
 
     it('Debe alternar el turno de rojo a azul en condiciones normales', () => {
         const state = createMockeState('red');
-        const engine = new GameEngine();
 
         //'Espiamos' al arbitro y forzamos que retorne true
         vi.spyOn(MoveArbitrator, 'hasValidMoves').mockReturnValue(true);
 
-        const newState = engine.switchTurn(state);
+        const newState = GameEngine.switchTurn(state);
 
         expect(newState.currentTurn).toBe('blue');
         vi.restoreAllMocks();
@@ -52,11 +51,10 @@ describe('FEAT-08: Alternar el turno entre los jugadores', () => {
 
     it('Debe alternar el turno de azul a rojo en condiciones normales', () => {
         const state = createMockeState('blue');
-        const engine = new GameEngine();
 
         vi.spyOn(MoveArbitrator, 'hasValidMoves').mockReturnValue(true);
 
-        const newState = engine.switchTurn(state);
+        const newState = GameEngine.switchTurn(state);
 
         expect(newState.currentTurn).toBe('red');
         vi.restoreAllMocks();
@@ -65,12 +63,11 @@ describe('FEAT-08: Alternar el turno entre los jugadores', () => {
      it('Debe saltar el turno del jugador si no tiene movimientos válidos', () => {
 
         const state = createMockeState('red');
-        const engine = new GameEngine();
 
         vi.spyOn(MoveArbitrator, 'hasValidMoves').mockReturnValueOnce(false);
 
         //Pasamos el turno al azul
-        const newState = engine.switchTurn(state);
+        const newState = GameEngine.switchTurn(state);
 
         expect(newState.currentTurn).toBe('blue');
         expect(newState.status).toBe('waiting_for_discard');

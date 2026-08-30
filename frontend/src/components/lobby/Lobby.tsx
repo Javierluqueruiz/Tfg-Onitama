@@ -1,11 +1,11 @@
-import { MainMenu } from './lobby/MainMenu';
-import { CreateRoom } from './lobby/CreateRoom';
-import { JoinRoom } from './lobby/JoinRoom';
-import { WaitingRoom } from './lobby/WaitingRoom';
-import styles from './lobby/Lobby.module.css';
-import { useLobby } from './useLobby';
-import type { GameMode } from '../../../shared';
-import { MatchmakingRoom } from './lobby/MatchmakingRoom';
+import { MainMenu } from './ui/MainMenu';
+import { CreateRoom } from './ui/CreateRoom';
+import { JoinRoom } from './ui/JoinRoom';
+import { WaitingRoom } from './ui/WaitingRoom';
+import styles from './Lobby.module.css';
+import { useLobby } from './hooks/useLobby';
+import type { GameMode } from '../../../../shared';
+import { MatchmakingRoom } from './ui/MatchmakingRoom';
 
 export const Lobby: React.FC =  () => {
     const {

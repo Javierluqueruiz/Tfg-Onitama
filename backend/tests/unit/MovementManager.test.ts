@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { MovementManager } from "../../src/game/MovementManager";
-import { GameEngine } from "../../src/game/GameEngine";
 import { Board } from "../../../shared/index";
 import { BoardGenerator } from "../../src/game/BoardGenerator";
 
@@ -17,7 +16,7 @@ describe('FEAT-03 : Desplazamiento de piezas', () => {
         const from = { x: 0, y: 0 }; //Posición inicial de una pieza roja
         const to = { x: 0, y: 1 }; //Posición destino vacía
         
-        const { newBoard, capturedPiece } = MovementManager.movePiece(initialBoard, from, to);
+        const { newBoard } = MovementManager.movePiece(initialBoard, from, to);
 
         expect(newBoard[to.y][to.x]).toEqual(initialBoard[from.y][from.x]); //La pieza se mueve a la nueva posición
         expect(newBoard[from.y][from.x]).toBeNull(); //La posición original queda vacía
@@ -38,6 +37,10 @@ describe('FEAT-03 : Desplazamiento de piezas', () => {
         //El tablero original no debe modificarse
         expect(initialBoard[from.y][from.x]).not.toBeNull();
         expect(initialBoard[to.y][to.x]).toBeNull();
+
+        expect(newBoard[from.y][from.x]).toBeNull();
+        expect(newBoard[to.y][to.x]).toEqual(initialBoard[from.y][from.x]);
+        expect(newBoard).not.toBe(initialBoard); //Deben ser referencias diferentes
     });
 
     it('Debe lanzar un error si la posición de origen o destino están fuera de los límites del tablero', () => {

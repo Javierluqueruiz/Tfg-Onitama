@@ -9,11 +9,12 @@ interface NetworkStatusProps {
     isConnected: boolean;
     disconnectTimer: number | null;
     reconnectMessage?: boolean;
+    isReconnecting?: boolean;
 };
 
-export const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOpponent, isConnected, disconnectTimer, reconnectMessage }) => 
+export const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOpponent, isConnected, disconnectTimer, reconnectMessage, isReconnecting }) => 
     {
-        const { socket, isReconnecting } = useSocket(); // Solo extraemos el socket, NO el ping
+        const { socket } = useSocket(); // Solo extraemos el socket, NO el ping
         const [ping, setPing] = useState<number>(0);
 
         // Efecto aislado SOLO para calcular el ping de este componente

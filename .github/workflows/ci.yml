@@ -29,6 +29,10 @@ jobs:
         working-directory: ./backend
         run: npx vitest run --coverage
 
+      - name: Lint
+        working-directory: ./backend
+        run: npm run lint
+
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
@@ -60,3 +64,7 @@ jobs:
       - name: Build (incluye comprobación de tipos)
         working-directory: ./frontend
         run: npm run build
+
+      - name: Run tests
+        working-directory: ./frontend
+        run: npm test

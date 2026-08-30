@@ -1,6 +1,4 @@
 //Eventos para los WebSockets
-import type {GameState } from './domain.types';
-
 export enum SocketEvents {
     //Cliente a Servidor
     CREATE_ROOM = 'create_room',
@@ -57,17 +55,6 @@ export interface PlayerProfile {
     name: string;
 }
 
-export interface RoomSession {
-    roomId: string;
-    roomCode: string;
-    mode: GameMode;
-    players: {
-        RED: PlayerProfile | null;
-        BLUE: PlayerProfile | null;
-    };
-    gameState: GameState | null;
-}
-
 export interface ReconnectPayload {
     roomId: string;
     originalSocketId: string;
@@ -77,10 +64,6 @@ export interface ReconnectPayload {
 //Sub-06.1
 //Modos de juego
 export type GameMode = 'casual' | 'normal' | 'fast';
-
-export interface JoinQueuePayload {
-    mode: GameMode;
-}
 
 export interface MatchFoundPayload {
     roomId: string;

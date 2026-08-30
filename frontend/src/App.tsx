@@ -1,4 +1,4 @@
-import { Lobby } from './components/Lobby';
+import { Lobby } from './components/lobby/Lobby';
 import { GameScreen } from './components/game/GameScreen';
 import { useApp } from './useApp';
 

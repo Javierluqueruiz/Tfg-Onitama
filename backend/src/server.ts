@@ -5,14 +5,14 @@ import { registerSocketEvents } from './network/SocketHandler';
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+
 app.get('/health', (req, res) => {
     res.status(200).send('OK');
 });
-//app.use(cors());
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        //origin: "http://localhost:5173",
         origin: "*",
         methods: ["GET", "POST"]
     },
@@ -27,4 +27,3 @@ registerSocketEvents(io);
 server.listen(PORT, () => {
     console.log(`Servidor escuchando en el puerto ${PORT}`);
 })
-
