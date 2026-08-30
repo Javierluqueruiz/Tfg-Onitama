@@ -19,6 +19,7 @@ export const useRematchNegotiation = (socket: Socket | null) => {
 
     useSocketEvent(socket, SocketEvents.GAME_START, () => {
         setRematchState('none');
+        setTimesOffered(0);
     });
 
     const offerRematch = () => {
@@ -29,6 +30,7 @@ export const useRematchNegotiation = (socket: Socket | null) => {
 
     const acceptRematch = () => {
         socket?.emit(SocketEvents.ACCEPT_REMATCH);
+
     };
 
     const rejectRematch = () => {
