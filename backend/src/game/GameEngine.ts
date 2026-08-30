@@ -7,21 +7,15 @@ import { VictoryArbitrator } from "./VictoryArbitrator";
 
 export class GameEngine {
 
-    private gameState!: GameState;
-
-    constructor() {
-
-    }
-
     public createNewGame(roomId: string): GameState {
         const board = BoardGenerator.createInitialBoard();
         const deckResult = DeckManager.drawInitialCards();
 
-        this.gameState = {
-            roomId,
+        return {
+            roomId, 
             status: 'waiting',
             currentTurn: deckResult.firstTurn,
-            board, 
+            board,
             cards: deckResult.cards,
             winner: null,
             timeRemaining: {
@@ -29,9 +23,6 @@ export class GameEngine {
                 blue: 600
             },
         };
-
-        return this.gameState;
-
     }
 
     //FEAT-08: Alternar el turno entre los jugadores
@@ -65,7 +56,7 @@ export class GameEngine {
 
     //Flujo de turno completo
     public processTurn(state: GameState, from: Position, to: Position, cardName: string): GameState {
-        let newState: GameState = { ...this.gameState};
+        const newState: GameState = { ...state };
 
         //FEAT-06: Validar movimiento
         const hand = newState.currentTurn === 'red' ? newState.cards.red : newState.cards.blue;
@@ -84,6 +75,7 @@ export class GameEngine {
         if (winner) {
             newState.status = 'finished';
             newState.winner = winner;
+            newState.lastMove = { from, to };
             return newState;
         }
 
@@ -91,15 +83,8 @@ export class GameEngine {
         newState.cards = DeckManager.playCard(newState.cards, newState.currentTurn, cardName);
 
         //FEAT-08: Cambio de turno y detección de bloqueos
-        this.gameState =  this.switchTurn(newState);
-        this.gameState.lastMove = { from, to };
-        return this.gameState;
+        const finalState =  this.switchTurn(newState);
+        finalState.lastMove = { from, to };
+        return finalState;
     }
-
-    public getGameStatic(): GameState {
-        return this.gameState;
-    }
-
-
-
 }

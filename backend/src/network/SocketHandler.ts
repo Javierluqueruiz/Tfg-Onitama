@@ -105,6 +105,10 @@ export function registerSocketEvents(io: Server) {
                 return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala o el estado del juego.' });
             }
 
+            if (room.gameState.status === 'finished') {
+                return socket.emit(SocketEvents.ERROR, { message: 'El juego ya ha terminado.' });
+            }
+
             try {
                 const newState = room.gameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
                 room.gameState = newState;
