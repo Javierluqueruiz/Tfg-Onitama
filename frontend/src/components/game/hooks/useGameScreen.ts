@@ -4,6 +4,7 @@ import { useSocket } from '../../../contexts/SocketContext';
 import { useNetwork } from './useNetwork';
 import { useDrawNegotiation } from './useDrawNegotiation';
 import { useRematchNegotiation } from './useRematchNegotiation';
+import { useGameReconnection } from './useGameReconnection';
 
 
 
@@ -12,7 +13,8 @@ export const useGameScreen = (
         localColor: PlayerColor | null, 
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
 ) => {
-    const { socket, isConnected, isReconnecting, lastError } = useSocket();
+    const { socket, isConnected, lastError } = useSocket();
+    const { isReconnecting } = useGameReconnection(socket);
     const rematch = useRematchNegotiation(socket);
 
     const networkState = useNetwork(socket, gameState.status);

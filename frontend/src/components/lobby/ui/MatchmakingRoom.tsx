@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { SocketEvents, type GameMode, type MatchFoundPayload } from '../../../../shared';
-import { useSocket } from '../../contexts/SocketContext';
+import { SocketEvents, type GameMode, type MatchFoundPayload } from '../../../../../shared';
+import { useSocket } from '../../../contexts/SocketContext';
 import styles from './MatchmakingRoom.module.css';
 
 

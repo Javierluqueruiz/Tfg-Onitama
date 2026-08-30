@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './MainMenu.module.css';
-import type { GameMode } from '../../../../shared';
+import type { GameMode } from '../../../../../shared';
 
 interface MainMenuProps {
     onSelectCreate: () => void;

@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './Forms.module.css';
-import type { GameMode } from '../../../../shared';
+import type { GameMode } from '../../../../../shared';
 
 interface CreateRoomProps {
     playerName: string;
@@ -51,7 +51,7 @@ export const CreateRoom: React.FC<CreateRoomProps> = ({ playerName, setPlayerNam
 
             <div className={styles.buttonGroup}>
                 <button className={styles.btnBack} onClick={onBack}>Volver</button>
-                <button className={`styles.btnSubmit ${styles.btnCreate}`} onClick={() => onCreateRoom(selectedMode)}>
+                <button className={`${styles.btnSubmit} ${styles.btnCreate}`} onClick={() => onCreateRoom(selectedMode)}>
                     Crear Sala
                 </button>
             </div>
