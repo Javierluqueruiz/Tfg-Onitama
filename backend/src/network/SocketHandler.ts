@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
+import { MatchmakingService } from "./MatchmakingService";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -174,7 +175,7 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
     socket.on('disconnect', () => {
         console.log(`Usuario desconectado: ${socket.id}`)
         //Sub-06.1
-        RoomManager.leaveQueue(socket.id);
+        MatchmakingService.leaveQueue(socket.id);
         
         const timeLimit = RoomManager.DISCONNECT_TIMEOUT_MS; // 30 segundos
         //Sub-05.2
@@ -274,12 +275,13 @@ function registerDrawEvents(io: Server, socket: Socket) {
     });
 }
 
+//FEAT-06
 function registerMatchmakingEvents(io: Server, socket: Socket) {
         //Sub-06.1: Cola de emparejamiento
     socket.on(SocketEvents.JOIN_QUEUE, (data: { mode: GameMode }) => {
         const { mode } = data;
 
-        const result = RoomManager.joinQueue(socket.id, mode);
+        const result = MatchmakingService.joinQueue(socket.id, mode);
         console.log(`Jugador ${socket.id} se ha unido a la cola de emparejamiento en modo ${mode}. Resultado:`, result);
         if (result.matchFound && result.roomId && result.roomCode ) {
 
@@ -321,11 +323,12 @@ function registerMatchmakingEvents(io: Server, socket: Socket) {
     });
 
     socket.on(SocketEvents.LEAVE_QUEUE, () => {
-        RoomManager.leaveQueue(socket.id);
+        MatchmakingService.leaveQueue(socket.id);
         socket.emit(SocketEvents.QUEUE_LEFT);
     });        
 }
 
+//FEAT-05
 function registerRematchEvents(io: Server, socket: Socket) {
  //Sub-05.5: Rematch
     socket.on(SocketEvents.OFFER_REMATCH, () => {
@@ -367,7 +370,8 @@ function registerRematchEvents(io: Server, socket: Socket) {
         }    
     });
 }
-        
+
+//FEAT-07
 function registerChatEvents(io: Server, socket: Socket) {
 //Sub-07.1: Chat
     socket.on(SocketEvents.SEND_MESSAGE, (messageData: { message: string }) => {
