@@ -1,4 +1,4 @@
-import { Position } from "./domain.types";
+import type { Position } from "./domain.types";
 
 export const BOARD_SIZE = 5;
 

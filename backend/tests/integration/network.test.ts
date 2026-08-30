@@ -1,12 +1,17 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it} from 'vitest';
-
 import { RoomManager } from "../../src/network/RoomManager";
 import { registerSocketEvents } from "../../src/network/SocketHandler";
-import { SocketEvents, PlayerColor, GameMode, ChatMessage } from "../../../shared/index";
+import { SocketEvents, PlayerColor, ChatMessage, GameMode, GameState, PlayerProfile } from "../../../shared/index";
 
 import { Server } from 'socket.io';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
-import { createServer } from 'http';
+import { createServer, Server as HttpServer } from 'http';
+import type { AddressInfo } from 'net';
+
+type GameStartPayload = { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } };
+type GameUpdatePayload = { gameState: GameState };
+type ErrorPayload = { message: string };
+type MatchFoundPayload = { roomId: string, roomCode: string, mode: GameMode };
 
 describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
     let io: Server;
@@ -24,7 +29,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
 
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
-                port = (httpServer.address() as any).port;
+                port = (httpServer.address() as AddressInfo).port;
                 resolve();
             });
         });
@@ -35,7 +40,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
     });
 
     beforeEach(async () => {
-        (RoomManager as any).activeRooms.clear();
+        RoomManager['activeRooms'].clear();
 
         clientSocket1 = ioClient(`http://localhost:${port}`);
         clientSocket2 = ioClient(`http://localhost:${port}`);
@@ -151,7 +156,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
-                port = (httpServer.address() as any).port;
+                port = (httpServer.address() as AddressInfo).port;
                 resolve();
             });
         });
@@ -162,7 +167,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
     });
 
     beforeEach(async () => {
-        (RoomManager as any).activeRooms.clear();
+        RoomManager['activeRooms'].clear();
 
         clientSocket1 = ioClient(`http://localhost:${port}`);
         clientSocket2 = ioClient(`http://localhost:${port}`);
@@ -195,7 +200,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
             let currentRoomCode = '';
 
             // Escuchamos GAME_START en ambos clientes
-            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: any) => {
+            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn; // 'red' | 'blue'
                 
@@ -251,7 +256,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
             // Contabilizamos que ambos clientes reciban el GAME_UPDATE del servidor
             let updatesReceived = 0;
-            const checkGameUpdate = (data: any) => {
+            const checkGameUpdate = (data: GameUpdatePayload) => {
                 try {
                     expect(data.gameState).toBeDefined();
                     expect(data.gameState.board).toBeDefined();
@@ -283,7 +288,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
     it('Sub-04.2: Debe rechazar un movimiento ejecutado por el jugador que no tiene el turno', () => {
         return new Promise<void>((resolve, reject) => {
-            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: any) => {
+            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
                 const isInactive = (activeColor === 'red' && !isHost) || (activeColor === 'blue' && isHost);
@@ -298,7 +303,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
                 }
             };
 
-            const handleError = (error: any) => {
+            const handleError = (error: ErrorPayload) => {
                 try {
                     expect(error.message).toBeDefined();
                     resolve();
@@ -323,7 +328,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
     it('Sub-04.3: Debe rechazar una jugada inválida y mantener el tablero sin cambios', () =>{
         return new Promise<void>((resolve, reject) => {
-            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: any) => {
+            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
                 
@@ -345,7 +350,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
             };
 
             // Escuchamos el evento de error que debe escupir el backend
-            const handleError = (error: any) => {
+            const handleError = (error: ErrorPayload) => {
                 try {
                     expect(error.message).toBeDefined();
                     // Opcionalmente, puedes ser más estricto comprobando el texto del error
@@ -377,6 +382,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
             const clientTimeStamp = Date.now();
 
             clientSocket1.once(SocketEvents.PONG, (serverTimeStamp: number) => {
+                expect(serverTimeStamp).toBe(clientTimeStamp);
                 const latency = Date.now() - clientTimeStamp;
                 resolve(latency);
             });
@@ -395,7 +401,7 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
 describe('FEAT-05: Resoluciones alternativas de partida', () => {
     let ioServer: Server;
-    let httpServer: any;
+    let httpServer: HttpServer;
     let port: number;
     
     let clientSocket1: ClientSocket;
@@ -413,7 +419,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
 
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
-                port = (httpServer.address() as any).port;
+                port = (httpServer.address() as AddressInfo).port;
                 resolve();
             });
         });
@@ -549,7 +555,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
             });
         });
 
-        const opponentNotifiedPromise = new Promise<void>((resolve, reject) => {
+        const opponentNotifiedPromise = new Promise<void>((resolve) => {
             clientSocket2.on(SocketEvents.OPPONENT_RECONNECTED, () => resolve());
         });
 
@@ -670,11 +676,11 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
     });
 
     it('Sub-05.5b: Debe permitir la aceptación de una revancha y reiniciar el juego', async () => {
-        const gameStartPromise1 = new Promise<any>((resolve, reject) => {
+        const gameStartPromise1 = new Promise<GameStartPayload>((resolve) => {
             clientSocket1.on(SocketEvents.GAME_START, (data) => resolve(data));
         });
 
-        const gameStartPromise2 = new Promise<any>((resolve, reject) => {
+        const gameStartPromise2 = new Promise<GameStartPayload>((resolve) => {
             clientSocket2.on(SocketEvents.GAME_START, (data) => resolve(data));
         });
 
@@ -697,7 +703,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
 
 describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
     let ioServer: Server;
-    let httpServer: any;
+    let httpServer: HttpServer;
     let port: number;
 
     let clientA: ClientSocket;
@@ -712,7 +718,7 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
 
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
-                port = (httpServer.address() as any).port;
+                port = (httpServer.address() as AddressInfo).port;
                 resolve();
             });
         });
@@ -723,7 +729,7 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
         httpServer.close();
     });
 
-    beforeEach(async (done) => {
+    beforeEach(async () => {
         clientA = ioClient(`http://localhost:${port}`);
         clientB = ioClient(`http://localhost:${port}`);
 
@@ -764,7 +770,7 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
             let expectedRoomId = '';
             
 
-            const handleMatchFound = (payload: any) => {
+            const handleMatchFound = (payload: MatchFoundPayload) => {
                 expect(payload).toHaveProperty('roomId');
                 expect(payload).toHaveProperty('roomCode');
                 expect(payload.mode).toBe('normal');
@@ -778,7 +784,7 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
                 matchesFound++;
             };
 
-            const handleGameStart = (payload: any) => {
+            const handleGameStart = (payload: GameStartPayload) => {
                 expect(payload).toHaveProperty('gameState');
                 expect(payload.gameState).toHaveProperty('roomId');
                 expect(payload.gameState.roomId).toBe(expectedRoomId);
@@ -875,14 +881,12 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
 
 describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
     let ioServer: Server;
-    let httpServer: any;
+    let httpServer: HttpServer;
     let port: number;
     
     let clientSocket1: ClientSocket;
     let clientSocket2: ClientSocket;
     let activeRoomId: string;
-    let client1Color: PlayerColor;
-    let client2Color: PlayerColor;
 
     beforeAll(async () => {
         httpServer = createServer();
@@ -893,7 +897,7 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
 
         await new Promise<void>((resolve) => {
             httpServer.listen(0, () => {
-                port = (httpServer.address() as any).port;
+                port = (httpServer.address() as AddressInfo).port;
                 resolve();
             });
         });
@@ -922,8 +926,6 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
 
             clientSocket1.on(SocketEvents.GAME_START, (data) => {
                 activeRoomId = data.gameState.roomId;
-                client1Color = data.players.red.socketId === clientSocket1.id ? 'red' : 'blue';
-                client2Color = data.players.red.socketId === clientSocket2.id ? 'red' : 'blue';
                 resolve();
             });
         });
@@ -934,7 +936,7 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
         clientSocket2.disconnect();
     });
 
-    it('Sub-07.1 y Sub-07.2: Debe propagar el mensaje del jugador a todos los jugadores de la sala', (done: (error?: any) => void) => {
+    it('Sub-07.1 y Sub-07.2: Debe propagar el mensaje del jugador a todos los jugadores de la sala', (done: (error?: unknown) => void) => {
         const testMessage = "¡Hola, oponente!";
 
         clientSocket2.on(SocketEvents.CHAT_UPDATE, (message: ChatMessage) => {
@@ -955,12 +957,12 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
         clientSocket1.emit(SocketEvents.SEND_MESSAGE, { message: testMessage });
     });
 
-    it('Sub-07.1: Debe mantener un historial de chat limitado a 50 mensajes por sala', (done: (error?: any) => void) => {
+    it('Sub-07.1: Debe mantener un historial de chat limitado a 50 mensajes por sala', (done: (error?: unknown) => void) => {
         const totalMessages = 55;
         const maxMessages = 50;
         let receivedCount = 0;
 
-        clientSocket2.on(SocketEvents.CHAT_UPDATE, (message: ChatMessage) => {
+        clientSocket2.on(SocketEvents.CHAT_UPDATE, () => {
             receivedCount++;
 
             if (receivedCount === totalMessages) {
