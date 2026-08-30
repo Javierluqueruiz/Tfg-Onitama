@@ -1,43 +1,35 @@
-import { Board, BoardRow, Piece } from '../../../shared';
+import { Board, BoardRow, Piece, PieceType, PlayerColor } from '../../../shared';
 
 export class BoardGenerator {
 
     public static createInitialBoard(): Board {
         return [
-            this.createRedRow(),
+            this.createHomeRow('red'),
             this.createEmptyRow(),
             this.createEmptyRow(),
             this.createEmptyRow(),
-            this.createBlueRow(),
+            this.createHomeRow('blue'),
         ]
     }
 
-    private static createRedRow(): BoardRow {
+    private static createHomeRow(color: PlayerColor): BoardRow {
         return [
-            this.createPiece('student', 'red'),
-            this.createPiece('student', 'red'),
-            this.createPiece('master', 'red'),
-            this.createPiece('student', 'red'),
-            this.createPiece('student', 'red'),
+            this.createPiece('student', color),
+            this.createPiece('student', color),
+            this.createPiece('master', color),
+            this.createPiece('student', color),
+            this.createPiece('student', color),
         ]
     }
 
-    private static createBlueRow(): BoardRow {
-        return [
-            this.createPiece('student', 'blue'),
-            this.createPiece('student', 'blue'),
-            this.createPiece('master', 'blue'),
-            this.createPiece('student', 'blue'),
-            this.createPiece('student', 'blue'),
-        ]
-    }
 
     private static createEmptyRow(): BoardRow {
         return [null, null, null, null, null];
     }
 
 
-    private static createPiece(type: 'master' | 'student', color: 'red' | 'blue'): Piece {
+
+    private static createPiece(type: PieceType, color: PlayerColor): Piece {
         return { type, color };
 
     }

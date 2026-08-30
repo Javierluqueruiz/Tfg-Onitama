@@ -1,4 +1,4 @@
-import { Board, Piece, Position } from '../../../shared';
+import { Board, Piece, Position, isOutOfBounds } from '../../../shared';
 
 export interface MoveResult {
     newBoard: Board;
@@ -12,10 +12,10 @@ export class MovementManager {
     public static movePiece(board: Board, from: Position, to: Position): MoveResult {
     
         //1.Validar las posiciones
-        if (this.isOutOfBounds(from)) {
+        if (isOutOfBounds(from)) {
             throw new Error(`[FEAT-03] La posición de origen (${from.x}, ${from.y}) está fuera de los límites del tablero`);
         }
-        if (this.isOutOfBounds(to)) {
+        if (isOutOfBounds(to)) {
             throw new Error(`[FEAT-03] La posición de destino (${to.x}, ${to.y}) está fuera de los límites del tablero`);
         }
         
@@ -39,9 +39,5 @@ export class MovementManager {
             newBoard,
             capturedPiece
         };
-    }
-
-    private static isOutOfBounds(pos: Position): boolean {
-        return pos.x < 0 || pos.x > 4 || pos.y < 0 || pos.y > 4;
     }
 }
