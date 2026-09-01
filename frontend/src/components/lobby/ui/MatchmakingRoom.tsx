@@ -48,7 +48,7 @@ export const MatchmakingRoom: React.FC<MatchmakingRoomProps> = ({ onCancel, onMa
 
     return (
         <div className={styles.waitingContainer}>
-            <h2>Buscando partida...</h2>
+            <h2 className={styles.heading}>Buscando partida...</h2>
             <p className={styles.modeText}>Modo: {mode.toUpperCase()}</p>
 
             <div className={styles.spinner}></div>

@@ -6,6 +6,7 @@ import styles from './Lobby.module.css';
 import { useLobby } from './hooks/useLobby';
 import type { GameMode } from '../../../../shared';
 import { MatchmakingRoom } from './ui/MatchmakingRoom';
+import '../game/theme.css';
 
 export const Lobby: React.FC =  () => {
     const {
@@ -16,7 +17,7 @@ export const Lobby: React.FC =  () => {
     } = useLobby();
 
     return (
-        <div className = {styles.wrapper}>
+        <div className={`${styles.wrapper} gameTheme`}>
             <div className={styles.header}
             >
                 <h1 className={styles.mainTitle}>⛩️ ONITAMA</h1>
@@ -25,10 +26,12 @@ export const Lobby: React.FC =  () => {
 
             <div className={styles.content}>
                 <div className={styles.statusContainer}>
-                    <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`}/>
-                    <span className={styles.statusText}>
-                        {isConnected ? ' Servidor Online' : ' Conectando...'}
-                    </span>
+                    <div className={styles.statusHeader}>
+                        <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`}/>
+                        <span className={styles.statusText}>
+                            {isConnected ? 'Servidor Online' : 'Conectando...'}
+                        </span>
+                    </div>
 
                     {/* ---PANTALLA PRINCIPAL --- */}
                     {currentScreen === 'MAIN' && (
