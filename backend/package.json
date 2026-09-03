@@ -7,9 +7,10 @@
     "dev": "nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/backend/src/server.js",
-    "test": "vitest run --coverage",
+    "test": "vitest run",
     "lint": "eslint .",
-    "demo": "ts-node src/simulatedGame.ts"
+    "demo": "ts-node src/simulatedGame.ts",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",

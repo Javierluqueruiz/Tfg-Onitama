@@ -13,62 +13,67 @@ type GameUpdatePayload = { gameState: GameState };
 type ErrorPayload = { message: string };
 type MatchFoundPayload = { roomId: string, roomCode: string, mode: GameMode };
 
-describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
-    let io: Server;
+export interface TestServer {
+    io: Server;
+    httpServer: HttpServer;
+    port: number;
+}
+
+export async function startTestServer(): Promise<TestServer> {
+    const httpServer = createServer();
+    const io = new Server(httpServer);
+    registerSocketEvents(io);
+
+    const port = await new Promise<number>((resolve) => {
+        httpServer.listen(0, () => {
+            resolve((httpServer.address() as AddressInfo).port);
+        });
+    });
+    return { io, httpServer, port };
+}
+
+export function stopTestServer(server: TestServer): void {
+    server.io.close();
+    server.httpServer.close();
+}
+
+export async function connectClients(port: number, numClients: number): Promise<ClientSocket[]> {
+    const clients = Array.from({ length: numClients }, () => ioClient(`http://localhost:${port}`));
+
+    await Promise.all( 
+        clients.map((client) => new Promise<void>((resolve) => client.on('connect', () => resolve())))
+    );
+    return clients;
+}
+
+
+describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
+    let server: TestServer;
     let clientSocket1: ClientSocket;
     let clientSocket2: ClientSocket;
-    let port: number;
 
     beforeAll(async () => {
-        console.log("\n=== INICIANDO PRUEBAS DE GESTIÓN DE SALAS PRIVADAS ===");
-        const httpServer = createServer();
-        io = new Server(httpServer);
-
-        // ¡Inyectamos tu código real del enrutador!
-        registerSocketEvents(io); // Pasamos true para habilitar el modo de prueba
-
-        await new Promise<void>((resolve) => {
-            httpServer.listen(0, () => {
-                port = (httpServer.address() as AddressInfo).port;
-                resolve();
-            });
-        });
+        server = await startTestServer();
     });
 
     afterAll(() => {
-        io.close();
+        stopTestServer(server);
     });
 
     beforeEach(async () => {
-        RoomManager['activeRooms'].clear();
+        RoomManager.clearActiveRooms();
 
-        clientSocket1 = ioClient(`http://localhost:${port}`);
-        clientSocket2 = ioClient(`http://localhost:${port}`);
-
-        await new Promise<void>((resolve) => {
-                let connectedClients = 0;
-            const checkDone = () => {
-                connectedClients++;
-                if (connectedClients === 2) {
-                    resolve();
-                }
-            };
-
-            clientSocket1.on('connect', checkDone);
-            clientSocket2.on('connect', checkDone);
-
-        });
+        [clientSocket1, clientSocket2] = await connectClients(server.port, 2);
         
     });
 
     afterEach(() => {
-
         clientSocket1.disconnect();
         clientSocket2.disconnect();
     });
 
     //Suite de test
-    it('Sub-03.1: Debe crear una sala privada y devolver el código de la sala', () => {
+    it('Test-03.1: Debe crear una sala privada y devolver el código de la sala', () => {
         return new Promise<void>((resolve) => {
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 expect(data.roomCode).toBeDefined();
@@ -81,8 +86,8 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
         });
     });
 
-    it("Sub-03.2:  Debe permitir a un segundo jugador unirse a la sala privada y comenzar el juego", () => {
-        console.log("Sub-03.2: Creando sala con Player1 y uniendo Player2...");
+    it("Test-03.2:  Debe permitir a un segundo jugador unirse a la sala privada y comenzar el juego", () => {
+        console.log("Test-03.2: Creando sala con Player1 y uniendo Player2...");
         return new Promise<void>((resolve) => {
             clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
 
@@ -98,7 +103,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
         });
     });
 
-    it("Sub-03.3: Debe rechazar la conexión si la sala no existe", () => {
+    it("Test-03.3: Debe rechazar la conexión si la sala no existe", () => {
         return new Promise<void>((resolve) => {
             clientSocket2.on(SocketEvents.ERROR, (error) => {
                 expect(error.message).toBe('Código incorrecto o la sala no existe.');
@@ -109,7 +114,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
         });
     });
 
-    it("Sub-03.4: Debe rechazar la conexión si la sala está llena", () => {
+    it("Test-03.4: Debe rechazar la conexión si la sala está llena", () => {
         return new Promise<void>((resolve) => {
 
             clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
@@ -119,7 +124,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
 
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: roomCode, guestName: 'Player2' });
                 clientSocket2.on(SocketEvents.GAME_START, () => {
-                    const clientSocket3 = ioClient(`http://localhost:${port}`);
+                    const clientSocket3 = ioClient(`http://localhost:${server.port}`);
 
                     clientSocket3.on('connect', () => {
                         clientSocket3.emit(SocketEvents.JOIN_ROOM, { roomCode: roomCode, guestName: 'Player3' });
@@ -140,61 +145,31 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets', () => {
 });
 
 
-describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
-    let io: Server;
+describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
+    let server: TestServer;
     let clientSocket1: ClientSocket;
     let clientSocket2: ClientSocket;
-    let port: number;
 
     beforeAll(async () => {
-        console.log("\n=== INICIANDO PRUEBAS DE GESTIÓN DE SALAS PRIVADAS ===");
-        const httpServer = createServer();
-        io = new Server(httpServer);
-
-        // ¡Inyectamos tu código real del enrutador!
-        registerSocketEvents(io);
-
-        await new Promise<void>((resolve) => {
-            httpServer.listen(0, () => {
-                port = (httpServer.address() as AddressInfo).port;
-                resolve();
-            });
-        });
+        server = await startTestServer();
     });
 
     afterAll(() => {
-        io.close();
+        stopTestServer(server);
     });
 
     beforeEach(async () => {
-        RoomManager['activeRooms'].clear();
+        RoomManager.clearActiveRooms();
 
-        clientSocket1 = ioClient(`http://localhost:${port}`);
-        clientSocket2 = ioClient(`http://localhost:${port}`);
-
-        await new Promise<void>((resolve) => {
-                let connectedClients = 0;
-            const checkDone = () => {
-                connectedClients++;
-                if (connectedClients === 2) {
-                    resolve();
-                }
-            };
-
-            clientSocket1.on('connect', checkDone);
-            clientSocket2.on('connect', checkDone);
-
-        });
-        
+        [clientSocket1, clientSocket2] = await connectClients(server.port, 2);
     });
 
     afterEach(() => {
-
         clientSocket1.disconnect();
         clientSocket2.disconnect();
     });
 
-    it('Sub-04.1: Los jugadores inician partida, el jugador en turno realiza un movimiento legal según sus cartas y ambos reciben GAME_UPDATE', () => {
+    it('Test-04.1: Los jugadores inician partida, el jugador en turno realiza un movimiento legal según sus cartas y ambos reciben GAME_UPDATE', () => {
         return new Promise<void>((resolve, reject) => {
             let activeClient: ClientSocket;
             let currentRoomCode = '';
@@ -286,8 +261,11 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
         });
     });
 
-    it('Sub-04.2: Debe rechazar un movimiento ejecutado por el jugador que no tiene el turno', () => {
+    it('Test-04.2: Debe rechazar un movimiento ejecutado por el jugador que no tiene el turno, sin alterar el estado ni notificar al rival', () => {
         return new Promise<void>((resolve, reject) => {
+            let offender: ClientSocket | null = null;
+            let rival: ClientSocket | null = null;
+
             const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
@@ -295,6 +273,9 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
                 // El jugador que NO tiene el turno intenta mover
                 if (isInactive) {
+                    offender = client;
+                    rival = isHost ? clientSocket2 : clientSocket1;
+
                     client.emit(SocketEvents.PLAYER_MOVE, {
                         from: { x: 2, y: 0 },
                         to: { x: 2, y: 1 },
@@ -303,17 +284,33 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
                 }
             };
 
-            const handleError = (error: ErrorPayload) => {
+            // El estado de la partida no debe alterarse: ningún cliente debería recibir GAME_UPDATE.
+            const failOnGameUpdate = () => reject(new Error('No debería emitirse GAME_UPDATE: la jugada fuera de turno no debe alterar el estado.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
+            const handleError = (client: ClientSocket) => (error: ErrorPayload) => {
+                if (client === rival) {
+                    return reject(new Error('El error no debería llegar al jugador que sí tenía el turno.'));
+                }
+
                 try {
+                    expect(client).toBe(offender);
                     expect(error.message).toBeDefined();
-                    resolve();
+
+                    // Margen de gracia para confirmar que no llega ningún GAME_UPDATE ni error adicional al rival.
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
                 } catch (err) {
                     reject(err);
                 }
             };
 
-            clientSocket1.on(SocketEvents.ERROR, handleError);
-            clientSocket2.on(SocketEvents.ERROR, handleError);
+            clientSocket1.on(SocketEvents.ERROR, handleError(clientSocket1));
+            clientSocket2.on(SocketEvents.ERROR, handleError(clientSocket2));
 
             clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1, true));
             clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2, false));
@@ -326,22 +323,22 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
         });
     });
 
-    it('Sub-04.3: Debe rechazar una jugada inválida y mantener el tablero sin cambios', () =>{
+    it('Test-04.3: Debe rechazar una jugada con coordenadas fuera del tablero y mantener el estado sin cambios', () =>{
         return new Promise<void>((resolve, reject) => {
             const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
-                
+
                 // Solo el jugador que tiene el turno intentará hacer la trampa
                 const isMyTurn = (activeColor === 'red' && isHost) || (activeColor === 'blue' && !isHost);
-                
+
                 if (isMyTurn) {
                     // 1. Obtenemos una de sus cartas reales para que esa validación pase
                     const playerCards = activeColor === 'red' ? gameState.cards.red : gameState.cards.blue;
                     const selectedCard = playerCards[0];
 
                     // 2. Emitimos un movimiento claramente ilegal (coordenadas fuera de la matriz 5x5)
-                    client.emit('player_move', {
+                    client.emit(SocketEvents.PLAYER_MOVE, {
                         from: { x: 0, y: 0 },
                         to: { x: 10, y: 10 }, // Destino matemáticamente imposible
                         cardName: selectedCard.name
@@ -349,35 +346,44 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
                 }
             };
 
+            // El estado de la partida no debe alterarse: ningún cliente debería recibir GAME_UPDATE.
+            const failOnGameUpdate = () => reject(new Error('No debería emitirse GAME_UPDATE: la jugada con coordenadas fuera del tablero no debe alterar el estado.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
             // Escuchamos el evento de error que debe escupir el backend
             const handleError = (error: ErrorPayload) => {
                 try {
                     expect(error.message).toBeDefined();
-                    // Opcionalmente, puedes ser más estricto comprobando el texto del error
-                    // expect(error.message).toContain('fuera de los límites');
-                    resolve();
+
+                    // Margen de gracia para confirmar que no llega ningún GAME_UPDATE tras el error.
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
                 } catch (err) {
                     reject(err);
                 }
             };
 
             // Suscribimos ambos clientes por si el error le llega al que no debe
-            clientSocket1.on('error', handleError);
-            clientSocket2.on('error', handleError);
+            clientSocket1.on(SocketEvents.ERROR, handleError);
+            clientSocket2.on(SocketEvents.ERROR, handleError);
 
-            clientSocket1.on('game_start', handleGameStart(clientSocket1, true));
-            clientSocket2.on('game_start', handleGameStart(clientSocket2, false));
+            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1, true));
+            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2, false));
 
             // Flujo estándar de arranque de sala
-            clientSocket1.on('room_created', (data) => {
-                clientSocket2.emit('join_room', { roomCode: data.roomCode, guestName: 'Player2' });
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit('create_room', 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
         });
     });
 
-    it('Sub-04.4: Debe capturar la latencia de red mediante un ciclo de ping-pong', async () => {
+    it('Test-04.4: Debe capturar la latencia de red mediante un ciclo de ping-pong', async () => {
         const pingPromise = new Promise<number>((resolve) => {
             const clientTimeStamp = Date.now();
 
@@ -400,48 +406,33 @@ describe('FEAT-04: Gestiónd del Tablero en Tiempo real', () => {
 
 
 describe('FEAT-05: Resoluciones alternativas de partida', () => {
-    let ioServer: Server;
-    let httpServer: HttpServer;
-    let port: number;
-    
+    let server: TestServer;
+
     let clientSocket1: ClientSocket;
     let clientSocket2: ClientSocket;
     let activeRoomId: string;
     let client1Color: PlayerColor;
     let client2Color: PlayerColor;
+    let defaultDisconnectTimeoutMs: number;
 
     beforeAll(async () => {
-        httpServer = createServer();
-        ioServer = new Server(httpServer);
-        
-        // Registramos tus eventos reales del backend
-        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
+        server = await startTestServer();
 
-        await new Promise<void>((resolve) => {
-            httpServer.listen(0, () => {
-                port = (httpServer.address() as AddressInfo).port;
-                resolve();
-            });
-        });
+        // Guardamos el valor real de fábrica para poder restaurarlo tras cada test que lo sobreescriba.
+        defaultDisconnectTimeoutMs = RoomManager.DISCONNECT_TIMEOUT_MS;
     });
 
     afterAll(() => {
-        ioServer.close();
-        httpServer.close();
+        stopTestServer(server);
     });
 
     beforeEach(async () => {
-        RoomManager['activeRooms'].clear();
+        RoomManager.clearActiveRooms();
 
-        clientSocket1 = ioClient(`http://localhost:${port}`);
-        clientSocket2 = ioClient(`http://localhost:${port}`);
+        [clientSocket1, clientSocket2] = await connectClients(server.port, 2);
 
         //Creamos una sala y unimos ambos jugadores antes de cada test
         await new Promise<void>((resolve) => {
-            clientSocket1.on('connect', () => {
-                clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1'});
-            });
-
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
@@ -452,15 +443,19 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
                 client2Color = data.players.red.socketId === clientSocket2.id ? 'red' : 'blue';
                 resolve();
             });
+
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
         });
     });
 
     afterEach(() => {
         clientSocket1.disconnect();
         clientSocket2.disconnect();
+        // Restauramos el timeout de desconexión por si algún test lo ha reducido para forzar el escenario.
+        RoomManager.DISCONNECT_TIMEOUT_MS = defaultDisconnectTimeoutMs;
     });
 
-    it('Sub-05,1: Debe permitir a un jugador rendirse y notificar al oponente, finalizando la partida', async () => {
+    it('Test-05.1: Debe permitir a un jugador rendirse y notificar al oponente, finalizando la partida', async () => {
         //Preparar las promesas antes de emitir la rendición
         const client1UpdatePromise = new Promise<void>((resolve, reject) => {
             clientSocket1.on(SocketEvents.GAME_UPDATE, (data) => {
@@ -489,11 +484,13 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         clientSocket1.emit(SocketEvents.SURRENDER);
 
         await Promise.all([client1UpdatePromise, client2UpdatePromise]);
-        //expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
-        //expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+
+        // La sala se mantiene en memoria tras la rendición para permitir una revancha (Sub-05.5); no se borra aquí.
+        expect(RoomManager.getRoomById(activeRoomId)).toBeDefined();
+        expect(RoomManager.roomExists(activeRoomId)).toBe(true);
     });
 
-    it('Sub-05.2a: Debe manejar la desconexión de un jugador y notificar al oponente, finalizando la partida si no se reconecta', async () => {
+    it('Test-05.2a: Debe manejar la desconexión de un jugador y notificar al oponente, finalizando la partida si no se reconecta', async () => {
         RoomManager.DISCONNECT_TIMEOUT_MS = 1000; // Reducimos el tiempo de espera para la prueba
         
         const client2DisconnectedPromise = new Promise<void>((resolve, reject) => {
@@ -526,12 +523,9 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
 
         expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
         expect(RoomManager.roomExists(activeRoomId)).toBe(false);
-
-        clientSocket2.emit('DEBUG_SET_TIMEOUT', { timeout: 30000 });
-
     });
 
-    it('Sub-05.2b: Debe permitir la reconexión de un jugador dentro del tiempo límite y continuar la partida', async () => {
+    it('Test-05.2b: Debe permitir la reconexión de un jugador dentro del tiempo límite y continuar la partida', async () => {
         RoomManager.DISCONNECT_TIMEOUT_MS = 2000; // Reducimos el tiempo de espera para la prueba
 
         const disconnectWarningPromise = new Promise<void>((resolve) => {
@@ -542,7 +536,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         clientSocket1.disconnect();
         await disconnectWarningPromise;
 
-        const newClientSocket1 = ioClient(`http://localhost:${port}`);
+        const newClientSocket1 = ioClient(`http://localhost:${server.port}`);
 
         const reconnectSuccessPromise = new Promise<void>((resolve, reject) => {
             newClientSocket1.on(SocketEvents.RECONNECT_SUCCESS, (data) => {
@@ -568,7 +562,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         newClientSocket1.disconnect();
     });
 
-    it('Sub-05.3: Debe finalizar la partida y otorgar la victoria al oponente si el temporizador de juego llega a cero', async () => {
+    it('Test-05.3: Debe finalizar la partida y otorgar la victoria al oponente si el temporizador de juego llega a cero', async () => {
         const room = RoomManager.getRoomById(activeRoomId);
 
         const activeColor = room!.gameState.currentTurn;
@@ -590,10 +584,13 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
 
         await timeOutVictoryPromise;
 
-        expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+        // La sala se mantiene en memoria tras el agotamiento del tiempo para permitir una revancha (Sub-05.5),
+        // igual que en el resto de finales de partida (rendición, empate).
+        expect(RoomManager.getRoomById(activeRoomId)).toBeDefined();
+        expect(RoomManager.roomExists(activeRoomId)).toBe(true);
     });
         
-    it('Sub-05.4a: Debe permitir a un jugador ofrecer empate y que el oponente lo rechace, continuando la partida', async () => {
+    it('Test-05.4a: Debe permitir a un jugador ofrecer empate y que el oponente lo rechace, continuando la partida', async () => {
         const offerDrawPromise = new Promise<void>((resolve) => {
             clientSocket2.on(SocketEvents.OFFER_DRAW, () => resolve());
         });
@@ -612,7 +609,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         expect(RoomManager.roomExists(activeRoomId)).toBe(true);
     });
 
-    it('Sub-05.4b: Debe permitir a un jugador ofrecer empate y que el oponente lo acepte, finalizando la partida en empate', async () => {
+    it('Test-05.4b: Debe permitir a un jugador ofrecer empate y que el oponente lo acepte, finalizando la partida en empate', async () => {
         const offerDrawPromise = new Promise<void>((resolve) => {
             clientSocket2.on(SocketEvents.OFFER_DRAW, () => resolve());
         });
@@ -647,11 +644,12 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         clientSocket2.emit(SocketEvents.ACCEPT_DRAW);
         await Promise.all([client1UpdatePromise, client2UpdatePromise]);
 
-        //expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined();
-        //expect(RoomManager.roomExists(activeRoomId)).toBe(false);
+        // La sala se mantiene en memoria tras el empate para permitir una revancha (Sub-05.5); no se borra aquí.
+        expect(RoomManager.getRoomById(activeRoomId)).toBeDefined();
+        expect(RoomManager.roomExists(activeRoomId)).toBe(true);
     });
 
-    it('Sub-05.5a: Debe notificar el rechazo de una revancha y eliminar la sala', async () => {
+    it('Test-05.5a: Debe notificar el rechazo de una revancha y eliminar la sala', async () => {
                 
         const offerPromise = new Promise<void>((resolve) => {
             clientSocket2.on(SocketEvents.REMATCH_OFFERED, () => {
@@ -675,7 +673,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         expect(room).toBeUndefined();
     });
 
-    it('Sub-05.5b: Debe permitir la aceptación de una revancha y reiniciar el juego', async () => {
+    it('Test-05.5b: Debe permitir la aceptación de una revancha y reiniciar el juego', async () => {
         const gameStartPromise1 = new Promise<GameStartPayload>((resolve) => {
             clientSocket1.on(SocketEvents.GAME_START, (data) => resolve(data));
         });
@@ -701,51 +699,22 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
 });
 
 
-describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
-    let ioServer: Server;
-    let httpServer: HttpServer;
-    let port: number;
+describe('FEAT-06: Gestión de la cola de emparejamiento', () => {
+    let server: TestServer;
 
     let clientA: ClientSocket;
     let clientB: ClientSocket;
-    
-    beforeAll(async () => {
-        httpServer = createServer();
-        ioServer = new Server(httpServer);
-        
-        // Registramos tus eventos reales del backend
-        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
 
-        await new Promise<void>((resolve) => {
-            httpServer.listen(0, () => {
-                port = (httpServer.address() as AddressInfo).port;
-                resolve();
-            });
-        });
+    beforeAll(async () => {
+        server = await startTestServer();
     });
 
     afterAll(() => {
-        ioServer.close();
-        httpServer.close();
+        stopTestServer(server);
     });
 
     beforeEach(async () => {
-        clientA = ioClient(`http://localhost:${port}`);
-        clientB = ioClient(`http://localhost:${port}`);
-
-        await new Promise<void>((resolve) => {
-                let connectedClients = 0;
-            const checkDone = () => {
-                connectedClients++;
-                if (connectedClients === 2) {
-                    resolve();
-                }
-            };
-
-            clientA.on('connect', checkDone);
-            clientB.on('connect', checkDone);
-
-        });
+        [clientA, clientB] = await connectClients(server.port, 2);
     });
 
     afterEach(() => {
@@ -753,10 +722,9 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
         clientB.disconnect();
     });
 
-    it('Sub-06.1: Debe colocar al jugador en la cola y emitir QUEUE_JOINED si está vacía', () => {
+    it('Test-06.1: Debe colocar al jugador en la cola y emitir QUEUE_JOINED si está vacía', () => {
         return new Promise<void>((resolve) => {
             clientA.on(SocketEvents.QUEUE_JOINED, () => {
-                expect(true).toBe(true);
                 resolve();
             });
 
@@ -764,7 +732,7 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
         });
     });
 
-    it('Sub-06.2: Debe emparejar a dos jugadores en el mismo modo y emitir MATCH_FOUND y GAME_START a ambos', () => {
+    it('Test-06.2: Debe emparejar a dos jugadores en el mismo modo y emitir MATCH_FOUND y GAME_START a ambos', () => {
         return new Promise<void>((resolve) => {
             let matchesFound = 0;
             let expectedRoomId = '';
@@ -801,78 +769,68 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
             clientB.on(SocketEvents.MATCH_FOUND, handleMatchFound);
             clientB.on(SocketEvents.GAME_START, handleGameStart);
 
-            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
-
-            setTimeout(() => {
+            clientA.once(SocketEvents.QUEUE_JOINED, () => {
                 clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
-            }, 100);
+            });
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });  
         })
     });
 
-    it('Su-06.3: No debe emparejar a jugadores de diferentes modos', () => {
+    it('Test-06.3: No debe emparejar a jugadores de diferentes modos', () => {
         return new Promise<void>((resolve, reject) => {
-            let matchFound = false;
-
-            const failTest = () => { matchFound = true; reject(new Error('Se emparejaron jugadores de diferentes modos.')); };
+            const failTest = () => reject(new Error('Se emparejaron jugadores de diferentes modos.'));
             clientA.on(SocketEvents.MATCH_FOUND, failTest);
             clientB.on(SocketEvents.MATCH_FOUND, failTest);
 
-            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'casual' });
-            setTimeout(() => {
+            clientA.once(SocketEvents.QUEUE_JOINED, () => {
                 clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
-            }, 100);
+            });
+           
+            clientB.once(SocketEvents.QUEUE_JOINED, () => {
+                setTimeout(resolve, 300);
+            });
 
-            setTimeout(() => {
-                if (!matchFound) {
-                    expect(true).toBe(true);
-                    resolve();
-                }
-            }, 300);
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'casual' });
+           
         });
     });
 
-    it('Sub-06.4: Debe permitir a un jugador abandonar la cola y emitir QUEUE_LEFT', () => {
+    it('Test-06.4: Debe permitir a un jugador abandonar la cola y emitir QUEUE_LEFT', () => {
         return new Promise<void>((resolve, reject) => {
             clientB.on(SocketEvents.MATCH_FOUND, () => {
                 reject(new Error('Jugador B se emparejó con Jugador A a pesar de que A abandonó la cola.'));
             });
-
-            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'fast' });
 
             clientA.on(SocketEvents.QUEUE_JOINED, () => {
                 clientA.emit(SocketEvents.LEAVE_QUEUE);
             });
 
             clientA.on(SocketEvents.QUEUE_LEFT, () => {
+                clientB.once(SocketEvents.QUEUE_JOINED, () => resolve());
                 clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'fast' });
-
-                clientB.on(SocketEvents.QUEUE_JOINED, () => {
-                    setTimeout(() => resolve(), 100);
-                });
             });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'fast' });
         });
     });
 
-    it('Sub-06.5: Debe limpiar la cola si un jugador se desconecta mientras está en ella', () => {
+    it('Test-06.5: Debe limpiar la cola si un jugador se desconecta mientras está en ella', () => {
         return new Promise<void>((resolve, reject) => {
             
             clientB.on(SocketEvents.MATCH_FOUND, () => {
                 reject(new Error('Jugador B se emparejó con Jugador A a pesar de que A se desconectó.'));
             });
 
-            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
-
             clientA.on(SocketEvents.QUEUE_JOINED, () => {
                 clientA.disconnect();
 
-                setTimeout(() => {
+                setTimeout(() =>  {
+                    clientB.once(SocketEvents.QUEUE_JOINED, () => resolve());
                     clientB.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
-
-                    clientB.on(SocketEvents.QUEUE_JOINED, () => {
-                        setTimeout(() => resolve(), 100);
-                    });
-                });
+                }, 100);
             });
+
+            clientA.emit(SocketEvents.JOIN_QUEUE, { mode: 'normal' });
         });
     });
 
@@ -880,46 +838,27 @@ describe ('FEAT-06: Gestión de la cola de emparejamiento', () => {
 
 
 describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
-    let ioServer: Server;
-    let httpServer: HttpServer;
-    let port: number;
-    
+    let server: TestServer;
+
     let clientSocket1: ClientSocket;
     let clientSocket2: ClientSocket;
     let activeRoomId: string;
 
     beforeAll(async () => {
-        httpServer = createServer();
-        ioServer = new Server(httpServer);
-        
-        // Registramos tus eventos reales del backend
-        registerSocketEvents(ioServer); // Pasamos true para habilitar el modo de prueba
-
-        await new Promise<void>((resolve) => {
-            httpServer.listen(0, () => {
-                port = (httpServer.address() as AddressInfo).port;
-                resolve();
-            });
-        });
+        server = await startTestServer();
     });
 
     afterAll(() => {
-        ioServer.close();
-        httpServer.close();
+        stopTestServer(server);
     });
 
     beforeEach(async () => {
-        RoomManager['activeRooms'].clear();
+        RoomManager.clearActiveRooms();
 
-        clientSocket1 = ioClient(`http://localhost:${port}`);
-        clientSocket2 = ioClient(`http://localhost:${port}`);
+        [clientSocket1, clientSocket2] = await connectClients(server.port, 2);
 
         //Creamos una sala y unimos ambos jugadores antes de cada test
         await new Promise<void>((resolve) => {
-            clientSocket1.on('connect', () => {
-                clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1'});
-            });
-
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
@@ -928,6 +867,8 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
                 activeRoomId = data.gameState.roomId;
                 resolve();
             });
+
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
         });
     });
 
@@ -936,7 +877,7 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
         clientSocket2.disconnect();
     });
 
-    it('Sub-07.1 y Sub-07.2: Debe propagar el mensaje del jugador a todos los jugadores de la sala', (done: (error?: unknown) => void) => {
+    it('Test-07.1: Debe propagar el mensaje del jugador a todos los jugadores de la sala', (done: (error?: unknown) => void) => {
         const testMessage = "¡Hola, oponente!";
 
         clientSocket2.on(SocketEvents.CHAT_UPDATE, (message: ChatMessage) => {
@@ -957,7 +898,7 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
         clientSocket1.emit(SocketEvents.SEND_MESSAGE, { message: testMessage });
     });
 
-    it('Sub-07.1: Debe mantener un historial de chat limitado a 50 mensajes por sala', (done: (error?: unknown) => void) => {
+    it('Test-07.2: Debe mantener un historial de chat limitado a 50 mensajes por sala', (done: (error?: unknown) => void) => {
         const totalMessages = 55;
         const maxMessages = 50;
         let receivedCount = 0;

@@ -1,3 +1,5 @@
+import { GameState } from "./domain.types";
+
 //Eventos para los WebSockets
 export enum SocketEvents {
     //Cliente a Servidor
@@ -47,6 +49,18 @@ export enum SocketEvents {
 
     //Sub-07.1
     CHAT_UPDATE = 'chat_update',
+}
+
+export interface RoomSession {
+    roomId: string;
+    gameState: GameState;
+    roomCode: string;
+    mode: GameMode;
+    chatHistory: ChatMessage[];
+    players: {
+        red: PlayerProfile | null;
+        blue: PlayerProfile | null;
+    }
 }
 
 //Primera versión de la interfaz del perfil del jugador.

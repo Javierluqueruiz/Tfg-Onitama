@@ -1,17 +1,5 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile, Winner } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
-
-export interface RoomSession {
-    roomId: string;
-    gameState: GameState;
-    roomCode: string;
-    mode: GameMode;
-    chatHistory: ChatMessage[];
-    players: {
-        red: PlayerProfile | null;
-        blue: PlayerProfile | null;
-    }
-}
 
 export class RoomManager {
 
@@ -85,6 +73,10 @@ export class RoomManager {
         this.activeRooms.delete(roomId);
     }
 
+    public static clearActiveRooms(): void {
+        this.activeRooms.clear();
+    }
+
     public static getRoomBySocketId(socketId: string): RoomSession | undefined {
         for (const room of this.activeRooms.values()) {
             if (room.players.red?.socketId === socketId || room.players.blue?.socketId === socketId) {
@@ -126,11 +118,14 @@ export class RoomManager {
         }
     }
 
-    //Sub-05.2: Reconexión 
+    //Sub-05.2: Reconexión
     public static reconnectPlayer(roomId: string, oldSocketId: string, newSocketId: string): RoomSession | null {
         const room = this.getRoomById(roomId);
 
-        if (!room || room.gameState.status === 'finished') return null;
+        // No se bloquea la reconexión si la partida ya ha finalizado: las salas se mantienen en memoria
+        // tras el final de la partida para permitir la revancha (Sub-05.5), y el jugador reconectado debe
+        // poder ver el resultado, el chat y una posible oferta de revancha o empate pendiente.
+        if (!room) return null;
 
         if (room.players.red?.socketId === oldSocketId) {
             room.players.red.socketId = newSocketId;

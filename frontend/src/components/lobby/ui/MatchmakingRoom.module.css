@@ -5,7 +5,7 @@
     justify-content: center;
     gap: 1.5rem;
     padding: 2.5rem;
-    background-color: var(--game-wood-deep);
+    background-color: var(--game-wood);
     border-radius: 16px;
     color: var(--game-paper);
     text-align: center;
@@ -14,7 +14,8 @@
 }
 .heading {
     margin: 0;
-    color: var(--game-paper);
+    color: var(--game-ink);
+    font-weight: bold;
 }
 .spinner {
     width: 60px;
@@ -31,7 +32,8 @@
 }
 .modeText {
     font-size: 1.1rem;
-    color: var(--game-paper-soft);
+    font-weight: bold;
+    color: var(--game-ink-soft);
     text-transform: uppercase;
     letter-spacing: 1.5px;
 }

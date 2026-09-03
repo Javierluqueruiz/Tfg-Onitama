@@ -100,7 +100,6 @@ function registerRoomEvents(io: Server, socket: Socket) {
 
                 (finalState) => {
                     io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
-                    RoomManager.deleteRoom(roomId);
                 }
             );
         }
@@ -362,7 +361,6 @@ function registerRematchEvents(io: Server, socket: Socket) {
                         (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
                         (finalState) => {
                             io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
-                            RoomManager.deleteRoom(room.roomId);
                         }
                     );
                 }
