@@ -562,6 +562,162 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         newClientSocket1.disconnect();
     });
 
+    it('Test-05.2c: Debe permitir la reconexión aunque la partida ya haya finalizado, para que el jugador pueda ver el resultado', async () => {
+        RoomManager.DISCONNECT_TIMEOUT_MS = 5000; // Tiempo de gracia amplio para que no expire durante la prueba
+
+        const disconnectWarningPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.OPPONENT_DISCONNECTED, () => resolve());
+        });
+
+        const oldSocketId = clientSocket1.id;
+        clientSocket1.disconnect();
+        await disconnectWarningPromise;
+
+        // Mientras el jugador 1 está desconectado, la partida finaliza por una vía normal (no por el timeout de desconexión).
+        const room = RoomManager.getRoomById(activeRoomId);
+        room!.gameState.status = 'finished';
+        room!.gameState.winner = client2Color;
+
+        const newClientSocket1 = ioClient(`http://localhost:${server.port}`);
+
+        const reconnectSuccessPromise = new Promise<void>((resolve, reject) => {
+            newClientSocket1.on(SocketEvents.RECONNECT_SUCCESS, (data) => {
+                try {
+                    expect(data.gameState.status).toBe('finished');
+                    expect(data.gameState.winner).toBe(client2Color);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        newClientSocket1.emit(SocketEvents.RECONNECT_ATTEMPT, {
+            roomId: activeRoomId,
+            originalSocketId: oldSocketId });
+
+        await reconnectSuccessPromise;
+
+        newClientSocket1.disconnect();
+    });
+
+    it('Test-05.2d: Debe restaurar el historial de chat al reconectar, incluyendo los mensajes enviados durante la desconexión', async () => {
+        RoomManager.DISCONNECT_TIMEOUT_MS = 5000;
+
+        const disconnectWarningPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.OPPONENT_DISCONNECTED, () => resolve());
+        });
+
+        const oldSocketId = clientSocket1.id;
+        clientSocket1.disconnect();
+        await disconnectWarningPromise;
+
+        // El jugador 2 envía un mensaje mientras el jugador 1 está desconectado.
+        clientSocket2.emit(SocketEvents.SEND_MESSAGE, { message: 'Mensaje mientras estabas desconectado' });
+        // Pequeña espera para asegurar que el servidor ha procesado el mensaje antes de reconectar.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const newClientSocket1 = ioClient(`http://localhost:${server.port}`);
+
+        const reconnectSuccessPromise = new Promise<void>((resolve, reject) => {
+            newClientSocket1.on(SocketEvents.RECONNECT_SUCCESS, (data) => {
+                try {
+                    expect(data.chatHistory).toBeDefined();
+                    expect(data.chatHistory.length).toBe(1);
+                    expect(data.chatHistory[0].message).toBe('Mensaje mientras estabas desconectado');
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        newClientSocket1.emit(SocketEvents.RECONNECT_ATTEMPT, {
+            roomId: activeRoomId,
+            originalSocketId: oldSocketId });
+
+        await reconnectSuccessPromise;
+
+        newClientSocket1.disconnect();
+    });
+
+    it('Test-05.2e: Debe restaurar una oferta de empate pendiente al reconectar', async () => {
+        RoomManager.DISCONNECT_TIMEOUT_MS = 5000;
+
+        const disconnectWarningPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.OPPONENT_DISCONNECTED, () => resolve());
+        });
+
+        const oldSocketId = clientSocket1.id;
+        clientSocket1.disconnect();
+        await disconnectWarningPromise;
+
+        // El jugador 2 ofrece empate mientras el jugador 1 está desconectado.
+        clientSocket2.emit(SocketEvents.OFFER_DRAW);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const newClientSocket1 = ioClient(`http://localhost:${server.port}`);
+
+        const reconnectSuccessPromise = new Promise<void>((resolve, reject) => {
+            newClientSocket1.on(SocketEvents.RECONNECT_SUCCESS, (data) => {
+                try {
+                    expect(data.drawOffered).toBe(true);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        newClientSocket1.emit(SocketEvents.RECONNECT_ATTEMPT, {
+            roomId: activeRoomId,
+            originalSocketId: oldSocketId });
+
+        await reconnectSuccessPromise;
+
+        newClientSocket1.disconnect();
+    });
+
+    it('Test-05.2f: Debe restaurar una oferta de revancha pendiente al reconectar', async () => {
+        RoomManager.DISCONNECT_TIMEOUT_MS = 5000;
+
+        // La revancha solo tiene sentido tras una partida finalizada. Con la partida ya finalizada,
+        // el servidor no emite OPPONENT_DISCONNECTED al desconectarse (no hay periodo de gracia que
+        // proteger), así que no hay que esperar ese evento.
+        const room = RoomManager.getRoomById(activeRoomId);
+        room!.gameState.status = 'finished';
+        room!.gameState.winner = client1Color;
+
+        const oldSocketId = clientSocket1.id;
+        clientSocket1.disconnect();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // El jugador 2 ofrece revancha mientras el jugador 1 está desconectado.
+        clientSocket2.emit(SocketEvents.OFFER_REMATCH);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const newClientSocket1 = ioClient(`http://localhost:${server.port}`);
+
+        const reconnectSuccessPromise = new Promise<void>((resolve, reject) => {
+            newClientSocket1.on(SocketEvents.RECONNECT_SUCCESS, (data) => {
+                try {
+                    expect(data.rematchOffered).toBe(true);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
+
+        newClientSocket1.emit(SocketEvents.RECONNECT_ATTEMPT, {
+            roomId: activeRoomId,
+            originalSocketId: oldSocketId });
+
+        await reconnectSuccessPromise;
+
+        newClientSocket1.disconnect();
+    });
+
     it('Test-05.3: Debe finalizar la partida y otorgar la victoria al oponente si el temporizador de juego llega a cero', async () => {
         const room = RoomManager.getRoomById(activeRoomId);
 

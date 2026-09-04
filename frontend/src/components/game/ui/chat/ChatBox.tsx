@@ -21,10 +21,20 @@ export const ChatBox: React.FC = () => {
             setMessages((prevMessages) => [...prevMessages, message]);
         };
 
+        // Sub-05.2: al reconectar, el servidor devuelve el historial de chat de la sala para que los
+        // mensajes enviados mientras el jugador estaba desconectado no se pierdan.
+        const handleReconnectSuccess = (data: { chatHistory?: ChatMessage[] }) => {
+            if (data.chatHistory) {
+                setMessages(data.chatHistory);
+            }
+        };
+
         socket.on(SocketEvents.CHAT_UPDATE, handleNewMessage);
+        socket.on(SocketEvents.RECONNECT_SUCCESS, handleReconnectSuccess);
 
         return () => {
             socket.off(SocketEvents.CHAT_UPDATE, handleNewMessage);
+            socket.off(SocketEvents.RECONNECT_SUCCESS, handleReconnectSuccess);
         };
     }, [socket]);
 

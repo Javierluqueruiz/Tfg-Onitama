@@ -10,5 +10,5 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*", "../shared/**/*", "tests/unit/BoardGenerator.test.ts", "tests/unit/DeckManager.test.ts", "tests/unit/GameEngine.test.ts", "tests/unit/MoveArbitrator.test.ts", "tests/unit/MovementManager.test.ts", "tests/unit/VictoryArbitrator.test.ts"]
+  "include": ["src/**/*", "../shared/**/*"]
 }

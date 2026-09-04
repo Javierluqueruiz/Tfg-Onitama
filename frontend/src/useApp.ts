@@ -38,10 +38,8 @@ export const useApp = () => {
     useSocketEvent(socket, SocketEvents.GAME_UPDATE, (data: { gameState: GameState }) => {
         console.log('Actualización del estado del juego recibida:', data.gameState);
         setGameState(data.gameState);
-
-        if (data.gameState.status === 'finished') {
-            localStorage.removeItem('onitama_session');
-        }
+        // La sesión ya no se borra aquí al finalizar la partida: se mantiene para permitir reconectar
+        // y ver el resultado, el chat y una posible revancha pendiente (ver useGameScreen.ts, handleExit).
     });
 
     return {

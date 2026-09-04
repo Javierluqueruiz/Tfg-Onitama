@@ -19,8 +19,8 @@ describe('useNetwork', () => {
 
     it('Empieza con el temporizador de desconexión en null y el mensaje de reconexión en false', () => {
         const socket = createMockSocket();
-        const { result } = renderHook(() => useNetwork(socket as unknown as Socket, 'in_progress'));
-        
+        const { result } = renderHook(() => useNetwork(socket as unknown as Socket));
+
         expect(result.current.disconnectTimer).toBeNull();
         expect(result.current.reconnectMessage).toBe(false);
         expect(result.current.timeRemaining).toEqual({ red: 0, blue: 0 });
@@ -28,19 +28,19 @@ describe('useNetwork', () => {
 
     it('Actualiza el temporizador de desconexión al recibir OPPONENT_DISCONNECTED', () => {
         const socket = createMockSocket();
-        const { result } = renderHook(() => useNetwork(socket as unknown as Socket, 'in_progress'));
+        const { result } = renderHook(() => useNetwork(socket as unknown as Socket));
 
         act(() => {
             socket.trigger(SocketEvents.OPPONENT_DISCONNECTED, { timeLimit: 30000 });
         });
-        
+
         expect(result.current.disconnectTimer).toBe(30);
 
     });
 
     it('El temporizador de desconexión disminuye cada segundo', () => {
         const socket = createMockSocket();
-        const { result } = renderHook(() => useNetwork(socket as unknown as Socket, 'in_progress'));
+        const { result } = renderHook(() => useNetwork(socket as unknown as Socket));
 
         act(() => {
             socket.trigger(SocketEvents.OPPONENT_DISCONNECTED, { timeLimit: 3000 });
@@ -60,7 +60,7 @@ describe('useNetwork', () => {
 
     it('OPPONENT_RECONNECTED resetea el temporizador de desconexión y muestra el mensaje de reconexión', () => {
         const socket = createMockSocket();
-        const { result } = renderHook(() => useNetwork(socket as unknown as Socket, 'in_progress'));
+        const { result } = renderHook(() => useNetwork(socket as unknown as Socket));
         act(() => {
             socket.trigger(SocketEvents.OPPONENT_DISCONNECTED, { timeLimit: 30000 });
         });
@@ -80,7 +80,7 @@ describe('useNetwork', () => {
 
     it('TIME_TICK actualiza el tiempo restante', () => {
         const socket = createMockSocket();
-        const { result } = renderHook(() => useNetwork(socket as unknown as Socket, 'in_progress'));
+        const { result } = renderHook(() => useNetwork(socket as unknown as Socket));
 
         act(() => {
             socket.trigger(SocketEvents.TIME_TICK, { timeRemaining: { red: 120, blue: 90 } });
@@ -90,7 +90,7 @@ describe('useNetwork', () => {
 
     it('GAME_START sincroniza el tiempo de la partida y limpia el estado de desconexión', () => {
         const socket = createMockSocket();
-        const { result } = renderHook(() => useNetwork(socket as unknown as Socket, 'in_progress'));
+        const { result } = renderHook(() => useNetwork(socket as unknown as Socket));
 
         act(() => {
             socket.trigger(SocketEvents.OPPONENT_DISCONNECTED, { timeLimit: 30000 });
@@ -106,15 +106,19 @@ describe('useNetwork', () => {
         expect(result.current.reconnectMessage).toBe(false);
     });
 
-    it('Limpia la sesión al finalizar la partida', () => {
+    it('No borra la sesión guardada al finalizar la partida (Sub-05.2: debe permitir reconectar tras el final)', () => {
+        // Regresión: la sesión se borraba en cuanto la partida terminaba, lo que impedía reconectarse
+        // después para ver el resultado, el chat o una revancha pendiente. Ahora solo se borra al salir
+        // explícitamente de la partida (useGameScreen.ts, handleExit) o si el servidor rechaza la
+        // reconexión (useGameReconnection.ts, RECONNECT_FAILED).
         localStorage.setItem('onitama_session', JSON.stringify({ some: 'data' }));
         const socket = createMockSocket();
-        const { rerender} = renderHook(({ status }) => useNetwork(socket as unknown as Socket, status), { initialProps: { status: 'in_progress' } });
+        renderHook(() => useNetwork(socket as unknown as Socket));
+
+        act(() => {
+            socket.trigger(SocketEvents.OPPONENT_DISCONNECTED, { timeLimit: 30000 });
+        });
 
         expect(localStorage.getItem('onitama_session')).not.toBeNull();
-
-        rerender({ status: 'finished' });
-
-        expect(localStorage.getItem('onitama_session')).toBeNull();
     });
 });

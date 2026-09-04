@@ -12,6 +12,14 @@ export const useRematchNegotiation = (socket: Socket | null) => {
         setRematchState('received');
     });
 
+    // Sub-05.2: si al reconectar el servidor indica que hay una oferta de revancha pendiente del rival,
+    // se restaura el aviso como si se acabara de recibir.
+    useSocketEvent(socket, SocketEvents.RECONNECT_SUCCESS, (data: { rematchOffered?: boolean }) => {
+        if (data.rematchOffered) {
+            setRematchState('received');
+        }
+    });
+
     useSocketEvent(socket, SocketEvents.REMATCH_REJECTED, () => {
         console.log(`Jugador ${socket?.id} ha rechazado la solicitud de revancha.`);
         setRematchState('rejected');

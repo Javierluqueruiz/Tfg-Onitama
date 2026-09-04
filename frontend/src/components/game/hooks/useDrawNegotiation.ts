@@ -14,6 +14,14 @@ export const useDrawNegotiation = (socket: Socket | null) => {
         setDrawOfferReceived(true);
     });
 
+    // Sub-05.2: si al reconectar el servidor indica que hay una oferta de empate pendiente del rival,
+    // se restaura el aviso como si se acabara de recibir.
+    useSocketEvent(socket, SocketEvents.RECONNECT_SUCCESS, (data: { drawOffered?: boolean }) => {
+        if (data.drawOffered) {
+            setDrawOfferReceived(true);
+        }
+    });
+
     useSocketEvent(socket, SocketEvents.REJECT_DRAW, () => {
         setDrawOfferSent(false);
         setDrawRejectedMessage(true);

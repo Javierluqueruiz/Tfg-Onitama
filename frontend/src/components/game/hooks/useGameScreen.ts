@@ -17,7 +17,7 @@ export const useGameScreen = (
     const { isReconnecting } = useGameReconnection(socket);
     const rematch = useRematchNegotiation(socket);
 
-    const networkState = useNetwork(socket, gameState.status);
+    const networkState = useNetwork(socket);
     const drawNegotiationState = useDrawNegotiation(socket);
 
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -102,6 +102,7 @@ export const useGameScreen = (
 
     const handleExit = () => {
         socket?.emit(SocketEvents.LEAVE_ROOM);
+        localStorage.removeItem('onitama_session');
         window.location.reload();
     };
 

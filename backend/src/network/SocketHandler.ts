@@ -216,9 +216,14 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
             if (room) {
                 socket.join(room.roomId);
 
-                socket.emit(SocketEvents.RECONNECT_SUCCESS, { 
+                socket.emit(SocketEvents.RECONNECT_SUCCESS, {
                     gameState: room.gameState,
-                    players: room.players
+                    players: room.players,
+                    chatHistory: room.chatHistory,
+                    // Solo se marca como pendiente si la oferta la hizo el otro jugador; si la hizo el propio
+                    // jugador reconectado antes de desconectarse, no debe verse a sí mismo como receptor.
+                    drawOffered: room.drawOfferedBy != null && room.drawOfferedBy !== socket.id,
+                    rematchOffered: room.rematchOfferedBy != null && room.rematchOfferedBy !== socket.id
                 });
 
                 socket.to(room.roomId).emit(SocketEvents.OPPONENT_RECONNECTED);
@@ -240,6 +245,7 @@ function registerDrawEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
 
         if (room) {
+            room.drawOfferedBy = socket.id;
             socket.to(room.roomId).emit(SocketEvents.OFFER_DRAW);
         }
     });
@@ -249,6 +255,7 @@ function registerDrawEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
 
         if (room) {
+            room.drawOfferedBy = null;
             socket.to(room.roomId).emit(SocketEvents.REJECT_DRAW);
         }
     });
@@ -332,10 +339,11 @@ function registerRematchEvents(io: Server, socket: Socket) {
  //Sub-05.5: Rematch
     socket.on(SocketEvents.OFFER_REMATCH, () => {
         console.log(`Jugador ${socket.id} ha ofrecido una revancha.`);
-        const roomId = RoomManager.getRoomBySocketId(socket.id)?.roomId;
-        console.log(`Room ID para la revancha: ${roomId}`);
-        if (roomId) {
-            socket.to(roomId).emit(SocketEvents.REMATCH_OFFERED);
+        const room = RoomManager.getRoomBySocketId(socket.id);
+        console.log(`Room ID para la revancha: ${room?.roomId}`);
+        if (room) {
+            room.rematchOfferedBy = socket.id;
+            socket.to(room.roomId).emit(SocketEvents.REMATCH_OFFERED);
         }
     });
 

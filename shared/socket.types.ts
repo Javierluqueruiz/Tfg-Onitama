@@ -1,4 +1,4 @@
-import { GameState } from "./domain.types";
+import type { GameState } from "./domain.types";
 
 //Eventos para los WebSockets
 export enum SocketEvents {
@@ -61,6 +61,10 @@ export interface RoomSession {
         red: PlayerProfile | null;
         blue: PlayerProfile | null;
     }
+    // Sub-05.2: socket.id de quien ha hecho una oferta de empate/revancha pendiente de respuesta,
+    // para poder restaurarla si el destinatario se reconecta antes de que se resuelva.
+    drawOfferedBy: string | null;
+    rematchOfferedBy: string | null;
 }
 
 //Primera versión de la interfaz del perfil del jugador.

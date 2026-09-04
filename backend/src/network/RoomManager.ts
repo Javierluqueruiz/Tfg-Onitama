@@ -45,7 +45,9 @@ export class RoomManager {
             players: {
                 red: isHostRed ? hostProfile : null,
                 blue: isHostRed ? null : hostProfile
-            }
+            },
+            drawOfferedBy: null,
+            rematchOfferedBy: null
         };
 
         this.activeRooms.set(roomId, newRoom);
@@ -135,6 +137,15 @@ export class RoomManager {
             return null;
         }
 
+        // Si el jugador que se reconecta tenía una oferta de empate/revancha pendiente hecha por él mismo
+        // antes de desconectarse, se actualiza la referencia a su nuevo socket.id para no perder su autoría.
+        if (room.drawOfferedBy === oldSocketId) {
+            room.drawOfferedBy = newSocketId;
+        }
+        if (room.rematchOfferedBy === oldSocketId) {
+            room.rematchOfferedBy = newSocketId;
+        }
+
         this.clearDisconnectTimer(roomId);
 
         return room;
@@ -187,6 +198,7 @@ export class RoomManager {
         const room = this.getRoomById(roomId);
         if (!room || room.gameState.status === 'finished') return null;
 
+        room.drawOfferedBy = null;
         return this.finishGame(room, 'draw');
     }
 
@@ -199,6 +211,8 @@ export class RoomManager {
 
         this.stopGameTimer(roomId);
         room.gameState = GameEngine.createNewGame(roomId);
+        room.drawOfferedBy = null;
+        room.rematchOfferedBy = null;
 
         if (room.mode === 'normal') {
             room.gameState.timeRemaining = { red: 600, blue: 600 };
