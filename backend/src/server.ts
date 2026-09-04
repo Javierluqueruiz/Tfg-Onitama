@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io'
 import { registerSocketEvents } from './network/SocketHandler';
+import { connectDB } from './config/db';
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -24,6 +25,8 @@ const io = new Server(server, {
 
 registerSocketEvents(io);
 
-server.listen(PORT, () => {
-    console.log(`Servidor escuchando en el puerto ${PORT}`);
+connectDB().then(() => {
+    server.listen(PORT, () => {
+        console.log(`Servidor escuchando en el puerto ${PORT}`);
+    });
 })
