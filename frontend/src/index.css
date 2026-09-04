@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Nunito:wght@400;700;900&display=swap');
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -50,7 +52,6 @@
   }
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Nunito:wght@400;700;900&display=swap');
 
 #root {
   width: 1126px;

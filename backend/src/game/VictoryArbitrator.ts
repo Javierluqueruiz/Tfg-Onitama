@@ -1,5 +1,8 @@
 import { Board, PlayerColor } from "../../../shared";
 
+const RED_MASTER_POSITION = { x: 2, y: 0 };
+const BLUE_MASTER_POSITION = { x: 2, y: 4 };
+
 export class VictoryArbitrator {
 
     //FEAT-09: Determinar si se ha cumplido alguna condición de victoria
@@ -15,12 +18,12 @@ export class VictoryArbitrator {
                 if (piece && piece.type === 'master') {
                     if (piece.color === 'red') {
                         redMasterAlive = true;
-                        if (y === 4 && x === 2) {
+                        if (y === BLUE_MASTER_POSITION.y && x === BLUE_MASTER_POSITION.x) {
                             return 'red';
                         }
                     } else if (piece.color === 'blue') {
                         blueMasterAlive = true;
-                        if (y === 0 && x === 2) {
+                        if (y === RED_MASTER_POSITION.y && x === RED_MASTER_POSITION.x) {
                             return 'blue';
                         }
                     }

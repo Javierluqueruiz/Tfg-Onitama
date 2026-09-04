@@ -1,4 +1,4 @@
-import { Board, Piece, Position } from '../../../shared';
+import { Board, Piece, Position, isOutOfBounds, getCellAt, setCellAt } from '../../../shared';
 
 export interface MoveResult {
     newBoard: Board;
@@ -12,10 +12,10 @@ export class MovementManager {
     public static movePiece(board: Board, from: Position, to: Position): MoveResult {
     
         //1.Validar las posiciones
-        if (this.isOutOfBounds(from)) {
+        if (isOutOfBounds(from)) {
             throw new Error(`[FEAT-03] La posición de origen (${from.x}, ${from.y}) está fuera de los límites del tablero`);
         }
-        if (this.isOutOfBounds(to)) {
+        if (isOutOfBounds(to)) {
             throw new Error(`[FEAT-03] La posición de destino (${to.x}, ${to.y}) está fuera de los límites del tablero`);
         }
         
@@ -23,25 +23,21 @@ export class MovementManager {
         const newBoard: Board = board.map(row => [...row]) as Board;
 
         //3. Validar que haya una pieza en la posición de origen
-        const pieceToMove = newBoard[from.y][from.x];
+        const pieceToMove = getCellAt(newBoard, from);
 
         if (!pieceToMove) {
             throw new Error(`[FEAT-03] No hay pieza en la posición de origen (${from.x}, ${from.y})`);
         }
 
-        const capturedPiece = newBoard[to.y][to.x]; 
+        const capturedPiece = getCellAt(newBoard, to); 
 
         //4. Mover la pieza
-        newBoard[to.y][to.x] = pieceToMove; 
-        newBoard[from.y][from.x] = null;
+        setCellAt(newBoard, to, pieceToMove);
+        setCellAt(newBoard, from, null);
 
         return {
             newBoard,
             capturedPiece
         };
-    }
-
-    private static isOutOfBounds(pos: Position): boolean {
-        return pos.x < 0 || pos.x > 4 || pos.y < 0 || pos.y > 4;
     }
 }

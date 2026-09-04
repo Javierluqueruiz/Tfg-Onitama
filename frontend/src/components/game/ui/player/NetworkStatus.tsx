@@ -9,9 +9,10 @@ interface NetworkStatusProps {
     isConnected: boolean;
     disconnectTimer: number | null;
     reconnectMessage?: boolean;
+    isReconnecting?: boolean;
 };
 
-export const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOpponent, isConnected, disconnectTimer, reconnectMessage }) => 
+export const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOpponent, isConnected, disconnectTimer, reconnectMessage, isReconnecting }) => 
     {
         const { socket } = useSocket(); // Solo extraemos el socket, NO el ping
         const [ping, setPing] = useState<number>(0);
@@ -43,7 +44,7 @@ export const NetworkStatus: React.FC<NetworkStatusProps> = ({ isOpponent, isConn
 
     return (
         <>
-            {!isOpponent && !isConnected && (
+            {!isOpponent && (!isConnected || isReconnecting) && (
                 <div className={styles.disconnectBanner}>
                     Conexión perdida. Intentando reconectar...
                 </div>

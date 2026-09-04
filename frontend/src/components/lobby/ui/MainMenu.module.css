@@ -1,21 +1,22 @@
 .container {
     display: flex;
     flex-direction: column;
-    /*gap: 20px;*/
 }
 
 .btn {
     padding: 15px 30px;
     font-size: 20px;
-    color: white;
+    color: var(--game-paper);
     border: none;
     border-radius: 8px;
     font-weight: bold;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, transform 0.1s;
 }
 
-.btnCreate { background-color: #0f8941; }
-.btnJoin { background: #b05b10; }
+.btn:active { transform: scale(0.98); }
+
+.btnCreate { background-color: var(--game-jade); }
+.btnJoin { background-color: var(--game-wood-deep); border: 1px solid var(--game-wood-shadow); }
 
 .connected { cursor: pointer; opacity: 1; }
 .disconnected { cursor: not-allowed; opacity: 0.6; }
@@ -28,7 +29,7 @@
     width: 100%;
 }
 .sectionTitle {
-    color: #000000;
+    color: var(--game-ink);
     text-align: center;
     margin-bottom: 0.5rem;
     font-size: 1.1rem;
@@ -39,16 +40,16 @@
     gap: 8px;
 }
 .divider {
-    color: #888;
+    color: var(--game-ink-faint);
     text-align: center;
     margin: 1rem 0;
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-.btnFast { background-color: #e17055; color: white; }
-.btnNormal { background-color: #0984e3; color: white; }
-.btnCasual { background-color: #00b894; color: white; }
+.btnFast { background-color: var(--game-red); color: var(--game-paper); }
+.btnNormal { background-color: var(--game-blue); color: var(--game-paper); }
+.btnCasual { background-color: var(--game-jade); color: var(--game-paper); }
 
 
 /*FEAT-06*/
@@ -57,10 +58,10 @@
     display: flex;
     width: 100%;
     margin-bottom: 1.5rem;
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: var(--game-paper-soft);
     border-radius: 8px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--game-line-soft);
 }
 
 .tabBtn {
@@ -68,7 +69,7 @@
     padding: 0.8rem;
     background: transparent;
     border: none;
-    color: #a4b0be;
+    color: var(--game-ink-faint);
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
@@ -78,17 +79,18 @@
 }
 
 .tabBtn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #dfe4ea;
+    background-color: var(--game-line-soft);
+    color: var(--game-ink);
 }
 
 .activeTab {
-    background-color: #ff4757; /* Tu color de acento */
-    color: white;
+    background-color: var(--game-line);
+    color: var(--game-ink);
 }
 
 .activeTab:hover {
-    background-color: #ff6b81;
+    background-color: var(--game-line);
+    color: var(--game-ink);
 }
 
 /* --- CONTENEDOR CON ANIMACIÓN --- */
@@ -98,12 +100,12 @@
 }
 
 @keyframes fadeIn {
-    from { 
-        opacity: 0; 
-        transform: translateY(5px); 
+    from {
+        opacity: 0;
+        transform: translateY(5px);
     }
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

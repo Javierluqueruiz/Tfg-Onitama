@@ -1,0 +1,103 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.title { margin: 0; color: var(--game-ink); }
+
+.label {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: left;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--game-ink-soft);
+}
+
+.input {
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--game-line-soft);
+    background: var(--game-paper-soft);
+    color: var(--game-ink);
+    font-size: 16px;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--game-line);
+    box-shadow: 0 0 0 3px var(--game-line-soft);
+}
+
+.inputCode {
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 10px;
+}
+
+.buttonGroup .btnBack { flex: 0 0 auto; }
+.buttonGroup .btnSubmit { flex: 1; }
+
+.btnSubmit {
+    padding: 15px;
+    color: var(--game-paper);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 20px;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.btnSubmit:active { transform: scale(0.98); }
+
+.btnCreate { background-color: var(--game-jade); }
+.btnJoin { background-color: var(--game-wood-deep); border: 1px solid var(--game-wood-shadow); }
+
+.btnBack {
+    padding: 10px;
+    background: var(--game-paper-soft);
+    color: var(--game-ink);
+    border: 1px solid var(--game-line-soft);
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 6px;
+}
+
+/* Nuevos estilos */
+.modeSelection {
+    margin: 1.5rem 0;
+    text-align: center;
+}
+.modeButtonsRow {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+.modeBtn {
+    flex: 1;
+    padding: 10px;
+    background-color: transparent;
+    border: 2px solid var(--game-line-soft);
+    color: var(--game-ink-soft);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+.modeBtn:hover {
+    border-color: var(--game-line);
+    color: var(--game-ink);
+}
+/* Misma paleta de modos que MainMenu (rápido/normal/casual) */
+.activeFast { background-color: var(--game-red); border-color: var(--game-red); color: var(--game-paper); }
+.activeNormal { background-color: var(--game-blue); border-color: var(--game-blue); color: var(--game-paper); }
+.activeCasual { background-color: var(--game-jade); border-color: var(--game-jade); color: var(--game-paper); }

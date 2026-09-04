@@ -1,21 +1,23 @@
 import { useState, useMemo } from 'react';
-import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile } from '../../../../../shared';
+import { type Card, type Position, type PlayerColor, type GameState, SocketEvents, type PlayerProfile, getCellAt } from '../../../../../shared';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useNetwork } from './useNetwork';
 import { useDrawNegotiation } from './useDrawNegotiation';
 import { useRematchNegotiation } from './useRematchNegotiation';
-
-
+import { useGameReconnection } from './useGameReconnection';
+import { useSocketEvent } from '../../../hooks/useSocketEvent';
+import { getValidTargets } from '../logic/getValidTargets';
 
 export const useGameScreen = (
         gameState: GameState, 
         localColor: PlayerColor | null, 
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
 ) => {
-    const { socket, isConnected } = useSocket();
+    const { socket, isConnected, lastError } = useSocket();
+    const { isReconnecting } = useGameReconnection(socket);
     const rematch = useRematchNegotiation(socket);
 
-    const networkState = useNetwork(socket, gameState.status);
+    const networkState = useNetwork(socket);
     const drawNegotiationState = useDrawNegotiation(socket);
 
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -46,26 +48,25 @@ export const useGameScreen = (
         gameResult = 'draw';
     }
 
-    //Destinos Válidos
-    const validTargets = useMemo(() => {
-        if (!selectedCard || !selectedPiece) return [];
-        const multiplier = isLocalRed ? -1 : 1;
+    
+    useSocketEvent(socket, SocketEvents.GAME_START, () => {
+        setIsModalOpen(true);
+        setSelectedCard(null);
+        setSelectedPiece(null);
+    });
 
-        return selectedCard.moves.map(move => ({
-            x: selectedPiece.x + move.x * multiplier,
-            y: selectedPiece.y + move.y * multiplier    
-        })).filter(pos => {
-            if (pos.x < 0 || pos.x >= 5 || pos.y < 0 || pos.y >= 5) return false;
-            const destCell = board[pos.y][pos.x];
-            return !destCell || destCell.color !== localColor; // vacía o pieza rival (captura)
-        });
-    }, [selectedCard, selectedPiece, isLocalRed, board, localColor]);
+    //Destinos Válidos
+    //Destinos Válidos
+    const validTargets = useMemo(
+        () => getValidTargets(board, selectedCard, selectedPiece, localColor, isLocalRed),
+        [selectedCard, selectedPiece, isLocalRed, board, localColor]
+    );  
 
     //Gestión de Eventos
     const handleCellClick = (position: Position) => {
-        if (isGameOver || !isMyTurn) return;
+        if (isGameOver || !isMyTurn || isReconnecting) return;
 
-        const clickedCell = board[position.y][position.x];
+        const clickedCell = getCellAt(board, position);
 
         if (clickedCell && clickedCell.color === localColor) {
             if (!selectedCard) {
@@ -101,6 +102,7 @@ export const useGameScreen = (
 
     const handleExit = () => {
         socket?.emit(SocketEvents.LEAVE_ROOM);
+        localStorage.removeItem('onitama_session');
         window.location.reload();
     };
 
@@ -110,7 +112,7 @@ export const useGameScreen = (
         ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
         opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, isReconnecting, lastError
     };
 
 }

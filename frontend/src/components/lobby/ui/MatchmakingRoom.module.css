@@ -1,25 +1,29 @@
-.waitingContainers {
+.waitingContainer {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1.5rem;
     padding: 2.5rem;
-    background-color: rgba(30, 39, 46, 0.8);
-    border-radius: 12px;
-    color: white;
+    background-color: var(--game-wood);
+    border-radius: 16px;
+    color: var(--game-paper);
     text-align: center;
-    border: 1px solid #485460;
+    border: 1px solid var(--game-wood-shadow);
+    box-shadow: var(--game-shadow-panel);
+}
+.heading {
+    margin: 0;
+    color: var(--game-ink);
+    font-weight: bold;
 }
 .spinner {
     width: 60px;
     height: 60px;
-    border: 5px solid rgba(255, 255, 255, 0.1);
-    border-top: 5px solid #ff4757;
+    border: 5px solid rgba(255, 255, 255, 0.15);
+    border-top: 5px solid var(--game-line);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-
-    
 }
 
 @keyframes spin {
@@ -28,22 +32,23 @@
 }
 .modeText {
     font-size: 1.1rem;
-    color: #d2dae2;
+    font-weight: bold;
+    color: var(--game-ink-soft);
     text-transform: uppercase;
     letter-spacing: 1.5px;
 }
 .timer {
     font-size: 20px;
-    font-family: monospace;
+    font-family: var(--mono, monospace);
     font-weight: bold;
-    color: #ffdd59;
+    color: var(--game-line);
 }
 .cancelBtn {
     margin-top: 1rem;
     padding: 0.8rem 2rem;
     background-color: transparent;
-    border: 2px solid #ff4757;
-    color: #ff4757;
+    border: 2px solid var(--game-red);
+    color: var(--game-red);
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
@@ -51,6 +56,6 @@
     text-transform: uppercase;
 }
 .cancelBtn:hover {
-    background-color: #ff4757;
-    color: white;
+    background-color: var(--game-red);
+    color: var(--game-paper);
 }

@@ -1,6 +1,6 @@
-//Eventos para los WebSockets
-import type {GameState } from './domain.types';
+import type { GameState } from "./domain.types";
 
+//Eventos para los WebSockets
 export enum SocketEvents {
     //Cliente a Servidor
     CREATE_ROOM = 'create_room',
@@ -51,21 +51,26 @@ export enum SocketEvents {
     CHAT_UPDATE = 'chat_update',
 }
 
+export interface RoomSession {
+    roomId: string;
+    gameState: GameState;
+    roomCode: string;
+    mode: GameMode;
+    chatHistory: ChatMessage[];
+    players: {
+        red: PlayerProfile | null;
+        blue: PlayerProfile | null;
+    }
+    // Sub-05.2: socket.id de quien ha hecho una oferta de empate/revancha pendiente de respuesta,
+    // para poder restaurarla si el destinatario se reconecta antes de que se resuelva.
+    drawOfferedBy: string | null;
+    rematchOfferedBy: string | null;
+}
+
 //Primera versión de la interfaz del perfil del jugador.
 export interface PlayerProfile {
     socketId: string;
     name: string;
-}
-
-export interface RoomSession {
-    roomId: string;
-    roomCode: string;
-    mode: GameMode;
-    players: {
-        RED: PlayerProfile | null;
-        BLUE: PlayerProfile | null;
-    };
-    gameState: GameState | null;
 }
 
 export interface ReconnectPayload {
@@ -77,10 +82,6 @@ export interface ReconnectPayload {
 //Sub-06.1
 //Modos de juego
 export type GameMode = 'casual' | 'normal' | 'fast';
-
-export interface JoinQueuePayload {
-    mode: GameMode;
-}
 
 export interface MatchFoundPayload {
     roomId: string;

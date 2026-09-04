@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
-import { SocketEvents, type GameMode } from '../../../shared';
-import { useSocket } from '../contexts/SocketContext';
+import { useState } from 'react';
+import { SocketEvents, type GameMode } from '../../../../../shared';
+import { useSocket } from '../../../contexts/SocketContext';
+import { useSocketEvent } from '../../../hooks/useSocketEvent';
 
 type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITING' | 'MATCHMAKING';
 
 export const useLobby = () => {
-    const { socket, isConnected } = useSocket();
+    const { socket, isConnected, lastError: errorMsg, setLastError: setErrorMsg } = useSocket();
 
     //Todos los estados
     const [currentScreen, setCurrentScreen] = useState<MenuScreen>('MAIN');
@@ -13,27 +14,12 @@ export const useLobby = () => {
     const [playerName, setPlayerName] = useState<string>('');
     const [joinCode, setJoinCode] = useState<string>('');
     const [createdRoomCode, setCreatedRoomCode] = useState<string>('');
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-    //Todos los effects
-    useEffect(() => {
-        if (!socket) return;
-
-        socket.on(SocketEvents.ROOM_CREATED, (data: { roomCode: string }) => {
-            setCreatedRoomCode(data.roomCode)
-            setCurrentScreen('WAITING');
-            setErrorMsg(null);
-        });
-
-        socket.on(SocketEvents.ERROR, (data: { message: string }) => {
-            setErrorMsg(data.message);
-        });
-
-        return () => {
-            socket.off(SocketEvents.ROOM_CREATED);
-            socket.off(SocketEvents.ERROR);
-        };
-    }, [socket]);
+    useSocketEvent(socket, SocketEvents.ROOM_CREATED, (data: { roomCode: string }) => {
+        setCreatedRoomCode(data.roomCode);
+        setCurrentScreen('WAITING');
+        setErrorMsg(null);
+    });
 
     //Todos los handle
     const handleCreateRoom = (mode: GameMode) => {
@@ -57,7 +43,6 @@ export const useLobby = () => {
         setSelectMode(mode);
         setCurrentScreen('MATCHMAKING');
     };
-    console.log(`Selecting mode: ${selectMode}, current screen: ${currentScreen}`);
 
     return {
         isConnected,

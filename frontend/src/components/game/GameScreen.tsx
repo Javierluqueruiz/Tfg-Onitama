@@ -24,7 +24,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         opponentName, localName, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
-        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isReconnecting
     } = useGameScreen(gameState, localColor, playersProfile);
 
 
@@ -89,6 +89,8 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 onRejectDraw={handleRejectDraw}
             />
 
+            {lastError && <div className={styles.toastError}>{lastError}</div>}
+
             {/* Zona del Jugador Local */}
             <PlayerZone 
                 isOpponent={false}
@@ -102,6 +104,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 isGameOver={isGameOver}
                 isConnected={isConnected}
                 disconnectTimer={disconnectTimer}
+                isReconnecting={isReconnecting}
             />
 
             <GameControls

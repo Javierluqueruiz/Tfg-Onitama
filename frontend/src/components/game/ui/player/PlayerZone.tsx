@@ -22,6 +22,7 @@ interface PlayerZoneProps {
     isConnected?: boolean;
     disconnectTimer: number | null;
     reconnectMessage?: boolean;
+    isReconnecting?: boolean;
 }
 
 export const PlayerZone: React.FC<PlayerZoneProps> = ({
@@ -36,7 +37,8 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     isGameOver,
     isConnected = true,
     disconnectTimer,
-    reconnectMessage
+    reconnectMessage,
+    isReconnecting 
 }) => {
 
     // Extraemos el renderizado de las cartas
@@ -75,6 +77,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
             isConnected={isConnected}
             disconnectTimer={disconnectTimer}
             reconnectMessage={reconnectMessage}
+            isReconnecting={isReconnecting}
         />
     );
 

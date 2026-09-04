@@ -1,19 +1,5 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile, SocketEvents } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
-import { Server } from 'socket.io';
-
-export interface RoomSession {
-    roomId: string;
-    gameEngine: GameEngine;
-    gameState: GameState;
-    roomCode: string;
-    mode: GameMode;
-    chatHistory: ChatMessage[];
-    players: {
-        red: PlayerProfile | null;
-        blue: PlayerProfile | null;
-    }
-}
 
 export class RoomManager {
 
@@ -26,29 +12,17 @@ export class RoomManager {
 
     public static DISCONNECT_TIMEOUT_MS = 30000; 
 
-    //Sub-06.1
-    private static matchmakingQueue: Record<GameMode, string[]> = {
-        casual: [],
-        normal: [],
-        fast: []
-    };
 
     public static getActiveRooms(): Map<string, RoomSession> {
         return this.activeRooms;
     }
 
     private static generateUniqueRoomCode(): string {
-        let roomCode: string = '';
-        let isUnique: boolean = false;
+        let roomCode: string;
         
         do {
             roomCode = Math.random().toString(36).substring(2,7).toUpperCase();
-
-            const existingRoom = this.getRoomByCode(roomCode);
-            if (!existingRoom) {
-                isUnique = true;
-            }
-        } while (!isUnique);
+        } while (this.getRoomByCode(roomCode));
 
         return roomCode;
     }
@@ -62,10 +36,8 @@ export class RoomManager {
 
         const isHostRed = Math.random() < 0.5;
 
-        //Crea una sala con un nuevo GameEngine.
         const newRoom: RoomSession = {
             roomId,
-            gameEngine: new GameEngine(),
             gameState: null as unknown as GameState, // Inicialmente null, se establecerá cuando se cree un nuevo juego.
             roomCode,
             mode,
@@ -73,7 +45,9 @@ export class RoomManager {
             players: {
                 red: isHostRed ? hostProfile : null,
                 blue: isHostRed ? null : hostProfile
-            }
+            },
+            drawOfferedBy: null,
+            rematchOfferedBy: null
         };
 
         this.activeRooms.set(roomId, newRoom);
@@ -101,6 +75,10 @@ export class RoomManager {
         this.activeRooms.delete(roomId);
     }
 
+    public static clearActiveRooms(): void {
+        this.activeRooms.clear();
+    }
+
     public static getRoomBySocketId(socketId: string): RoomSession | undefined {
         for (const room of this.activeRooms.values()) {
             if (room.players.red?.socketId === socketId || room.players.blue?.socketId === socketId) {
@@ -109,24 +87,24 @@ export class RoomManager {
         }  
     }
 
-    //Sub-05.1
-    public static surrenderGame(roomId: string, surrenderingPlayerSocketId: string): GameState | null {
-        const room = this.getRoomById(roomId);
-        if (!room) return null;
-
-        const isRed = room.players.red?.socketId === surrenderingPlayerSocketId;
-        const winner = isRed ? 'blue' : 'red';
-
-        const updatedState: GameState = {
+    private static finishGame(room: RoomSession, winner: Winner): GameState {
+        room.gameState = {
             ...room.gameState,
             status: 'finished',
             winner: winner
         };
-        
-        room.gameState = updatedState;
-        this.activeRooms.set(roomId, room); // Actualiza la sala con el nuevo estado del juego
+        return room.gameState;
+    }
 
-        return updatedState;
+    //Sub-05.1
+    public static surrenderGame(roomId: string, surrenderingPlayerSocketId: string): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room || room.gameState.status === 'finished') return null;
+
+        const isRed = room.players.red?.socketId === surrenderingPlayerSocketId;
+        const winner = isRed ? 'blue' : 'red';
+
+        return this.finishGame(room, winner);
     }
     
     //SUB-05.2: Desconexión
@@ -142,11 +120,14 @@ export class RoomManager {
         }
     }
 
-    //Sub-05.2: Reconexión 
+    //Sub-05.2: Reconexión
     public static reconnectPlayer(roomId: string, oldSocketId: string, newSocketId: string): RoomSession | null {
         const room = this.getRoomById(roomId);
 
-        if (!room || room.gameState.status === 'finished') return null;
+        // No se bloquea la reconexión si la partida ya ha finalizado: las salas se mantienen en memoria
+        // tras el final de la partida para permitir la revancha (Sub-05.5), y el jugador reconectado debe
+        // poder ver el resultado, el chat y una posible oferta de revancha o empate pendiente.
+        if (!room) return null;
 
         if (room.players.red?.socketId === oldSocketId) {
             room.players.red.socketId = newSocketId;
@@ -154,6 +135,15 @@ export class RoomManager {
             room.players.blue.socketId = newSocketId;
         } else {
             return null;
+        }
+
+        // Si el jugador que se reconecta tenía una oferta de empate/revancha pendiente hecha por él mismo
+        // antes de desconectarse, se actualiza la referencia a su nuevo socket.id para no perder su autoría.
+        if (room.drawOfferedBy === oldSocketId) {
+            room.drawOfferedBy = newSocketId;
+        }
+        if (room.rematchOfferedBy === oldSocketId) {
+            room.rematchOfferedBy = newSocketId;
         }
 
         this.clearDisconnectTimer(roomId);
@@ -208,55 +198,11 @@ export class RoomManager {
         const room = this.getRoomById(roomId);
         if (!room || room.gameState.status === 'finished') return null;
 
-        const updatedState: GameState = {
-            ...room.gameState,
-            status: 'finished',
-            winner: 'draw'
-        };
-
-        room.gameState = updatedState;
-        this.activeRooms.set(roomId, room); 
-
-        return updatedState;
+        room.drawOfferedBy = null;
+        return this.finishGame(room, 'draw');
     }
 
-    //Sub-06.1
-    public static joinQueue(socketId: string, mode: GameMode): {matchFound: boolean, roomId?: string, roomCode?: string, opponentId?: string} {
-        this.leaveQueue(socketId); 
-
-        const queue = this.matchmakingQueue[mode];
-        if (queue.length > 0) {
-            const opponentId = queue.shift()!; // Jugador más antiguo
-
-            const hostProfile: PlayerProfile = { socketId: opponentId, name: 'Invitado 1' };
-            const guestProfile: PlayerProfile = { socketId, name: 'Invitado 2' };
-            const newRoom = this.createRoom(hostProfile, mode);
-            
-            if (newRoom.players.red?.socketId === opponentId) {
-                newRoom.players.blue = guestProfile;
-            } else {
-                newRoom.players.red = guestProfile;
-            }
-
-            
-            return {
-                matchFound: true,
-                roomId: newRoom.roomId,
-                roomCode: newRoom.roomCode,
-                opponentId
-            };
-        } else {
-            queue.push(socketId);
-            return { matchFound: false };
-        }
-    }
-
-    public static leaveQueue(socketId: string): void {
-        const modes: GameMode[] = ['casual', 'normal', 'fast'];
-        for (const mode of modes) {
-            this.matchmakingQueue[mode] = this.matchmakingQueue[mode].filter(id => id !== socketId);
-        }
-    }
+    
 
     //Sub-05.5: Rematch
     public static resetGameForRematch(roomId: string): GameState | null {
@@ -264,8 +210,15 @@ export class RoomManager {
         if (!room) return null;
 
         this.stopGameTimer(roomId);
+        room.gameState = GameEngine.createNewGame(roomId);
+        room.drawOfferedBy = null;
+        room.rematchOfferedBy = null;
 
-        room.gameState = room.gameEngine.createNewGame(roomId);
+        if (room.mode === 'normal') {
+            room.gameState.timeRemaining = { red: 600, blue: 600 };
+        } else if (room.mode === 'fast') {
+            room.gameState.timeRemaining = { red: 300, blue: 300 };
+        } 
 
         return room.gameState;
     }

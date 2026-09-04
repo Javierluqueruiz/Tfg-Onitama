@@ -1,10 +1,8 @@
 import { describe, beforeAll, it, expect } from 'vitest';
-import { DeckDrawResult, DeckManager, CardsState } from '../../src/game/DeckManager';
+import { DeckManager, CardsState } from '../../src/game/DeckManager';
 import { Card, PlayerColor } from '../../../shared/index';
 
 describe('FEAT-02: DeckManager', () => {
-
-    let deckResult: DeckDrawResult;
 
     it('Debe repartir exactamente 5 cartas al inicio de la partida', () => {
         const deckResult = DeckManager.drawInitialCards();
@@ -76,7 +74,7 @@ describe('FEAT-05: DeckManager', () => {
         const cardToPlay: Card = initialCards.red[0];
         const originalNeutral: Card = initialCards.neutral;
 
-        const newCards = DeckManager.playCard(initialCards, player, cardToPlay.name);
+        DeckManager.playCard(initialCards, player, cardToPlay.name);
 
         expect(initialCards.neutral.name).toBe(originalNeutral.name);
         expect(initialCards.red[0]).toBe(cardToPlay);
