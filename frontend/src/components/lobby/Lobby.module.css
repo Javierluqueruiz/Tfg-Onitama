@@ -2,18 +2,20 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background-image: url(https://i0.wp.com/churapereviews.com/wp-content/uploads/2024/01/Onitama-Background.png?fit=2775%2C1875&ssl=1);
+    background-color: var(--game-paper);
+    background-image: url('../../assets/lobby-background.png');
     background-size: cover;
-    background-position: center;
+    background-position: right center;
+    background-repeat: no-repeat;
 }
 
 .header {
-    padding: 48px 20px 20px;
+    padding: 48px 20px 20px 60px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    text-align: center;
+    text-align: left;
 }
 
 .mainTitle {
@@ -38,8 +40,8 @@
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
+    justify-content: flex-start;
+    padding: 20px 20px 20px 60px;
 }
 
 .statusContainer {
@@ -121,4 +123,37 @@
 
 .authLink:hover {
     text-decoration: underline;
+}
+
+/* Responsive: pantallas estrechas (móvil) */
+@media (max-width: 700px) {
+    .wrapper {
+        /* Degradado hacia el papel superpuesto a la imagen, para que el texto
+           siga siendo legible aunque el recorte "cover" muestre sobre todo
+           la zona del árbol en vertical */
+        background-image:
+            linear-gradient(to right, var(--game-paper) 0%, color-mix(in srgb, var(--game-paper) 55%, transparent) 45%, transparent 75%),
+            url('../../assets/lobby-background.png');
+        background-position: center, 65% center;
+        background-size: cover, cover;
+    }
+
+    .header {
+        padding: 32px 20px 12px;
+    }
+
+    .mainTitle {
+        font-size: 2.4rem;
+        letter-spacing: 2px;
+        margin-bottom: 24px;
+    }
+
+    .subTitle {
+        font-size: 1.2rem;
+        margin-left: 0;
+    }
+
+    .content {
+        padding: 12px 20px 20px;
+    }
 }
