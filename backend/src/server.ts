@@ -3,13 +3,8 @@ import http from 'http';
 import { Server } from 'socket.io'
 import { registerSocketEvents } from './network/SocketHandler';
 import { connectDB } from './config/db';
-
-const PORT = process.env.PORT || 3000;
-const app = express();
-
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
+import { env } from './config/env';
+import { app } from './app';
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -26,7 +21,7 @@ const io = new Server(server, {
 registerSocketEvents(io);
 
 connectDB().then(() => {
-    server.listen(PORT, () => {
-        console.log(`Servidor escuchando en el puerto ${PORT}`);
+    server.listen(env.port, () => {
+        console.log(`Servidor escuchando en el puerto ${env.port}`);
     });
 })
