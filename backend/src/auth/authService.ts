@@ -46,6 +46,9 @@ export class AuthService {
     }
 
     static async register(username: string, email: string, password: string): Promise<IUser> {
+        if (password.length < 6) {
+            throw new AuthError('La contraseña debe tener al menos 6 caracteres', 400);
+        }
         const passwordHash = await AuthService.hashPassword(password);
         try {
             return await User.create({ username, email, passwordHash });

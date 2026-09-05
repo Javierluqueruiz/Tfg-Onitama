@@ -53,6 +53,14 @@ describe('POST /api/auth/register', () => {
         expect(response.status).toBe(400);
         expect(response.body.message).toContain('El correo no tiene un formato válido');
     });
+
+    it('devuelve 400 si la contraseña es demasiado corta', async () => {
+        const response = await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: '12345' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe('La contraseña debe tener al menos 6 caracteres');
+    });
 });
 
 describe('POST /api/auth/login', () => {

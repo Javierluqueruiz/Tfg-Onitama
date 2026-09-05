@@ -70,6 +70,11 @@ describe('AuthService.register', async () => {
         await expect(AuthService.register('us', 'usuario@prueba.com', 'miContraseña')
         ).rejects.toBeInstanceOf( AuthError );
     });
+
+    it('lanza un error 400 si la contraseña es demasiado corta', async () => {
+        await expect(AuthService.register('usuarioPrueba', 'usuario@prueba.com', '12345')
+        ).rejects.toMatchObject({ statusCode: 400 });
+    });
 });
 
 describe('AuthService.login', async () => {

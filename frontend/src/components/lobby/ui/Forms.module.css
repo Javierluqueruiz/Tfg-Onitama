@@ -68,7 +68,10 @@
     border: 1px solid var(--game-line-soft);
     cursor: pointer;
     font-size: 16px;
+    padding-top: 20px;
+    font-weight: bold;
     border-radius: 6px;
+    text-decoration: none;   /* <- añadir esta línea */
 }
 
 /* Nuevos estilos */
@@ -101,3 +104,27 @@
 .activeFast { background-color: var(--game-red); border-color: var(--game-red); color: var(--game-paper); }
 .activeNormal { background-color: var(--game-blue); border-color: var(--game-blue); color: var(--game-paper); }
 .activeCasual { background-color: var(--game-jade); border-color: var(--game-jade); color: var(--game-paper); }
+
+/*FEAT-08*/
+.error {
+    color: var(--game-red);
+    font-weight: bold;
+    margin: 0;
+}
+
+.switchLink {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--game-ink-soft);
+}
+
+.switchLink a {
+    color: var(--game-jade);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.switchLink a:hover {
+    text-decoration: underline;
+}
