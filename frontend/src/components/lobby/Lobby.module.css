@@ -88,3 +88,37 @@
     font-size: 15px;
     font-weight: bold;
 }
+
+/*FEAT-08*/
+.authStatus {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.authUser {
+    color: var(--game-ink);
+    font-weight: bold;
+}
+
+.authGuest {
+    color: var(--game-ink-faint);
+}
+
+.authLink {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--game-jade);
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.authLink:hover {
+    text-decoration: underline;
+}

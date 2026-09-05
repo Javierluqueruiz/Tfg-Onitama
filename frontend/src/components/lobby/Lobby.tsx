@@ -6,6 +6,7 @@ import styles from './Lobby.module.css';
 import { useLobby } from './hooks/useLobby';
 import type { GameMode } from '../../../../shared';
 import { MatchmakingRoom } from './ui/MatchmakingRoom';
+import { AuthStatus } from './ui/AuthStatus';
 import '../game/theme.css';
 
 export const Lobby: React.FC =  () => {
@@ -26,6 +27,7 @@ export const Lobby: React.FC =  () => {
 
             <div className={styles.content}>
                 <div className={styles.statusContainer}>
+                    <AuthStatus />
                     <div className={styles.statusHeader}>
                         <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`}/>
                         <span className={styles.statusText}>

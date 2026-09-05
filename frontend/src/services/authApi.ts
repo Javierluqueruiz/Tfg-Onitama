@@ -3,12 +3,18 @@ import type { RegisterRequest, LoginRequest, AuthResponse, AuthUser } from '../.
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 async function postJson<TResponse>(path: string, body: unknown): Promise<TResponse> {
-    const response = await fetch(`${API_URL}${path}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    });
-
+    let response: Response;
+    
+    try {
+        response = await fetch(`${API_URL}${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+    } catch {
+        throw new Error('Error de red. No se pudo conectar con el servidor.');
+    }
+    
     const data = await response.json();
 
     if (!response.ok) {
