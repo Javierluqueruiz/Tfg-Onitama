@@ -1,12 +1,38 @@
 .wrapper {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
     background-color: var(--game-paper);
-    background-image: url('../../assets/lobby-background.png');
+}
+
+/* FEAT-08: dos fondos superpuestos que se funden entre sí (crossfade + zoom
+   ligero) según la pestaña/pantalla activa, en vez de una imagen fija */
+.scene {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     background-size: cover;
-    background-position: right center;
     background-repeat: no-repeat;
+    background-position: right center;
+    opacity: 0;
+    transform: scale(1.06);
+    transition: opacity 1s ease, transform 1.2s ease;
+}
+
+.sceneActive {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.sceneMain {
+    background-image: url('../../assets/lobby-background.png');
+}
+
+.scenePrivate {
+    background-image: url('../../assets/fight-background2.jpeg');
 }
 
 .header {
@@ -127,16 +153,20 @@
 
 /* Responsive: pantallas estrechas (móvil) */
 @media (max-width: 700px) {
-    .wrapper {
+    .sceneMain,
+    .scenePrivate {
         /* Degradado hacia el papel superpuesto a la imagen, para que el texto
            siga siendo legible aunque el recorte "cover" muestre sobre todo
-           la zona del árbol en vertical */
+           la zona con más detalle en vertical */
         background-image:
             linear-gradient(to right, var(--game-paper) 0%, color-mix(in srgb, var(--game-paper) 55%, transparent) 45%, transparent 75%),
-            url('../../assets/lobby-background.png');
+            var(--scene-image);
         background-position: center, 65% center;
         background-size: cover, cover;
     }
+
+    .sceneMain { --scene-image: url('../../assets/lobby-background.png'); }
+    .scenePrivate { --scene-image: url('../../assets/fight-background.jpeg'); }
 
     .header {
         padding: 32px 20px 12px;

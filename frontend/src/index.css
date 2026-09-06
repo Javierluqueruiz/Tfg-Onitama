@@ -3,8 +3,11 @@
 body {
   margin: 0;
   padding: 0;
-  /* Fondo con un degradado radial sutil hacia el centro */
-  background: radial-gradient(circle at center, #fdfbf7 0%, #e8e4d9 100%);
+  /* Fondo con un degradado radial sutil hacia el centro -- mismo tono cálido
+     que --game-paper/--game-wood (theme.css), para que las páginas que dejen
+     ver el fondo del body (p. ej. GameScreen con .screenContainer
+     transparente) no choquen con un blanco distinto */
+  background: radial-gradient(circle at center, #f6efdc 0%, #e7dcc0 100%);
   min-height: 100vh;
   font-family: 'Nunito', sans-serif;
   color: #2c3e50;

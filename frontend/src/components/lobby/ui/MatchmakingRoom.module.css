@@ -5,12 +5,11 @@
     justify-content: center;
     gap: 1.5rem;
     padding: 2.5rem;
-    background-color: var(--game-wood);
+    background-color: var(--game-paper-soft);
     border-radius: 16px;
-    color: var(--game-paper);
     text-align: center;
-    border: 1px solid var(--game-wood-shadow);
-    box-shadow: var(--game-shadow-panel);
+    border: 1px solid var(--game-line-soft);
+    box-shadow: var(--game-shadow-soft);
 }
 .heading {
     margin: 0;

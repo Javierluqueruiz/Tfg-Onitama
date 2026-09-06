@@ -9,6 +9,7 @@ interface AuthLayoutProps {
 export const AuthLayout = ({ children }: AuthLayoutProps) => {
     return (
         <div className={`${lobbyStyles.wrapper} gameTheme`}>
+            <div className={`${lobbyStyles.scene} ${lobbyStyles.sceneMain} ${lobbyStyles.sceneActive}`} />
             <div className={lobbyStyles.header}>
                 <h1 className={lobbyStyles.mainTitle}>⛩️ ONITAMA</h1>
                 <p className={lobbyStyles.subTitle}>El Camino del Maestro</p>
