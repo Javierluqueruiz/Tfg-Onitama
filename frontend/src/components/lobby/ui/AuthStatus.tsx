@@ -3,7 +3,11 @@ import { useAuth } from "../../../contexts/AuthContext";
 import styles from "../Lobby.module.css";
 
 export const AuthStatus = () => {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user, isAuthenticated, isLoading, logout } = useAuth();
+
+    if (isLoading) {
+        return null;
+    }
 
     if (isAuthenticated && user) {
         return (

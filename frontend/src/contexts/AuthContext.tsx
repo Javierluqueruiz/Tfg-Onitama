@@ -1,11 +1,14 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { RegisterRequest, LoginRequest, AuthUser } from '../../../shared';
 import { AuthApi } from '../services/authApi';
+
+const TOKEN_STORAGE_KEY = 'onitama_token';
 
 interface AuthContextState {
     user: AuthUser | null;
     token: string | null;
     isAuthenticated: boolean;
+    isLoading: boolean;
     login: (credentials: LoginRequest) => Promise<void>;
     register: (payload: RegisterRequest) => Promise<void>;
     logout: () => void;
@@ -15,6 +18,7 @@ const AuthContext = createContext<AuthContextState>({
     user: null,
     token: null,
     isAuthenticated: false,
+    isLoading: true,
     login: async () => {},
     register: async () => {},
     logout: () => {},
@@ -23,9 +27,32 @@ const AuthContext = createContext<AuthContextState>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+        if (!storedToken) {
+            setIsLoading(false);
+            return;
+        }
+
+        AuthApi.me(storedToken)
+            .then((restoredUser) => {
+                setUser(restoredUser);
+                setToken(storedToken);
+            })
+            .catch(() => {
+                localStorage.removeItem(TOKEN_STORAGE_KEY);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            })
+    }, []);
 
     const login = async (credentials: LoginRequest) => {
         const response = await AuthApi.login(credentials);
+        localStorage.setItem(TOKEN_STORAGE_KEY, response.token);
         setToken(response.token);
         setUser(response.user);
     };
@@ -36,12 +63,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = () => {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
         setToken(null);
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, login, register, logout }}>
+        <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, isLoading, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );

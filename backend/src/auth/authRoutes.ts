@@ -2,10 +2,19 @@ import { Router, Response } from 'express';
 import { AuthService, AuthError } from './authService';
 import { requireAuth, AuthenticatedRequest } from './authMiddleware';
 import { User } from './User.model';
+import rateLimit from 'express-rate-limit';
 
 export const authRoutes = Router();
 
-authRoutes.post('/register', async (req, res) => {
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    limit: 10,
+    message: { message: 'Demasiados intentos de autenticación. Por favor, inténtelo de nuevo más tarde.'},
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+authRoutes.post('/register', authLimiter, async (req, res) => {
     const { username, email, password } = req.body;
 
     try {
@@ -16,7 +25,7 @@ authRoutes.post('/register', async (req, res) => {
     }
 });
 
-authRoutes.post('/login', async (req, res) => {
+authRoutes.post('/login', authLimiter, async (req, res) => {
     const { username, password } = req.body;
 
     try {
