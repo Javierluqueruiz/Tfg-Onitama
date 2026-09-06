@@ -28,23 +28,23 @@ export const CreateRoom: React.FC<CreateRoomProps> = ({ playerName, setPlayerNam
             <div className={styles.modeSelection}>
                 <p className={styles.label}>Modo de Juego:</p>
                 <div className={styles.modeButtonsRow}>
-                    <button 
+                    <button
                         className={`${styles.modeBtn} ${selectedMode === 'fast' ? styles.activeFast : ''}`}
                         onClick={() => setSelectedMode('fast')}
                     >
-                        ⚡ 5 min
+                        5 min
                     </button>
-                    <button 
+                    <button
                         className={`${styles.modeBtn} ${selectedMode === 'normal' ? styles.activeNormal : ''}`}
                         onClick={() => setSelectedMode('normal')}
                     >
-                        ⏱️ 10 min
+                        10 min
                     </button>
-                    <button 
+                    <button
                         className={`${styles.modeBtn} ${selectedMode === 'casual' ? styles.activeCasual : ''}`}
                         onClick={() => setSelectedMode('casual')}
                     >
-                        ☕ Casual
+                        Casual
                     </button>
                 </div>
             </div>

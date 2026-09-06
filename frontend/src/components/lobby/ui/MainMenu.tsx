@@ -2,31 +2,32 @@ import React from 'react';
 import styles from './MainMenu.module.css';
 import type { GameMode } from '../../../../../shared';
 
+export type Tab = 'MATCHMAKING' | 'PRIVATE';
+
 interface MainMenuProps {
     onSelectCreate: () => void;
     onSelectJoin: () => void;
     onStartMatchmaking: (mode: GameMode) => void;
     isConnected: boolean;
+    activeTab: Tab;
+    onTabChange: (tab: Tab) => void;
 }
 
-type Tab = 'MATCHMAKING' | 'PRIVATE';
-
-export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin, onStartMatchmaking, isConnected }) => {
-    const [activeTab, setActiveTab] = React.useState<Tab>('MATCHMAKING');
+export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin, onStartMatchmaking, isConnected, activeTab, onTabChange }) => {
     const statusClass = isConnected ? styles.connected : styles.disconnected;
-    
+
     return (
         <div className={styles.container}>
             <div className={styles.tabHeader}>
                 <button
                     className={`${styles.tabBtn} ${activeTab === 'MATCHMAKING' ? styles.activeTab : ''}`}
-                    onClick={() => setActiveTab('MATCHMAKING')}
+                    onClick={() => onTabChange('MATCHMAKING')}
                 >
                     Partida Pública
                 </button>
                 <button
                     className={`${styles.tabBtn} ${activeTab === 'PRIVATE' ? styles.activeTab : ''}`}
-                    onClick={() => setActiveTab('PRIVATE')}
+                    onClick={() => onTabChange('PRIVATE')}
                 >
                     Partida Privada
                 </button>

@@ -1,19 +1,47 @@
 .wrapper {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background-image: url(https://i0.wp.com/churapereviews.com/wp-content/uploads/2024/01/Onitama-Background.png?fit=2775%2C1875&ssl=1);
+    background-color: var(--game-paper);
+}
+
+/* FEAT-08: dos fondos superpuestos que se funden entre sí (crossfade + zoom
+   ligero) según la pestaña/pantalla activa, en vez de una imagen fija */
+.scene {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     background-size: cover;
-    background-position: center;
+    background-repeat: no-repeat;
+    background-position: right center;
+    opacity: 0;
+    transform: scale(1.06);
+    transition: opacity 1s ease, transform 1.2s ease;
+}
+
+.sceneActive {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.sceneMain {
+    background-image: url('../../assets/lobby-background.png');
+}
+
+.scenePrivate {
+    background-image: url('../../assets/fight-background2.jpeg');
 }
 
 .header {
-    padding: 48px 20px 20px;
+    padding: 48px 20px 20px 60px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    text-align: center;
+    text-align: left;
 }
 
 .mainTitle {
@@ -38,8 +66,8 @@
     flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
+    justify-content: flex-start;
+    padding: 20px 20px 20px 60px;
 }
 
 .statusContainer {
@@ -121,4 +149,41 @@
 
 .authLink:hover {
     text-decoration: underline;
+}
+
+/* Responsive: pantallas estrechas (móvil) */
+@media (max-width: 700px) {
+    .sceneMain,
+    .scenePrivate {
+        /* Degradado hacia el papel superpuesto a la imagen, para que el texto
+           siga siendo legible aunque el recorte "cover" muestre sobre todo
+           la zona con más detalle en vertical */
+        background-image:
+            linear-gradient(to right, var(--game-paper) 0%, color-mix(in srgb, var(--game-paper) 55%, transparent) 45%, transparent 75%),
+            var(--scene-image);
+        background-position: center, 65% center;
+        background-size: cover, cover;
+    }
+
+    .sceneMain { --scene-image: url('../../assets/lobby-background.png'); }
+    .scenePrivate { --scene-image: url('../../assets/fight-background.jpeg'); }
+
+    .header {
+        padding: 32px 20px 12px;
+    }
+
+    .mainTitle {
+        font-size: 2.4rem;
+        letter-spacing: 2px;
+        margin-bottom: 24px;
+    }
+
+    .subTitle {
+        font-size: 1.2rem;
+        margin-left: 0;
+    }
+
+    .content {
+        padding: 12px 20px 20px;
+    }
 }
