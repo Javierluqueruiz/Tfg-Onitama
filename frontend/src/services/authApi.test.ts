@@ -49,4 +49,45 @@ describe("AuthApi", () => {
 
         expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/auth/me'), expect.objectContaining({ headers: { 'Authorization': 'Bearer fake-token' } }));
     });
+
+    //Sub-08.4
+    it('verifyEmail manda el token en la solicitud POST y devuelve el usuario', async () => {
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ id: '123', username: 'testuser', emailVerified: true }),
+        });
+
+        const result = await AuthApi.verifyEmail('fake-token');
+
+        expect(fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/api/auth/verify-email'),
+            expect.objectContaining({ method: 'POST', body: JSON.stringify({ token: 'fake-token' }) })
+        );
+        expect(result).toEqual({ id: '123', username: 'testuser', emailVerified: true });
+    });
+
+    it('lanza el mensaje de error del servidor si la respuesta de verifyEmail no es ok', async () => {
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            ok: false,
+            json: async () => ({ message: 'El enlace de verificación es inválido o ha expirado' }),
+        });
+
+        await expect(AuthApi.verifyEmail('invalid-token'))
+            .rejects.toThrow('El enlace de verificación es inválido o ha expirado');
+    });
+
+    it('resendVerification manda el token de sesión en la cabecera Authorization', async () => {
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ message: 'Correo reenviado' }),
+        });
+
+        await AuthApi.resendVerificationEmail('session-token');
+
+        expect(fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/api/auth/resend-verification'),
+            expect.objectContaining({ method: 'POST', headers: { 'Authorization': 'Bearer session-token' } })
+        );
+    });
+    
 });
