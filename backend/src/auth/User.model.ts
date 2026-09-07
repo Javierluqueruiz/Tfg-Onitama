@@ -5,6 +5,7 @@ export interface IUser extends Document {
     email: string;
     passwordHash: string;
     createdAt: Date;
+    emailVerified: boolean;
 }
 
 const userSchema = new Schema<IUser>({
@@ -30,6 +31,10 @@ const userSchema = new Schema<IUser>({
     createdAt: {
         type: Date,
         default: Date.now,
+    },
+    emailVerified: {
+        type: Boolean,
+        default: false,
     },
 });
 

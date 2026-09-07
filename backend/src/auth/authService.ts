@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { IUser, User } from './User.model';
 import mongoose from 'mongoose';
+import { sendVerificationEmail } from './emailService';
 
 const SALT_ROUNDS = 10;
 
@@ -14,8 +15,14 @@ export class AuthError extends Error {
 }
 
 export interface TokenPayload {
+    purpose: 'session';
     sub: string;
     username: string;
+}
+
+interface EmailVerificationPayload {
+    purpose: 'emailVerification';
+    sub: string;
 }
 
 export class AuthService {
@@ -35,14 +42,19 @@ export class AuthService {
     }
 
     static signToken(user: IUser): string {
-        const payload: TokenPayload = { sub: user._id.toString(), username: user.username };
+        const payload: TokenPayload = { purpose: 'session', sub: user._id.toString(), username: user.username };
         return jwt.sign(payload, AuthService.getJwtSecret(), {
             expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'],
         })
     }
 
     static verifyToken(token: string): TokenPayload {
-        return jwt.verify(token, AuthService.getJwtSecret()) as TokenPayload;
+        const payload =  jwt.verify(token, AuthService.getJwtSecret()) as TokenPayload;
+        
+        if (payload.purpose !== 'session') {
+            throw new AuthError('Token inválido', 401);
+        }
+        return payload;
     }
 
     static async register(username: string, email: string, password: string): Promise<IUser> {
@@ -50,8 +62,9 @@ export class AuthService {
             throw new AuthError('La contraseña debe tener al menos 6 caracteres', 400);
         }
         const passwordHash = await AuthService.hashPassword(password);
+        let user: IUser;
         try {
-            return await User.create({ username, email, passwordHash });
+            user = await User.create({ username, email, passwordHash });
         } catch (error) {
             if (isDuplicateKeyError(error)) {
                 throw new AuthError('El nombre de usuario o correo ya está en uso', 409);  
@@ -62,6 +75,9 @@ export class AuthService {
             }
             throw error;
         }
+
+        await AuthService.sendVerificationEmail(user);
+        return user;
     }
 
     static async login(username: string, password: string): Promise<{user: IUser, token: string}> {
@@ -77,6 +93,65 @@ export class AuthService {
 
         const token = AuthService.signToken(user);
         return { user, token };
+    }
+
+    static signEMailVerificationToken(userId: string): string {
+        return jwt.sign(
+            { purpose: 'emailVerification', sub: userId},
+            AuthService.getJwtSecret(),
+            { expiresIn: '1d'}
+        );
+    }    
+
+    static verifyEmailVerificationToken(token: string): string {
+        const payload = jwt.verify(token, AuthService.getJwtSecret()) as EmailVerificationPayload;
+
+        if (payload.purpose !== 'emailVerification') {
+            throw new AuthError('Token inválido', 401);
+        }
+
+        return payload.sub;
+    }
+
+    static async verifyEmail(token: string): Promise<IUser> {
+        let userId: string;
+
+        try {
+            userId = AuthService.verifyEmailVerificationToken(token);
+        } catch (error) {
+            throw new AuthError('El enlace de verificación es inválido o ha expirado', 400);
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AuthError('Usuario no encontrado', 404);
+        }
+
+        user.emailVerified = true;
+        await user.save();
+
+        return user;
+    }
+
+    static async resendVerificationEmail(userId: IUser): Promise<void> {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AuthError('Usuario no encontrado', 404);
+        }
+        if (user.emailVerified) {
+            throw new AuthError('El correo ya ha sido verificado', 400);
+        }
+        await AuthService.sendVerificationEmail(user);
+    }
+
+    private static async sendVerificationEmail(user: IUser): Promise<void> {
+        try {
+            const token = AuthService.signEMailVerificationToken(user._id.toString());
+            const verificationLink = `${env.frontendOrigin}/verify-email?token=${token}`;
+            await sendVerificationEmail(user.email, verificationLink);
+        } catch (error) {
+            console.error('Error al enviar el correo de verificación:', error);
+        }
     }
 }
 
