@@ -118,7 +118,7 @@ export class AuthService {
 
         try {
             userId = AuthService.verifyEmailVerificationToken(token);
-        } catch (error) {
+        } catch {
             throw new AuthError('El enlace de verificación es inválido o ha expirado', 400);
         }
 
@@ -133,7 +133,7 @@ export class AuthService {
         return user;
     }
 
-    static async resendVerificationEmail(userId: IUser): Promise<void> {
+    static async resendVerificationEmail(userId: string): Promise<void> {
         const user = await User.findById(userId);
         if (!user) {
             throw new AuthError('Usuario no encontrado', 404);

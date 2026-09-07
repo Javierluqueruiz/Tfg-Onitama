@@ -51,6 +51,26 @@ authRoutes.get('/me', requireAuth, async (req: AuthenticatedRequest, res) => {
     res.status(200).json({ id: user._id, username: user.username });
 });
 
+authRoutes.post('/verify-email', async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        const user = await AuthService.verifyEmail(token);
+        res.status(200).json({ id: user._id, username: user.username, emailVerified: user.emailVerified });
+    } catch (error) {
+        handleAuthError(error, res);
+    }
+});
+
+authRoutes.post('/resend-verification', requireAuth, authLimiter, async (req: AuthenticatedRequest, res) => {
+    try {
+        await AuthService.resendVerificationEmail(req.userId!);
+        res.status(200).json({ message: 'Correo de verificación reenviado exitosamente' });
+    } catch (error) {
+        handleAuthError(error, res);
+    }
+});
+
 function handleAuthError(error: unknown, res: Response): void {
     if (error instanceof AuthError) {
         res.status(error.statusCode).json({ message: error.message });

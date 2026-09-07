@@ -4,6 +4,10 @@ import mongoose from 'mongoose';
 import { AuthService, AuthError } from '../../src/auth/authService';
 import { User, IUser } from '../../src/auth/User.model';
 
+vi.mock('../../src/auth/emailService', () => ({
+    sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
 afterEach(() => {
     vi.restoreAllMocks();
 });
@@ -107,5 +111,47 @@ describe('AuthService.login', async () => {
         expect(token).toBeDefined();
         expect(typeof token).toBe('string');
         expect(AuthService.verifyToken(token).username).toBe('usuarioPrueba');
+    });
+});
+
+//Sub-08.4
+
+describe('AuthService - verificación de correo', () => {
+    it('signEmailVerificationToken y verifyEmailVerificationToken son funciones complementarias', () => {
+        const token = AuthService.signEMailVerificationToken('12345');
+        expect(AuthService.verifyEmailVerificationToken(token)).toBe('12345');
+    });
+
+    it('verifyEmail marca al usuario como verificado', async () => {
+        const save = vi.fn().mockResolvedValue(undefined);
+        const fakeUser = { emailVerified: false, save };
+
+        vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
+
+        const token = AuthService.signEMailVerificationToken('12345');
+        const user = await AuthService.verifyEmail(token);
+        
+        expect(user.emailVerified).toBe(true);
+        expect(save).toHaveBeenCalledOnce();
+    });
+
+    it('verifyEmail lanza un error 400 si el token es inválido o ha expirado', async () => {
+        await expect(AuthService.verifyEmail('tokenInvalido'))
+            .rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('verifyEmail lanza un error 404 si el usuario no existe', async () => {
+        vi.spyOn(User, 'findById').mockResolvedValue(null);
+        const token = AuthService.signEMailVerificationToken('12345');
+
+        await expect(AuthService.verifyEmail(token))
+            .rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('resendVerificationEmail lanza un error 400 si el correo ya ha sido verificado', async () => {
+        vi.spyOn(User, 'findById').mockResolvedValue({ emailVerified: true } as IUser);
+
+        await expect(AuthService.resendVerificationEmail('12345'))
+            .rejects.toMatchObject({ statusCode: 400 });
     });
 });

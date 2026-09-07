@@ -1,9 +1,14 @@
-import { describe, it, expect, afterAll, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, afterAll, beforeAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { app } from '../../src/app';
 import { User } from '../../src/auth/User.model';
+import { AuthService } from '../../src/auth/authService';
+
+vi.mock('../../src/auth/emailService', () => ({
+    sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+}));
 
 let mongoServer: MongoMemoryServer;
 
@@ -125,6 +130,48 @@ describe('GET /api/auth/me', () => {
         const response = await request(app)
             .get('/api/auth/me')
             .set('Authorization', 'Bearer tokenInvalido');
+        expect(response.status).toBe(401);
+    });
+});
+
+//Sub-08.4
+
+describe('POST /api/auth/verify-email', () => {
+    it('verifica el correo electrónico con un token válido', async () => {
+        const registerResponse = await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+
+        const token = AuthService.signEMailVerificationToken(registerResponse.body.id);
+        const response = await request(app).post('/api/auth/verify-email').send({ token });
+        
+        expect(response.status).toBe(200);
+        expect(response.body.emailVerified).toBe(true);
+    });
+
+    it('devuelve 400 con un token inválido', async () => {
+        const response = await request(app).post('/api/auth/verify-email').send({ token: 'tokenInvalido' });
+        expect(response.status).toBe(400);
+    });
+});
+
+
+describe('POST /api/auth/resend-verification', () => {
+    it('reenviar correo de verificación para un usuario autenticado', async () => {
+        await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+
+        const loginResponse = await request(app).post('/api/auth/login')
+            .send({ username: 'usuarioPrueba', password: 'password123' });
+
+        const response = await request(app)
+            .post('/api/auth/resend-verification')
+            .set('Authorization', `Bearer ${loginResponse.body.token}`);
+        
+        expect(response.status).toBe(200);
+    });
+
+    it('devuelve 401 si no hay token de sesión', async () => {
+        const response = await request(app).post('/api/auth/resend-verification');
         expect(response.status).toBe(401);
     });
 });
