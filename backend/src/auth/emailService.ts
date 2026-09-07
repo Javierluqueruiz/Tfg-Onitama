@@ -1,17 +1,40 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 
-const resend = new Resend(env.resendApiKey);
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: env.gmailUser,
+        pass: env.gmailAppPassword,
+    },
+    tls: {
+        rejectUnauthorized: process.env.NODE_ENV === 'production',
+    },
+});
 
-export async function sendVerificationEmail(to: string, verificationUrl: string) {
-    await resend.emails.send({
-        from: env.emailFrom,
+export async function sendVerificationEmail(to: string, verificationUrl: string): Promise<void> {
+    await transporter.sendMail({
+        from: env.gmailUser,
         to,
-        subject: 'Verifica tu correo',
+        subject: 'Verifica tu cuenta de Onitama',
         html: `
-            <p>Gracias por registrarte en Onitama</p>
-            <p>Por favor, haz clic en el siguiente enlace para verificar tu correo electrónico:</p>
-            <a href="${verificationUrl}">Verificar correo</a>
-        `
-    }); 
+            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
+                <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
+                <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
+                    Gracias por registrarte. Confirma tu correo electrónico haciendo clic en el siguiente botón
+                    (el enlace caduca en 24 horas):
+                </p>
+                <p style="text-align: center; margin: 32px 0;">
+                    <a href="${verificationUrl}"
+                       style="background-color: #3f6d57; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                        Verificar mi correo
+                    </a>
+                </p>
+                <p style="color: #5b4c34; font-size: 13px;">
+                    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+                    <a href="${verificationUrl}" style="color: #3f6d57; word-break: break-all;">${verificationUrl}</a>
+                </p>
+            </div>
+        `,
+    });
 }

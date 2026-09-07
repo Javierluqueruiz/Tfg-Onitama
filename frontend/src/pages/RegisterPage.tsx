@@ -1,17 +1,17 @@
 import { useState, type SubmitEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthLayout } from './AuthLayout';
 import styles from '../components/lobby/ui/Forms.module.css';
 
 export const RegisterPage = () => {
     const { register } = useAuth();
-    const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
     const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -20,13 +20,28 @@ export const RegisterPage = () => {
 
         try {
             await register({ username, email, password });
-            navigate('/');
+            setRegisteredEmail(email);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error desconocido');
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    if (registeredEmail) {
+        return (
+            <AuthLayout>
+                <h3 className={styles.title}>¡Cuenta creada!</h3>
+                <div className={styles.container}>
+                    <p>
+                        Te hemos enviado un correo de verificación a <strong>{registeredEmail}</strong>.
+                        Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar tu cuenta.
+                    </p>
+                    <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate}`}>Continuar</Link>
+                </div>
+            </AuthLayout>
+        );
+    }
 
     return (
         <AuthLayout>

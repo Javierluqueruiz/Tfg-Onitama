@@ -13,6 +13,7 @@ export interface LoginRequest {
 export interface AuthUser {
     id: string;
     username: string;
+    emailVerified: boolean;
 }
 
 export interface AuthResponse {

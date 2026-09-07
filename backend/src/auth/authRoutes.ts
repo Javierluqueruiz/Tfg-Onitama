@@ -23,7 +23,7 @@ authRoutes.post('/register', authLimiter, async (req, res) => {
 
     try {
         const user = await AuthService.register(username, email, password);
-        res.status(201).json({ message: 'Usuario registrado exitosamente', id: user._id, username: user.username });
+        res.status(201).json({ message: 'Usuario registrado exitosamente', id: user._id, username: user.username, emailVerified: user.emailVerified });
     } catch (error) {
         handleAuthError(error, res);
     }
@@ -34,7 +34,7 @@ authRoutes.post('/login', authLimiter, async (req, res) => {
 
     try {
         const { user, token } = await AuthService.login(username, password);
-        res.status(200).json({ message: 'Inicio de sesión exitoso', token, user: { id: user._id, username: user.username } });
+        res.status(200).json({ message: 'Inicio de sesión exitoso', token, user: { id: user._id, username: user.username, emailVerified: user.emailVerified } });
     } catch (error) {
         handleAuthError(error, res);
     }
@@ -48,7 +48,7 @@ authRoutes.get('/me', requireAuth, async (req: AuthenticatedRequest, res) => {
         return;
     }
 
-    res.status(200).json({ id: user._id, username: user.username });
+    res.status(200).json({ id: user._id, username: user.username, emailVerified: user.emailVerified });
 });
 
 authRoutes.post('/verify-email', async (req, res) => {
