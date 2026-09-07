@@ -10,7 +10,20 @@ export class RoomManager {
     //Sub-05.3
     private static gameTimers: Map<string, NodeJS.Timeout> = new Map();
 
-    public static DISCONNECT_TIMEOUT_MS = 30000; 
+    public static DISCONNECT_TIMEOUT_MS = 30000;
+
+    // Duración inicial del reloj por modo de juego, en segundos. 'casual' vale 0
+    // a propósito: PlayerInfo.tsx solo muestra el reloj cuando timeLeft > 0.
+    private static readonly MODE_DURATIONS: Record<GameMode, number> = {
+        fast: 300,
+        normal: 600,
+        casual: 0,
+    };
+
+    public static getInitialTimeForMode(mode: GameMode): { red: number; blue: number } {
+        const seconds = this.MODE_DURATIONS[mode];
+        return { red: seconds, blue: seconds };
+    }
 
 
     public static getActiveRooms(): Map<string, RoomSession> {
@@ -213,12 +226,7 @@ export class RoomManager {
         room.gameState = GameEngine.createNewGame(roomId);
         room.drawOfferedBy = null;
         room.rematchOfferedBy = null;
-
-        if (room.mode === 'normal') {
-            room.gameState.timeRemaining = { red: 600, blue: 600 };
-        } else if (room.mode === 'fast') {
-            room.gameState.timeRemaining = { red: 300, blue: 300 };
-        } 
+        room.gameState.timeRemaining = this.getInitialTimeForMode(room.mode);
 
         return room.gameState;
     }

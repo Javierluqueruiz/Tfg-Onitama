@@ -12,6 +12,10 @@ const authLimiter = rateLimit({
     message: { message: 'Demasiados intentos de autenticación. Por favor, inténtelo de nuevo más tarde.'},
     standardHeaders: true,
     legacyHeaders: false,
+    // Los tests de integración hacen muchos más de 10 registros/logins en un
+    // mismo archivo -- sin esto, el propio rate limiter empieza a devolver
+    // 429 a mitad de la suite. En producción NODE_ENV nunca es 'test'.
+    skip: () => process.env.NODE_ENV === 'test',
 });
 
 authRoutes.post('/register', authLimiter, async (req, res) => {

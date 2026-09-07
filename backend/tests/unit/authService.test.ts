@@ -43,7 +43,7 @@ describe('AuthService - hashing y JWT', () => {
 describe('AuthService.register', async () => {
     it('registra al ususario con la contraseña hasheada', async () => {
         const createSpy = vi.spyOn(User, 'create')
-        //@ts-expect-error
+        // @ts-expect-error -- mock simplificado, no implementa el tipo completo de documento de Mongoose
         .mockResolvedValue({
             _id: new mongoose.Types.ObjectId(),
             username: 'usuarioPrueba'
@@ -87,7 +87,7 @@ describe('AuthService.login', async () => {
 
     it('lanza un error 401 si la contraseña es incorrecta', async () => {
         const hash = await AuthService.hashPassword('miContraseña');
-        //@ts-expect-error
+        // @ts-expect-error -- mock simplificado, no implementa el tipo completo de documento de Mongoose
         vi.spyOn(User, 'findOne').mockResolvedValue({ username: 'usuarioPrueba', passwordHash: hash });
 
         await expect(AuthService.login('usuarioPrueba', 'contraseñaIncorrecta')
@@ -98,7 +98,7 @@ describe('AuthService.login', async () => {
         const hash = await AuthService.hashPassword('miContraseña');
         const fakeUser = { _id: new mongoose.Types.ObjectId(), username: 'usuarioPrueba', passwordHash: hash } as IUser;
 
-        //@ts-expect-error
+        // @ts-expect-error -- mock simplificado, no implementa el tipo completo de documento de Mongoose
         vi.spyOn(User, 'findOne').mockResolvedValue(fakeUser);
 
         const { token, user } = await AuthService.login('usuarioPrueba', 'miContraseña');

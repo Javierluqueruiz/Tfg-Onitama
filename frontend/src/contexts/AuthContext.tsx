@@ -27,13 +27,12 @@ const AuthContext = createContext<AuthContextState>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
     const [token, setToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(() => !!localStorage.getItem(TOKEN_STORAGE_KEY));
 
     useEffect(() => {
         const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
 
         if (!storedToken) {
-            setIsLoading(false);
             return;
         }
 
@@ -75,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     return useContext(AuthContext);
 }
