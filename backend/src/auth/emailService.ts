@@ -38,3 +38,30 @@ export async function sendVerificationEmail(to: string, verificationUrl: string)
         `,
     });
 }
+
+export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
+    await transporter.sendMail({
+        from: env.gmailUser,
+        to,
+        subject: 'Restablece tu contraseña de Onitama',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
+                <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
+                <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
+                    Hemos recibido una solicitud para restablecer tu contraseña. Si no has sido tú, ignora este correo.
+                    El enlace caduca en 1 hora.
+                </p>
+                <p style="text-align: center; margin: 32px 0;">
+                    <a href="${resetUrl}"
+                       style="background-color: #a8503a; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                        Restablecer mi contraseña
+                    </a>
+                </p>
+                <p style="color: #5b4c34; font-size: 13px;">
+                    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+                    <a href="${resetUrl}" style="color: #a8503a; word-break: break-all;">${resetUrl}</a>
+                </p>
+            </div>
+        `,
+    });
+}

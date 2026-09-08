@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { IUser, User } from './User.model';
 import mongoose from 'mongoose';
-import { sendVerificationEmail } from './emailService';
+import { sendVerificationEmail, sendPasswordResetEmail } from './emailService';
 
 const SALT_ROUNDS = 10;
 
@@ -22,6 +22,11 @@ export interface TokenPayload {
 
 interface EmailVerificationPayload {
     purpose: 'emailVerification';
+    sub: string;
+}
+
+interface PasswordResetPayload {
+    purpose: 'passwordReset';
     sub: string;
 }
 
@@ -152,6 +157,60 @@ export class AuthService {
         } catch (error) {
             console.error('Error al enviar el correo de verificación:', error);
         }
+    }
+
+    // Recuperación de contraseña
+    static signPasswordResetToken(userId: string): string {
+        return jwt.sign(
+            { purpose: 'passwordReset', sub: userId},
+            AuthService.getJwtSecret(),
+            { expiresIn: '1h' }
+        );
+    }
+
+    static verifyPasswordResetToken(token: string): string {
+        const payload = jwt.verify(token, AuthService.getJwtSecret()) as PasswordResetPayload;
+
+        if (payload.purpose !== 'passwordReset') {
+            throw new AuthError('Token inválido', 401);
+        }
+        return payload.sub;
+    }
+
+    static async requestPasswordReset(email: string): Promise<void> {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return; // No revelar si el correo existe o no
+        }
+
+        try {
+            const token = AuthService.signPasswordResetToken(user._id.toString());
+            const resetUrl = `${env.frontendOrigin}/reset-password?token=${token}`;
+            await sendPasswordResetEmail(user.email, resetUrl);
+        } catch (error) {
+            console.error('Error al enviar el correo de restablecimiento de contraseña:', error);
+        }   
+    }
+
+    static async resetPassword(token: string, newPassword: string): Promise<void> {
+        if (newPassword.length < 6) {
+            throw new AuthError('La contraseña debe tener al menos 6 caracteres', 400);
+        }
+
+        let userId: string;
+        try {
+            userId = AuthService.verifyPasswordResetToken(token);
+        } catch {
+            throw new AuthError('El enlace de restablecimiento de contraseña es inválido o ha expirado', 401);
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AuthError('Usuario no encontrado', 404);
+        }
+
+        user.passwordHash = await AuthService.hashPassword(newPassword);
+        await user.save();
     }
 }
 
