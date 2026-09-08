@@ -86,6 +86,10 @@ export class AuthService {
     }
 
     static async login(username: string, password: string): Promise<{user: IUser, token: string}> {
+        if (typeof username !== 'string' || typeof password !== 'string') {
+            throw new AuthError('Nombre de usuario o contraseña incorrectos', 401);
+        }
+
         const user = await User.findOne({ username });
         if (!user) {
             throw new AuthError('Nombre de usuario o contraseña incorrectos', 401);

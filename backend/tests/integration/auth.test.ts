@@ -32,21 +32,21 @@ describe('POST /api/auth/register', () => {
     it('crea un nuevo usuario y devuelve 201 sin la contraseña', async () => {
         const response = await request(app)
             .post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
 
         expect(response.status).toBe(201);
-        expect(response.body.username).toBe('usuarioPrueba');
+        expect(response.body.username).toBe('usuarioprueba');
         expect(response.body.passwordHash).toBeUndefined();
     });
 
     it('devuelve 409 si el nombre de usuario o correo ya existen', async () => {
         await request(app)
             .post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'prueba@test.com', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'prueba@test.com', password: 'password123' });
 
         const response = await request(app)
             .post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'otro@test.com', password: 'otrapassword123' });
+            .send({ username: 'usuarioprueba', email: 'otro@test.com', password: 'otrapassword123' });
 
         expect(response.status).toBe(409);
         expect(response.body.message).toBe('El nombre de usuario o correo ya está en uso');
@@ -55,7 +55,7 @@ describe('POST /api/auth/register', () => {
     it('devuelve 400 si el email no tiene un formato válido', async () => {
         const response = await request(app)
             .post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'correoInvalido', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'correoInvalido', password: 'password123' });
         
         expect(response.status).toBe(400);
         expect(response.body.message).toContain('El correo no tiene un formato válido');
@@ -63,7 +63,7 @@ describe('POST /api/auth/register', () => {
 
     it('devuelve 400 si la contraseña es demasiado corta', async () => {
         const response = await request(app).post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: '12345' });
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: '12345' });
 
         expect(response.status).toBe(400);
         expect(response.body.message).toBe('La contraseña debe tener al menos 6 caracteres');
@@ -74,23 +74,23 @@ describe('POST /api/auth/login', () => {
     beforeEach(async () => {
         await request(app)
             .post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
     });
 
     it('devuelve un token con las credenciales correctas', async () => {
         const response = await request(app)
             .post('/api/auth/login')
-            .send({ username: 'usuarioPrueba', password: 'password123' });
+            .send({ username: 'usuarioprueba', password: 'password123' });
         
         expect(response.status).toBe(200);
         expect(response.body.token).toBeDefined();
-        expect(response.body.user.username).toBe('usuarioPrueba');
+        expect(response.body.user.username).toBe('usuarioprueba');
     });
 
     it('devuelve 401 con constraseña incorrectas', async () => {
         const response = await request(app)
             .post('/api/auth/login')
-            .send({ username: 'usuarioPrueba', password: 'contraseñaIncorrecta' });
+            .send({ username: 'usuarioprueba', password: 'contraseñaIncorrecta' });
         
         expect(response.status).toBe(401);
         expect(response.body.message).toBe('Nombre de usuario o contraseña incorrectos');
@@ -109,17 +109,17 @@ describe('POST /api/auth/login', () => {
 describe('GET /api/auth/me', () => {
     it('devuelve los datos del usuario autenticado si el token es válido', async () => {
         await request(app).post('/api/auth/register')
-        .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+        .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
 
         const loginResponse = await request(app).post('/api/auth/login')
-        .send({ username: 'usuarioPrueba', password: 'password123' });
+        .send({ username: 'usuarioprueba', password: 'password123' });
 
         const response = await request(app)
             .get('/api/auth/me')
             .set('Authorization', `Bearer ${loginResponse.body.token}`);
 
         expect(response.status).toBe(200);
-        expect(response.body.username).toBe('usuarioPrueba');
+        expect(response.body.username).toBe('usuarioprueba');
     });
 
     it('devuelve 401 si el token es inválido', async () => {
@@ -141,7 +141,7 @@ describe('GET /api/auth/me', () => {
 describe('POST /api/auth/verify-email', () => {
     it('verifica el correo electrónico con un token válido', async () => {
         const registerResponse = await request(app).post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
 
         const token = AuthService.signEMailVerificationToken(registerResponse.body.id);
         const response = await request(app).post('/api/auth/verify-email').send({ token });
@@ -160,10 +160,10 @@ describe('POST /api/auth/verify-email', () => {
 describe('POST /api/auth/resend-verification', () => {
     it('reenviar correo de verificación para un usuario autenticado', async () => {
         await request(app).post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
 
         const loginResponse = await request(app).post('/api/auth/login')
-            .send({ username: 'usuarioPrueba', password: 'password123' });
+            .send({ username: 'usuarioprueba', password: 'password123' });
 
         const response = await request(app)
             .post('/api/auth/resend-verification')
@@ -181,9 +181,9 @@ describe('POST /api/auth/resend-verification', () => {
 describe('POST /api/auth/forgot-password', () => {
     it('devuelve 200 con el mismo mensaje independientemente de si el correo existe o no', async () => {
         await request(app).post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
         
-        const responseExist = await request(app).post('/api/auth/forgot-password').send({ email: 'usuarioPrueba@example.com' });
+        const responseExist = await request(app).post('/api/auth/forgot-password').send({ email: 'usuarioprueba@example.com' });
         const responseNotExist = await request(app).post('/api/auth/forgot-password').send({ email: 'noExiste@example.com' });
 
         expect(responseExist.status).toBe(200);
@@ -195,7 +195,7 @@ describe('POST /api/auth/forgot-password', () => {
 describe('POST /api/auth/reset-password', () => {
     it('permite iniciar sesión con la nueva contraseña después de un restablecimiento exitoso', async () => {
         const registerResponse = await request(app).post('/api/auth/register')
-            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
         const token = AuthService.signPasswordResetToken(registerResponse.body.id);
         
         const resetResponse = await request(app).post('/api/auth/reset-password')
@@ -203,11 +203,11 @@ describe('POST /api/auth/reset-password', () => {
         expect(resetResponse.status).toBe(200);
 
         const loginAntiguaContraseña = await request(app).post('/api/auth/login')
-            .send({ username: 'usuarioPrueba', password: 'password123' });
+            .send({ username: 'usuarioprueba', password: 'password123' });
         expect(loginAntiguaContraseña.status).toBe(401);
 
         const loginNuevaContraseña = await request(app).post('/api/auth/login')
-            .send({ username: 'usuarioPrueba', password: 'nuevaContraseña123' });
+            .send({ username: 'usuarioprueba', password: 'nuevaContraseña123' });
         expect(loginNuevaContraseña.status).toBe(200);
     });
 
@@ -216,5 +216,31 @@ describe('POST /api/auth/reset-password', () => {
             .send({ token: 'tokenInvalido', newPassword: 'nuevaContraseña123' });
         expect(response.status).toBeGreaterThanOrEqual(400);
         expect(response.status).toBeLessThan(500);
+    });
+});
+
+describe('Protección contra inyección NoSQL (sanitizeFilter)', () => {
+    it('un operador de MongoDB en el filtro no actúa como comodín -- Mongoose rechaza la consulta', async () => {
+        await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
+
+        // Sin sanitizeFilter, esto devolvería el primer usuario de la colección
+        // (cualquier username "no nulo" cuela). Con sanitizeFilter, Mongoose deja
+        // de tratar $ne como operador sobre el campo y en su lugar intenta castear
+        // el objeto entero a String (el tipo declarado en el schema) -- falla el
+        // cast y la consulta se rechaza, en vez de colar un comodín silenciosamente.
+        await expect(
+            User.findOne({ username: { $ne: null } } as unknown as { username: string })
+        ).rejects.toThrow(/Cast to string failed/);
+    });
+
+    it('el mismo intento contra /login no autentica a nadie', async () => {
+        await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
+
+        const response = await request(app).post('/api/auth/login')
+            .send({ username: { $ne: null }, password: 'cualquiera' });
+
+        expect(response.status).toBe(401);
     });
 });
