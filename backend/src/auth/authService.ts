@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { IUser, User } from './User.model';
 import mongoose from 'mongoose';
-import { sendVerificationEmail, sendPasswordResetEmail } from './emailService';
+import { sendVerificationEmail, sendPasswordResetEmail, sendVerifyBeforeResetEmail } from './emailService';
 
 const SALT_ROUNDS = 10;
 
@@ -184,6 +184,13 @@ export class AuthService {
         }
 
         try {
+            if (!user.emailVerified) {
+                const verificationToken = AuthService.signEMailVerificationToken(user._id.toString());
+                const verificationUrl = `${env.frontendOrigin}/verify-email?token=${verificationToken}`;
+                await sendVerifyBeforeResetEmail(user.email, verificationUrl);
+                return;
+            }
+            
             const token = AuthService.signPasswordResetToken(user._id.toString());
             const resetUrl = `${env.frontendOrigin}/reset-password?token=${token}`;
             await sendPasswordResetEmail(user.email, resetUrl);

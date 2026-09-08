@@ -6,6 +6,8 @@ import { User, IUser } from '../../src/auth/User.model';
 
 vi.mock('../../src/auth/emailService', () => ({
     sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+    sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+    sendVerifyBeforeResetEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 afterEach(() => {
@@ -153,5 +155,53 @@ describe('AuthService - verificación de correo', () => {
 
         await expect(AuthService.resendVerificationEmail('12345'))
             .rejects.toMatchObject({ statusCode: 400 });
+    });
+});
+
+describe('AuthService - recuperación de contraseña', () => {
+    it('signPasswordResetToken y verifyPasswordResetToken son funciones complementarias', () => {
+        const token = AuthService.signPasswordResetToken('12345');
+        expect(AuthService.verifyPasswordResetToken(token)).toBe('12345');  
+    });
+
+    it('requestPasswordReset no revela si el correo existe o no', async () => {
+        vi.spyOn(User, 'findOne').mockResolvedValue(null);
+        await 
+        expect(AuthService.requestPasswordReset('noExiste@example.com')).resolves.toBeUndefined();
+    });
+
+    it('resetPassword actualiza la contraseña del usuario si el token es válido', async () => {
+        const save = vi.fn().mockResolvedValue(undefined);
+        const fakeUser = { passwordHash: 'hash-antiguo', save };
+
+        vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
+
+        const token = AuthService.signPasswordResetToken('12345');
+        await AuthService.resetPassword(token, 'nuevaContraseña');
+
+        expect(fakeUser.passwordHash).not.toBe('hash-antiguo');
+        expect(save).toHaveBeenCalledOnce();
+    });
+
+    it('resetPassword lanza un error 400 si la contraseña es demasiado corta', async () => {
+        const token = AuthService.signPasswordResetToken('12345');
+        await expect(AuthService.resetPassword(token, 'con'))
+            .rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('resetPassword lanza un error si el token no es válido', async () => {
+        await expect(AuthService.resetPassword('tokenInvalido', 'nuevaContraseña'))
+            .rejects.toBeInstanceOf(AuthError);
+    });
+
+    it('requestPasswordReset manda el correo de verificación, no el de reseteo, si el correo no está verificado', async () => {
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), email: 'usuarioPrueba@example.com', emailVerified: false };
+        // @ts-expect-error -- mock simplificado, no implementa el tipo completo de documento de Mongoose
+        vi.spyOn(User, 'findOne').mockResolvedValue(fakeUser);
+        
+        await expect(AuthService.requestPasswordReset('usuarioPrueba@example.com')).resolves.toBeUndefined();
+        const emailService = await import('../../src/auth/emailService.js');
+        expect(emailService.sendVerifyBeforeResetEmail).toHaveBeenCalledOnce();
+        expect(emailService.sendPasswordResetEmail).not.toHaveBeenCalled();
     });
 });

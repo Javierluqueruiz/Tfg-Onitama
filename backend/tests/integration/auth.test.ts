@@ -8,6 +8,8 @@ import { AuthService } from '../../src/auth/authService';
 
 vi.mock('../../src/auth/emailService', () => ({
     sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+    sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined),
+    sendVerifyBeforeResetEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
 let mongoServer: MongoMemoryServer;
@@ -173,5 +175,46 @@ describe('POST /api/auth/resend-verification', () => {
     it('devuelve 401 si no hay token de sesión', async () => {
         const response = await request(app).post('/api/auth/resend-verification');
         expect(response.status).toBe(401);
+    });
+});
+
+describe('POST /api/auth/forgot-password', () => {
+    it('devuelve 200 con el mismo mensaje independientemente de si el correo existe o no', async () => {
+        await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+        
+        const responseExist = await request(app).post('/api/auth/forgot-password').send({ email: 'usuarioPrueba@example.com' });
+        const responseNotExist = await request(app).post('/api/auth/forgot-password').send({ email: 'noExiste@example.com' });
+
+        expect(responseExist.status).toBe(200);
+        expect(responseNotExist.status).toBe(200);
+        expect(responseExist.body.message).toBe(responseNotExist.body.message);
+    });
+});
+
+describe('POST /api/auth/reset-password', () => {
+    it('permite iniciar sesión con la nueva contraseña después de un restablecimiento exitoso', async () => {
+        const registerResponse = await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioPrueba', email: 'usuarioPrueba@example.com', password: 'password123' });
+        const token = AuthService.signPasswordResetToken(registerResponse.body.id);
+        
+        const resetResponse = await request(app).post('/api/auth/reset-password')
+            .send({ token, newPassword: 'nuevaContraseña123' });
+        expect(resetResponse.status).toBe(200);
+
+        const loginAntiguaContraseña = await request(app).post('/api/auth/login')
+            .send({ username: 'usuarioPrueba', password: 'password123' });
+        expect(loginAntiguaContraseña.status).toBe(401);
+
+        const loginNuevaContraseña = await request(app).post('/api/auth/login')
+            .send({ username: 'usuarioPrueba', password: 'nuevaContraseña123' });
+        expect(loginNuevaContraseña.status).toBe(200);
+    });
+
+    it('devuelve error con un token inválido o expirado', async () => {
+        const response = await request(app).post('/api/auth/reset-password')
+            .send({ token: 'tokenInvalido', newPassword: 'nuevaContraseña123' });
+        expect(response.status).toBeGreaterThanOrEqual(400);
+        expect(response.status).toBeLessThan(500);
     });
 });

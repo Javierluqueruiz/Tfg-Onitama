@@ -71,6 +71,31 @@ authRoutes.post('/resend-verification', requireAuth, authLimiter, async (req: Au
     }
 });
 
+authRoutes.post('/forgot-password', authLimiter, async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        await AuthService.requestPasswordReset(email);
+    } catch (error) {
+        console.error(error);
+    }
+
+    res.status(200).json({ message: 'Instrucciones de restablecimiento de contraseña enviadas' });
+});
+
+authRoutes.post('/reset-password', async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    try {
+        await AuthService.resetPassword(token, newPassword);
+        res.status(200).json({ message: 'Contraseña restablecida exitosamente' });
+    } catch (error) {
+        handleAuthError(error, res);
+    }
+});
+
+
+
 function handleAuthError(error: unknown, res: Response): void {
     if (error instanceof AuthError) {
         res.status(error.statusCode).json({ message: error.message });
