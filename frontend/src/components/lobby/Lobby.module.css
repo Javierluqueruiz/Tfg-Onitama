@@ -130,7 +130,7 @@
 .authUser {
     color: var(--game-ink);
     font-weight: bold;
-    font-size: 200px;
+    font-size: 20px;
 }
 
 .authGuest {

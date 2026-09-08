@@ -52,6 +52,8 @@ export const LoginPage = () => {
                     />
                 </label>
 
+                <p className={styles.switchLink}><Link to="/forgot-password">¿Olvidaste tu contraseña?</Link></p>
+
                 {error && <p className={styles.error}>{error}</p>}
 
                 <div className={styles.buttonGroup}>

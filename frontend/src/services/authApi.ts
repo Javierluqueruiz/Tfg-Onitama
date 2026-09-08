@@ -1,4 +1,4 @@
-import type { RegisterRequest, LoginRequest, AuthResponse, AuthUser } from '../../../shared';
+import type { RegisterRequest, LoginRequest, AuthResponse, AuthUser, ForgotPasswordRequest, ResetPasswordRequest } from '../../../shared';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -85,5 +85,13 @@ export const AuthApi = {
 
     resendVerificationEmail(token: string): Promise<{ message: string }> {
         return authPost('/api/auth/resend-verification', token);
+    },
+
+    forgotPassword(payload: ForgotPasswordRequest): Promise<{ message: string }> {
+        return postJson('/api/auth/forgot-password', payload);
+    },
+
+    resetPassword(payload: ResetPasswordRequest): Promise<{ message: string }> {
+        return postJson('/api/auth/reset-password', payload);
     },
 };
