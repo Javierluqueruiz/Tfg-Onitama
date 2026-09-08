@@ -41,7 +41,7 @@ export const ResetPasswordPage = () => {
     if (submitted) {
         return (
             <AuthLayout>
-                <h3 className={styles.title}>Contraseña actualizada</h3>
+                <h3 className={styles.title}>Contraseña actualizada con éxito</h3>
                 <div className={styles.container}>
                     <p>Ya puedes iniciar sesión con tu nueva contraseña.</p>
                     <Link to="/login" className={` ${styles.btnSubmit} ${styles.btnCreate}`}>Volver al inicio de sesión</Link>
