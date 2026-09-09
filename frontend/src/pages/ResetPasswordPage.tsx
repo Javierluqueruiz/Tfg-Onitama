@@ -56,11 +56,11 @@ export const ResetPasswordPage = () => {
             <form onSubmit={handleSubmit} className={styles.container}>
                 <label className={styles.label}>
                     Nueva contraseña:
-                    <input type="password" className={styles.input} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} />
+                    <input type="password" className={styles.input} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} />
                 </label>
                 <label className={styles.label}>
                     Confirmar nueva contraseña:
-                    <input type="password" className={styles.input} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} />
+                    <input type="password" className={styles.input} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
                 </label>
 
                 {error && <p className={styles.error}>{error}</p>}

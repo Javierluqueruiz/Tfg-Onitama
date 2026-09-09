@@ -66,7 +66,7 @@ describe('POST /api/auth/register', () => {
             .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: '12345' });
 
         expect(response.status).toBe(400);
-        expect(response.body.message).toBe('La contraseña debe tener al menos 6 caracteres');
+        expect(response.body.message).toBe('La contraseña debe tener al menos 8 caracteres');
     });
 });
 

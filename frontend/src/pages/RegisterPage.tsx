@@ -57,7 +57,7 @@ export const RegisterPage = () => {
                 </label>
                 <label className={styles.label}>
                     Contraseña:
-                    <input type="password" className={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                    <input type="password" className={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
                 </label>
 
                 {error && <p className={styles.error}>{error}</p>}

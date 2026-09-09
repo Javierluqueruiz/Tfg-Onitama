@@ -7,6 +7,15 @@ import { sendVerificationEmail, sendPasswordResetEmail, sendVerifyBeforeResetEma
 
 const SALT_ROUNDS = 10;
 
+const COMMON_PASSWORDS = new Set([
+        '12345678', 'password', '123456789', 'password1', 'qwerty123', 
+        '11111111', '87654321', 'abcdefgh', '123123123', 'admin1234',
+        'onitama1', 'letmein', 'welcome1', 'abc12345', 'iloveyou1', 'monkey123', 
+        'dragon12', 'sunshine', 'princess', 'football', 'baseball',
+        'superman', 'batman', 'starwars', 'pokemon', 'shadow12', 'master12',
+        'hello123', 'freedom1', 'whatever', 'trustno1', 'qazwsx12', 'zaq12wsx',
+    ])
+
 export class AuthError extends Error {
     constructor(message: string, public readonly statusCode: number) {
         super(message);
@@ -18,6 +27,7 @@ export interface TokenPayload {
     purpose: 'session';
     sub: string;
     username: string;
+    iat?: number;
 }
 
 interface EmailVerificationPayload {
@@ -36,6 +46,17 @@ export class AuthService {
             throw new Error('Falta la variable de entorno JWT_SECRET');
         }
         return env.jwtSecret;
+    }
+
+    
+
+    private static assertStrongPassword(password: string): void {
+        if (password.length < 8) {
+            throw new AuthError('La contraseña debe tener al menos 8 caracteres', 400);
+        }
+        if (COMMON_PASSWORDS.has(password.toLocaleLowerCase())) {
+            throw new AuthError('La contraseña es demasiado común', 400);
+        }
     }
 
     static hashPassword(password: string): Promise<string> {
@@ -62,10 +83,16 @@ export class AuthService {
         return payload;
     }
 
+    static async isSessionStillValid(payload: TokenPayload): Promise<boolean> {
+        const user = await User.findById(payload.sub);
+        if (!user) return false;
+
+        const passwordChangedAt = Math.floor(user.passwordChangedAt.getTime() / 1000);
+        return passwordChangedAt <= (payload.iat ?? 0);
+    }
+
     static async register(username: string, email: string, password: string): Promise<IUser> {
-        if (password.length < 6) {
-            throw new AuthError('La contraseña debe tener al menos 6 caracteres', 400);
-        }
+        AuthService.assertStrongPassword(password);
         const passwordHash = await AuthService.hashPassword(password);
         let user: IUser;
         try {
@@ -204,9 +231,7 @@ export class AuthService {
     }
 
     static async resetPassword(token: string, newPassword: string): Promise<void> {
-        if (newPassword.length < 6) {
-            throw new AuthError('La contraseña debe tener al menos 6 caracteres', 400);
-        }
+        AuthService.assertStrongPassword(newPassword);
 
         let userId: string;
         try {
@@ -221,6 +246,7 @@ export class AuthService {
         }
 
         user.passwordHash = await AuthService.hashPassword(newPassword);
+        user.passwordChangedAt = new Date();
         await user.save();
     }
 }
