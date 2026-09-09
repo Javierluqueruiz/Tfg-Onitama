@@ -3,13 +3,15 @@ import cors from 'cors';
 import { env } from './config/env';
 import { authRoutes } from './auth/authRoutes';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 
 export const app = express();
 
 app.set('trust proxy', 1); 
 app.use(helmet());
-app.use(cors({ origin: env.frontendOrigin }));
+app.use(cors({ origin: env.frontendOrigin, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 
 app.get('/health', (req, res) => {
     res.status(200).send('OK');

@@ -2,9 +2,22 @@ import { Router, Response } from 'express';
 import { AuthService, AuthError } from './authService';
 import { requireAuth, AuthenticatedRequest } from './authMiddleware';
 import { User } from './User.model';
+import { env } from '../config/env';
 import rateLimit from 'express-rate-limit';
+import ms from 'ms';
 
 export const authRoutes = Router();
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+function setSessionCookie(res: Response, token: string): void {
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+        maxAge: ms(env.jwtExpiresIn as Parameters<typeof ms>[0]),
+    });
+}
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
@@ -23,6 +36,8 @@ authRoutes.post('/register', authLimiter, async (req, res) => {
 
     try {
         const user = await AuthService.register(username, email, password);
+        const { token } = await AuthService.login(username, password);
+        setSessionCookie(res, token);
         res.status(201).json({ message: 'Usuario registrado exitosamente', id: user._id, username: user.username, emailVerified: user.emailVerified });
     } catch (error) {
         handleAuthError(error, res);
@@ -34,10 +49,20 @@ authRoutes.post('/login', authLimiter, async (req, res) => {
 
     try {
         const { user, token } = await AuthService.login(username, password);
-        res.status(200).json({ message: 'Inicio de sesión exitoso', token, user: { id: user._id, username: user.username, emailVerified: user.emailVerified } });
+        setSessionCookie(res, token);
+        res.status(200).json({ message: 'Inicio de sesión exitoso', user: { id: user._id, username: user.username, emailVerified: user.emailVerified } });
     } catch (error) {
         handleAuthError(error, res);
     }
+});
+
+authRoutes.post('/logout', (req: AuthenticatedRequest, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
+    });
+    res.status(200).json({ message: 'Sesión cerrada exitosamente' });
 });
 
 authRoutes.get('/me', requireAuth, async (req: AuthenticatedRequest, res) => {

@@ -33,7 +33,7 @@ describe('AuthService - hashing y JWT', () => {
     });
 
     it('signToken y verifyToken son funciones complementarias', () => {
-        const fakeUser = { _id: new mongoose.Types.ObjectId(), username: 'usuarioPrueba' } as IUser;
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), username: 'usuarioPrueba', passwordChangedAt: new Date() } as IUser;
         const token = AuthService.signToken(fakeUser);
         const payload = AuthService.verifyToken(token);
 
@@ -102,7 +102,7 @@ describe('AuthService.login', async () => {
 
     it('devuelve el usuario y token si las credenciales son correctas', async () => {
         const hash = await AuthService.hashPassword('miContraseña');
-        const fakeUser = { _id: new mongoose.Types.ObjectId(), username: 'usuarioPrueba', passwordHash: hash } as IUser;
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), username: 'usuarioPrueba', passwordHash: hash, passwordChangedAt: new Date() } as IUser;
 
         // @ts-expect-error -- mock simplificado, no implementa el tipo completo de documento de Mongoose
         vi.spyOn(User, 'findOne').mockResolvedValue(fakeUser);

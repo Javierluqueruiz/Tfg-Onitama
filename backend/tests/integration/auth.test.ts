@@ -77,13 +77,13 @@ describe('POST /api/auth/login', () => {
             .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
     });
 
-    it('devuelve un token con las credenciales correctas', async () => {
+    it('establece la cookie de sesión con las credenciales correctas', async () => {
         const response = await request(app)
             .post('/api/auth/login')
             .send({ username: 'usuarioprueba', password: 'password123' });
-        
+
         expect(response.status).toBe(200);
-        expect(response.body.token).toBeDefined();
+        expect(response.headers['set-cookie']).toBeDefined();
         expect(response.body.user.username).toBe('usuarioprueba');
     });
 
@@ -103,6 +103,55 @@ describe('POST /api/auth/login', () => {
         
         expect(response.status).toBe(401);
         expect(response.body.message).toBe('Nombre de usuario o contraseña incorrectos');
+    });
+});
+
+describe('POST /api/auth/logout', () => {
+    it('borra la cookie de sesión, dejando /me inaccesible después', async () => {
+        const agent = request.agent(app);
+
+        await agent.post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
+
+        const meAntes = await agent.get('/api/auth/me');
+        expect(meAntes.status).toBe(200);
+
+        const logoutResponse = await agent.post('/api/auth/logout');
+        expect(logoutResponse.status).toBe(200);
+
+        const meDespues = await agent.get('/api/auth/me');
+        expect(meDespues.status).toBe(401);
+    });
+});
+
+describe('Invalidación de sesión al cambiar la contraseña', () => {
+    it('un token emitido antes de restablecer la contraseña deja de servir', async () => {
+        const registerResponse = await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
+
+        const loginAntiguo = await request(app).post('/api/auth/login')
+            .send({ username: 'usuarioprueba', password: 'password123' });
+        const cookieAntigua = loginAntiguo.headers['set-cookie'];
+
+        const resetToken = AuthService.signPasswordResetToken(registerResponse.body.id);
+        await request(app).post('/api/auth/reset-password')
+            .send({ token: resetToken, newPassword: 'nuevaContraseña123' });
+
+        const meConCookieAntigua = await request(app)
+            .get('/api/auth/me')
+            .set('Cookie', cookieAntigua);
+
+        expect(meConCookieAntigua.status).toBe(401);
+    });
+});
+
+describe('Política de contraseñas', () => {
+    it('rechaza una contraseña de la lista de contraseñas comunes', async () => {
+        const response = await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password1' });
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toBe('La contraseña es demasiado común');
     });
 });
 
@@ -131,31 +180,28 @@ describe('Normalización de mayúsculas/minúsculas en el username', () => {
 });
 
 describe('GET /api/auth/me', () => {
-    it('devuelve los datos del usuario autenticado si el token es válido', async () => {
-        await request(app).post('/api/auth/register')
-        .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
+    it('devuelve los datos del usuario autenticado si la cookie de sesión es válida', async () => {
+        const agent = request.agent(app);
 
-        const loginResponse = await request(app).post('/api/auth/login')
-        .send({ username: 'usuarioprueba', password: 'password123' });
+        await agent.post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
 
-        const response = await request(app)
-            .get('/api/auth/me')
-            .set('Authorization', `Bearer ${loginResponse.body.token}`);
+        const response = await agent.get('/api/auth/me');
 
         expect(response.status).toBe(200);
         expect(response.body.username).toBe('usuarioprueba');
     });
 
-    it('devuelve 401 si el token es inválido', async () => {
+    it('devuelve 401 sin cookie de sesión', async () => {
         const response = await request(app)
             .get('/api/auth/me');
         expect(response.status).toBe(401);
     });
 
-    it('devuelve 401 sin token', async () => {
+    it('devuelve 401 si la cookie de sesión es inválida', async () => {
         const response = await request(app)
             .get('/api/auth/me')
-            .set('Authorization', 'Bearer tokenInvalido');
+            .set('Cookie', 'token=tokenInvalido');
         expect(response.status).toBe(401);
     });
 });
@@ -183,16 +229,13 @@ describe('POST /api/auth/verify-email', () => {
 
 describe('POST /api/auth/resend-verification', () => {
     it('reenviar correo de verificación para un usuario autenticado', async () => {
-        await request(app).post('/api/auth/register')
+        const agent = request.agent(app);
+
+        await agent.post('/api/auth/register')
             .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
 
-        const loginResponse = await request(app).post('/api/auth/login')
-            .send({ username: 'usuarioprueba', password: 'password123' });
+        const response = await agent.post('/api/auth/resend-verification');
 
-        const response = await request(app)
-            .post('/api/auth/resend-verification')
-            .set('Authorization', `Bearer ${loginResponse.body.token}`);
-        
         expect(response.status).toBe(200);
     });
 

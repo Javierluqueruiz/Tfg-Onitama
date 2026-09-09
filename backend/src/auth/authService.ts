@@ -27,7 +27,7 @@ export interface TokenPayload {
     purpose: 'session';
     sub: string;
     username: string;
-    iat?: number;
+    passwordChangedAt: number;
 }
 
 interface EmailVerificationPayload {
@@ -68,7 +68,12 @@ export class AuthService {
     }
 
     static signToken(user: IUser): string {
-        const payload: TokenPayload = { purpose: 'session', sub: user._id.toString(), username: user.username };
+        const payload: TokenPayload = {
+            purpose: 'session',
+            sub: user._id.toString(),
+            username: user.username,
+            passwordChangedAt: user.passwordChangedAt.getTime(),
+        };
         return jwt.sign(payload, AuthService.getJwtSecret(), {
             expiresIn: env.jwtExpiresIn as jwt.SignOptions['expiresIn'],
         })
@@ -87,8 +92,7 @@ export class AuthService {
         const user = await User.findById(payload.sub);
         if (!user) return false;
 
-        const passwordChangedAt = Math.floor(user.passwordChangedAt.getTime() / 1000);
-        return passwordChangedAt <= (payload.iat ?? 0);
+        return user.passwordChangedAt.getTime() === payload.passwordChangedAt;
     }
 
     static async register(username: string, email: string, password: string): Promise<IUser> {
