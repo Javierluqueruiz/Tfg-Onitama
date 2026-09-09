@@ -5,7 +5,7 @@ import { AuthApi } from "../../../services/authApi";
 import styles from "../Lobby.module.css";
 
 export const AuthStatus = () => {
-    const { user, token, isAuthenticated, isLoading, logout } = useAuth();
+    const { user, isAuthenticated, isLoading, logout } = useAuth();
     const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
 
     if (isLoading) {
@@ -14,10 +14,9 @@ export const AuthStatus = () => {
 
     if (isAuthenticated && user) {
         const handleResend = async () => {
-            if (!token) return;
             setResendStatus('sending');
             try {
-                await AuthApi.resendVerificationEmail(token);
+                await AuthApi.resendVerificationEmail();
                 setResendStatus('sent');
             } catch {
                 setResendStatus('idle');
@@ -47,5 +46,5 @@ export const AuthStatus = () => {
             <Link to="/login" className={styles.authLink}>Iniciar sesión</Link>
             <Link to="/register" className={styles.authLink}>Registrarse</Link>
         </div>
-    )
-}
+    );
+};

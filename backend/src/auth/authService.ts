@@ -38,6 +38,7 @@ interface EmailVerificationPayload {
 interface PasswordResetPayload {
     purpose: 'passwordReset';
     sub: string;
+    passwordChangedAt: number;
 }
 
 export class AuthService {
@@ -195,21 +196,25 @@ export class AuthService {
     }
 
     // Recuperación de contraseña
-    static signPasswordResetToken(userId: string): string {
+    static signPasswordResetToken(user: IUser): string {
         return jwt.sign(
-            { purpose: 'passwordReset', sub: userId},
+            {
+                purpose: 'passwordReset',
+                sub: user._id.toString(),
+                passwordChangedAt: user.passwordChangedAt.getTime(),
+            },
             AuthService.getJwtSecret(),
             { expiresIn: '1h' }
         );
     }
 
-    static verifyPasswordResetToken(token: string): string {
+    static verifyPasswordResetToken(token: string): PasswordResetPayload {
         const payload = jwt.verify(token, AuthService.getJwtSecret()) as PasswordResetPayload;
 
         if (payload.purpose !== 'passwordReset') {
             throw new AuthError('Token inválido', 401);
         }
-        return payload.sub;
+        return payload;
     }
 
     static async requestPasswordReset(email: string): Promise<void> {
@@ -226,7 +231,7 @@ export class AuthService {
                 return;
             }
             
-            const token = AuthService.signPasswordResetToken(user._id.toString());
+            const token = AuthService.signPasswordResetToken(user);
             const resetUrl = `${env.frontendOrigin}/reset-password?token=${token}`;
             await sendPasswordResetEmail(user.email, resetUrl);
         } catch (error) {
@@ -237,16 +242,23 @@ export class AuthService {
     static async resetPassword(token: string, newPassword: string): Promise<void> {
         AuthService.assertStrongPassword(newPassword);
 
-        let userId: string;
+        let payload: PasswordResetPayload;
         try {
-            userId = AuthService.verifyPasswordResetToken(token);
+            payload = AuthService.verifyPasswordResetToken(token);
         } catch {
             throw new AuthError('El enlace de restablecimiento de contraseña es inválido o ha expirado', 401);
         }
 
-        const user = await User.findById(userId);
+        const user = await User.findById(payload.sub);
         if (!user) {
             throw new AuthError('Usuario no encontrado', 404);
+        }
+
+        // Si passwordChangedAt ya no coincide con lo que llevaba el token, es que
+        // este mismo enlace ya se usó una vez (o la contraseña cambió por otra vía)
+        // -- se rechaza en vez de dejar reutilizarlo.
+        if (user.passwordChangedAt.getTime() !== payload.passwordChangedAt) {
+            throw new AuthError('Este enlace de restablecimiento ya se ha utilizado', 401);
         }
 
         user.passwordHash = await AuthService.hashPassword(newPassword);

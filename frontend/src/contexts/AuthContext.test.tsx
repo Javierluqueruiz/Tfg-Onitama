@@ -10,19 +10,20 @@ const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{childr
 
 describe("AuthContext", () => {
     beforeEach(() => {
-        localStorage.clear();
         vi.clearAllMocks();
+        // Por defecto, sin sesión activa -- cada test que sí la necesite lo sobreescribe.
+        vi.mocked(AuthApi.me).mockRejectedValue(new Error('No autenticado'));
     });
 
-    it('empieza como invitado si no hay token guardado', async () => {
+    it('empieza como invitado si no hay sesión activa', async () => {
         const { result } = renderHook(() => useAuth(), { wrapper });
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         expect(result.current.isAuthenticated).toBe(false);
     });
 
-    it('login guarda el token en localStorage y actualiza el estado', async () => {
-        vi.mocked(AuthApi.login).mockResolvedValueOnce({ token: 'fake-token', user: { id: '123', username: 'testuser', emailVerified: false } });
+    it('login actualiza el estado con el usuario devuelto', async () => {
+        vi.mocked(AuthApi.login).mockResolvedValueOnce({ user: { id: '123', username: 'testuser', emailVerified: false } });
 
         const { result } = renderHook(() => useAuth(), { wrapper });
         await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -31,13 +32,13 @@ describe("AuthContext", () => {
             await result.current.login({ username: 'testuser', password: 'password' });
         });
 
-        expect(localStorage.getItem('onitama_token')).toBe('fake-token');
         expect(result.current.isAuthenticated).toBe(true);
         expect(result.current.user).toEqual({ id: '123', username: 'testuser', emailVerified: false });
     });
 
-    it('logout elimina el token de localStorage y actualiza el estado', async () => {
-        vi.mocked(AuthApi.login).mockResolvedValueOnce({ token: 'fake-token', user: { id: '123', username: 'testuser', emailVerified: false } });
+    it('logout llama a AuthApi.logout y limpia el estado', async () => {
+        vi.mocked(AuthApi.login).mockResolvedValueOnce({ user: { id: '123', username: 'testuser', emailVerified: false } });
+        vi.mocked(AuthApi.logout).mockResolvedValue({ message: 'ok' });
 
         const { result } = renderHook(() => useAuth(), { wrapper });
         await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -45,17 +46,16 @@ describe("AuthContext", () => {
             await result.current.login({ username: 'testuser', password: 'password' });
         });
 
-        act(() => {
-            result.current.logout();
+        await act(async () => {
+            await result.current.logout();
         });
 
-        expect(localStorage.getItem('onitama_token')).toBeNull();
+        expect(AuthApi.logout).toHaveBeenCalledOnce();
         expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.user).toBeNull();
     });
 
-    it('restaura el estado del usuario si hay un token guardado', async () => {
-        localStorage.setItem('onitama_token', 'fake-token');
+    it('restaura el usuario si /me responde con éxito al arrancar', async () => {
         vi.mocked(AuthApi.me).mockResolvedValueOnce({ id: '123', username: 'testuser', emailVerified: false });
 
         const { result } = renderHook(() => useAuth(), { wrapper });
@@ -65,20 +65,18 @@ describe("AuthContext", () => {
         expect(result.current.user).toEqual({ id: '123', username: 'testuser', emailVerified: false });
     });
 
-    it('borra el token guardado si ya no es válido', async () => {
-        localStorage.setItem('onitama_token', 'fake-token');
+    it('se queda como invitado si /me falla al arrancar', async () => {
         vi.mocked(AuthApi.me).mockRejectedValueOnce(new Error('Token inválido'));
 
         const { result } = renderHook(() => useAuth(), { wrapper });
 
         await waitFor(() => expect(result.current.isLoading).toBe(false));
-        expect(localStorage.getItem('onitama_token')).toBeNull();
         expect(result.current.isAuthenticated).toBe(false);
     });
 
     it('register crea la cuenta y luego inicia sesión automáticamente', async () => {
         vi.mocked(AuthApi.register).mockResolvedValue({ id: '1', username: 'newuser', emailVerified: false });
-        vi.mocked(AuthApi.login).mockResolvedValueOnce({ token: 'new-token', user: { id: '1', username: 'newuser', emailVerified: false } });
+        vi.mocked(AuthApi.login).mockResolvedValueOnce({ user: { id: '1', username: 'newuser', emailVerified: false } });
 
         const { result } = renderHook(() => useAuth(), { wrapper });
         await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -91,7 +89,6 @@ describe("AuthContext", () => {
         expect(AuthApi.login).toHaveBeenCalledWith({ username: 'newuser', password: 'password' });
         expect(result.current.isAuthenticated).toBe(true);
         expect(result.current.user).toEqual({ id: '1', username: 'newuser', emailVerified: false });
-        expect(localStorage.getItem('onitama_token')).toBe('new-token');
     });
 
     it('si AuthApi.register falla, no inicia sesión y lanza el error', async () => {

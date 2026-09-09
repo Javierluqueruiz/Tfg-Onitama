@@ -10,16 +10,19 @@ describe("AuthApi", () => {
         vi.unstubAllGlobals();
     });
 
-    it('login manda una solicitud POST con los datos y devuelve el token', async () => {
+    it('login manda una solicitud POST con credenciales y devuelve el usuario', async () => {
         (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
             ok: true,
-            json: async () => ({ token: 'fake-token', user: { id: '123', username: 'testuser' } }),
+            json: async () => ({ user: { id: '123', username: 'testuser' } }),
         });
 
         const result = await AuthApi.login({ username: 'testuser', password: 'password' });
 
-        expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/auth/login'), expect.objectContaining({ method: 'POST' }));
-        expect(result).toEqual({ token: 'fake-token', user: { id: '123', username: 'testuser' } });
+        expect(fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/api/auth/login'),
+            expect.objectContaining({ method: 'POST', credentials: 'include' })
+        );
+        expect(result).toEqual({ user: { id: '123', username: 'testuser' } });
     });
 
     it('lanza el mensaje de error del servidor si la respuesta no es ok', async () => {
@@ -39,15 +42,18 @@ describe("AuthApi", () => {
             .rejects.toThrow('Error de red. No se pudo conectar con el servidor.');
     });
 
-    it('me manda el token en la cabecera Authorization', async () => {
+    it('me incluye las credenciales para que el navegador mande la cookie de sesión', async () => {
         (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
             ok: true,
             json: async () => ({ id: '123', username: 'testuser' }),
         });
 
-        await AuthApi.me('fake-token');
+        await AuthApi.me();
 
-        expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/auth/me'), expect.objectContaining({ headers: { 'Authorization': 'Bearer fake-token' } }));
+        expect(fetch).toHaveBeenCalledWith(
+            expect.stringContaining('/api/auth/me'),
+            expect.objectContaining({ credentials: 'include' })
+        );
     });
 
     //Sub-08.4
@@ -76,17 +82,17 @@ describe("AuthApi", () => {
             .rejects.toThrow('El enlace de verificación es inválido o ha expirado');
     });
 
-    it('resendVerification manda el token de sesión en la cabecera Authorization', async () => {
+    it('resendVerificationEmail incluye las credenciales para mandar la cookie de sesión', async () => {
         (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
             ok: true,
             json: async () => ({ message: 'Correo reenviado' }),
         });
 
-        await AuthApi.resendVerificationEmail('session-token');
+        await AuthApi.resendVerificationEmail();
 
         expect(fetch).toHaveBeenCalledWith(
             expect.stringContaining('/api/auth/resend-verification'),
-            expect.objectContaining({ method: 'POST', headers: { 'Authorization': 'Bearer session-token' } })
+            expect.objectContaining({ method: 'POST', credentials: 'include' })
         );
     });
     

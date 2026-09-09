@@ -15,7 +15,6 @@ vi.mock('react-router-dom', async () => {
 function mockUseAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
     vi.mocked(useAuth).mockReturnValue({
         user: null,
-        token: null,
         isAuthenticated: false,
         isLoading: false,
         login: vi.fn(),

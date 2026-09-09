@@ -133,7 +133,8 @@ describe('Invalidación de sesión al cambiar la contraseña', () => {
             .send({ username: 'usuarioprueba', password: 'password123' });
         const cookieAntigua = loginAntiguo.headers['set-cookie'];
 
-        const resetToken = AuthService.signPasswordResetToken(registerResponse.body.id);
+        const registeredUser = await User.findById(registerResponse.body.id);
+        const resetToken = AuthService.signPasswordResetToken(registeredUser!);
         await request(app).post('/api/auth/reset-password')
             .send({ token: resetToken, newPassword: 'nuevaContraseña123' });
 
@@ -263,8 +264,9 @@ describe('POST /api/auth/reset-password', () => {
     it('permite iniciar sesión con la nueva contraseña después de un restablecimiento exitoso', async () => {
         const registerResponse = await request(app).post('/api/auth/register')
             .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
-        const token = AuthService.signPasswordResetToken(registerResponse.body.id);
-        
+        const registeredUser = await User.findById(registerResponse.body.id);
+        const token = AuthService.signPasswordResetToken(registeredUser!);
+
         const resetResponse = await request(app).post('/api/auth/reset-password')
             .send({ token, newPassword: 'nuevaContraseña123' });
         expect(resetResponse.status).toBe(200);
@@ -276,6 +278,21 @@ describe('POST /api/auth/reset-password', () => {
         const loginNuevaContraseña = await request(app).post('/api/auth/login')
             .send({ username: 'usuarioprueba', password: 'nuevaContraseña123' });
         expect(loginNuevaContraseña.status).toBe(200);
+    });
+
+    it('rechaza reutilizar el mismo enlace de restablecimiento una segunda vez', async () => {
+        const registerResponse = await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'usuarioprueba@example.com', password: 'password123' });
+        const registeredUser = await User.findById(registerResponse.body.id);
+        const token = AuthService.signPasswordResetToken(registeredUser!);
+
+        const primerUso = await request(app).post('/api/auth/reset-password')
+            .send({ token, newPassword: 'primeraNueva123' });
+        expect(primerUso.status).toBe(200);
+
+        const segundoUso = await request(app).post('/api/auth/reset-password')
+            .send({ token, newPassword: 'segundaNueva123' });
+        expect(segundoUso.status).toBe(401);
     });
 
     it('devuelve error con un token inválido o expirado', async () => {

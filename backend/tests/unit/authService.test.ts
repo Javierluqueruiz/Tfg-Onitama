@@ -160,8 +160,12 @@ describe('AuthService - verificación de correo', () => {
 
 describe('AuthService - recuperación de contraseña', () => {
     it('signPasswordResetToken y verifyPasswordResetToken son funciones complementarias', () => {
-        const token = AuthService.signPasswordResetToken('12345');
-        expect(AuthService.verifyPasswordResetToken(token)).toBe('12345');  
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), passwordChangedAt: new Date() } as IUser;
+        const token = AuthService.signPasswordResetToken(fakeUser);
+
+        const payload = AuthService.verifyPasswordResetToken(token);
+        expect(payload.sub).toBe(fakeUser._id.toString());
+        expect(payload.passwordChangedAt).toBe(fakeUser.passwordChangedAt.getTime());
     });
 
     it('requestPasswordReset no revela si el correo existe o no', async () => {
@@ -172,19 +176,36 @@ describe('AuthService - recuperación de contraseña', () => {
 
     it('resetPassword actualiza la contraseña del usuario si el token es válido', async () => {
         const save = vi.fn().mockResolvedValue(undefined);
-        const fakeUser = { passwordHash: 'hash-antiguo', save };
+        const passwordChangedAt = new Date();
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), passwordHash: 'hash-antiguo', passwordChangedAt, save } as unknown as IUser;
 
         vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
 
-        const token = AuthService.signPasswordResetToken('12345');
+        const token = AuthService.signPasswordResetToken(fakeUser);
         await AuthService.resetPassword(token, 'nuevaContraseña');
 
         expect(fakeUser.passwordHash).not.toBe('hash-antiguo');
         expect(save).toHaveBeenCalledOnce();
     });
 
+    it('resetPassword lanza un error si el enlace ya se usó una vez', async () => {
+        const save = vi.fn().mockResolvedValue(undefined);
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), passwordHash: 'hash-antiguo', passwordChangedAt: new Date(), save } as unknown as IUser;
+
+        // El token se firma con la marca de tiempo actual, pero para cuando se
+        // verifica, el usuario ya tiene otra distinta -- simula un segundo uso
+        // del mismo enlace tras uno ya exitoso.
+        const token = AuthService.signPasswordResetToken(fakeUser);
+        fakeUser.passwordChangedAt = new Date(fakeUser.passwordChangedAt.getTime() + 1000);
+        vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
+
+        await expect(AuthService.resetPassword(token, 'otraContraseña123'))
+            .rejects.toMatchObject({ statusCode: 401 });
+    });
+
     it('resetPassword lanza un error 400 si la contraseña es demasiado corta', async () => {
-        const token = AuthService.signPasswordResetToken('12345');
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), passwordChangedAt: new Date() } as IUser;
+        const token = AuthService.signPasswordResetToken(fakeUser);
         await expect(AuthService.resetPassword(token, 'con'))
             .rejects.toMatchObject({ statusCode: 400 });
     });
