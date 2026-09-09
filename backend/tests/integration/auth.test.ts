@@ -106,6 +106,30 @@ describe('POST /api/auth/login', () => {
     });
 });
 
+describe('Normalización de mayúsculas/minúsculas en el username', () => {
+    it('permite iniciar sesión con una capitalización distinta a la del registro, conservando el nombre original', async () => {
+        await request(app).post('/api/auth/register')
+            .send({ username: 'UsuarioPrueba', email: 'mayusculas@example.com', password: 'password123' });
+
+        const response = await request(app)
+            .post('/api/auth/login')
+            .send({ username: 'usuarioprueba', password: 'password123' });
+
+        expect(response.status).toBe(200);
+        expect(response.body.user.username).toBe('UsuarioPrueba');
+    });
+
+    it('impide registrar dos cuentas cuyo username solo difiere en mayúsculas', async () => {
+        await request(app).post('/api/auth/register')
+            .send({ username: 'UsuarioPrueba', email: 'primero@example.com', password: 'password123' });
+
+        const response = await request(app).post('/api/auth/register')
+            .send({ username: 'usuarioprueba', email: 'segundo@example.com', password: 'password123' });
+
+        expect(response.status).toBe(409);
+    });
+});
+
 describe('GET /api/auth/me', () => {
     it('devuelve los datos del usuario autenticado si el token es válido', async () => {
         await request(app).post('/api/auth/register')

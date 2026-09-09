@@ -90,7 +90,7 @@ export class AuthService {
             throw new AuthError('Nombre de usuario o contraseña incorrectos', 401);
         }
 
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ usernameLower: username.trim().toLowerCase() });
         if (!user) {
             throw new AuthError('Nombre de usuario o contraseña incorrectos', 401);
         }

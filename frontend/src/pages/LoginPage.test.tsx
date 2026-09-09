@@ -59,6 +59,17 @@ describe('LoginPage', () => {
         await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/'));
     });
 
+    it('tiene un enlace a la recuperación de contraseña', () => {
+        mockUseAuth();
+
+        render(<MemoryRouter>
+                <LoginPage />
+            </MemoryRouter>
+        );
+
+        expect(screen.getByRole('link', { name: /olvidaste tu contraseña/i })).toHaveAttribute('href', '/forgot-password');
+    });
+
     it('muestra un mensaje de error si el inicio de sesión falla', async () => {
         mockUseAuth({ login: vi.fn().mockRejectedValue(new Error('Nombre de usuario o contraseña incorrectos')) });
 

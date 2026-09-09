@@ -2,6 +2,7 @@ import { Schema, model, Document } from 'mongoose';
 
 export interface IUser extends Document {
     username: string;
+    usernameLower: string;
     email: string;
     passwordHash: string;
     createdAt: Date;
@@ -12,10 +13,13 @@ const userSchema = new Schema<IUser>({
     username: {
         type: String,
         required: true,
-        unique: true,
         trim: true,
-        lowercase: true,
         minlength: 3,
+    },
+    usernameLower: {
+        type: String,
+        required: true,
+        unique: true,
     },
     email: {
         type: String,
@@ -37,6 +41,12 @@ const userSchema = new Schema<IUser>({
         type: Boolean,
         default: false,
     },
+});
+
+userSchema.pre('validate', function () {
+    if (this.isModified('username')) {
+        this.usernameLower = this.username.toLowerCase();
+    }
 });
 
 export const User = model<IUser>('User', userSchema);
