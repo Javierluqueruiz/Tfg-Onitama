@@ -16,7 +16,7 @@ describe("AuthApi", () => {
             json: async () => ({ user: { id: '123', username: 'testuser' } }),
         });
 
-        const result = await AuthApi.login({ username: 'testuser', password: 'password' });
+        const result = await AuthApi.login({ username: 'testuser', password: 'password', captchaToken: 'fake-captcha-token' });
 
         expect(fetch).toHaveBeenCalledWith(
             expect.stringContaining('/api/auth/login'),
@@ -31,14 +31,14 @@ describe("AuthApi", () => {
             json: async () => ({ message: 'Nombre de usuario o contraseña incorrectos' }),
         });
         
-        await expect(AuthApi.login({ username: 'wronguser', password: 'wrongpassword' }))
+        await expect(AuthApi.login({ username: 'wronguser', password: 'wrongpassword', captchaToken: 'fake-captcha-token' }))
             .rejects.toThrow('Nombre de usuario o contraseña incorrectos');
     });
 
     it('lanza un error de red si fetch falla', async () => {
         (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Failed to fetch'));
 
-        await expect(AuthApi.login({ username: 'testuser', password: 'password' }))
+        await expect(AuthApi.login({ username: 'testuser', password: 'password', captchaToken: 'fake-captcha-token' }))
             .rejects.toThrow('Error de red. No se pudo conectar con el servidor.');
     });
 

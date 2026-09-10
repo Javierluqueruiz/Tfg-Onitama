@@ -3,12 +3,15 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthLayout } from './AuthLayout';
 import styles from '../components/lobby/ui/Forms.module.css';
+import { TurnstileWidget } from '../components/TurnstileWidget';
 
 export const RegisterPage = () => {
     const { register } = useAuth();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+    const [captchaKey, setCaptchaKey] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
@@ -18,11 +21,19 @@ export const RegisterPage = () => {
         setError(null);
         setIsSubmitting(true);
 
+        if (!captchaToken) {
+            setError("Por favor, completa la verificación de seguridad.");
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
-            await register({ username, email, password });
+            await register({ username, email, password, captchaToken });
             setRegisteredEmail(email);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Error desconocido');
+            setCaptchaToken(null);
+            setCaptchaKey(prevKey => prevKey + 1);
         } finally {
             setIsSubmitting(false);
         }
@@ -59,6 +70,8 @@ export const RegisterPage = () => {
                     Contraseña:
                     <input type="password" className={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
                 </label>
+
+                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} />
 
                 {error && <p className={styles.error}>{error}</p>}
 

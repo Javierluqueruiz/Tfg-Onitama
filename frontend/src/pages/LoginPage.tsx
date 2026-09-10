@@ -3,25 +3,36 @@ import { useState, type SubmitEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "../components/lobby/ui/Forms.module.css";
 import { AuthLayout } from "./AuthLayout";
+import { TurnstileWidget } from "../components/TurnstileWidget";
 
 export const LoginPage = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+    const [captchaKey, setCaptchaKey] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
+
+        if (!captchaToken) {
+            setError("Por favor, completa la verificación de seguridad.");
+            return;
+        }
+
         setIsSubmitting(true);
 
         try{
-            await login({ username, password });
+            await login({ username, password, captchaToken });
             navigate("/");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error desconocido");
+            setCaptchaToken(null);
+            setCaptchaKey(prevKey => prevKey + 1);
         } finally {
             setIsSubmitting(false);
         }
@@ -51,6 +62,8 @@ export const LoginPage = () => {
                         required
                     />
                 </label>
+
+                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} />
 
                 <p className={styles.switchLink}><Link to="/forgot-password">¿Olvidaste tu contraseña?</Link></p>
 

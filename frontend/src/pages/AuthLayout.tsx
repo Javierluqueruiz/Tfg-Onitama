@@ -11,7 +11,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         <div className={`${lobbyStyles.wrapper} gameTheme`}>
             <div className={`${lobbyStyles.scene} ${lobbyStyles.sceneMain} ${lobbyStyles.sceneActive}`} />
             <div className={lobbyStyles.header}>
-                <h1 className={lobbyStyles.mainTitle}>⛩️ ONITAMA</h1>
+                <a className={lobbyStyles.mainTitle} href="/">⛩️ ONITAMA</a>
                 <p className={lobbyStyles.subTitle}>El Camino del Maestro</p>
             </div>
             <div className={lobbyStyles.content}>

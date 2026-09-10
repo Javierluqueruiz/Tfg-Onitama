@@ -29,7 +29,7 @@ describe("AuthContext", () => {
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         await act(async () => {
-            await result.current.login({ username: 'testuser', password: 'password' });
+            await result.current.login({ username: 'testuser', password: 'password', captchaToken: 'fake-captcha-token' });
         });
 
         expect(result.current.isAuthenticated).toBe(true);
@@ -43,7 +43,7 @@ describe("AuthContext", () => {
         const { result } = renderHook(() => useAuth(), { wrapper });
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         await act(async () => {
-            await result.current.login({ username: 'testuser', password: 'password' });
+            await result.current.login({ username: 'testuser', password: 'password', captchaToken: 'fake-captcha-token' });
         });
 
         await act(async () => {
@@ -74,19 +74,20 @@ describe("AuthContext", () => {
         expect(result.current.isAuthenticated).toBe(false);
     });
 
-    it('register crea la cuenta y luego inicia sesión automáticamente', async () => {
+    it('register crea la cuenta y actualiza el estado con el usuario devuelto, sin un login aparte', async () => {
         vi.mocked(AuthApi.register).mockResolvedValue({ id: '1', username: 'newuser', emailVerified: false });
-        vi.mocked(AuthApi.login).mockResolvedValueOnce({ user: { id: '1', username: 'newuser', emailVerified: false } });
 
         const { result } = renderHook(() => useAuth(), { wrapper });
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         await act(async () => {
-            await result.current.register({ username: 'newuser', email: 'newuser@example.com', password: 'password' });
+            await result.current.register({ username: 'newuser', email: 'newuser@example.com', password: 'password', captchaToken: 'fake-captcha-token' });
         });
 
-        expect(AuthApi.register).toHaveBeenCalledWith({ username: 'newuser', email: 'newuser@example.com', password: 'password' });
-        expect(AuthApi.login).toHaveBeenCalledWith({ username: 'newuser', password: 'password' });
+        expect(AuthApi.register).toHaveBeenCalledWith({ username: 'newuser', email: 'newuser@example.com', password: 'password', captchaToken: 'fake-captcha-token' });
+        // /register ya deja la sesión iniciada por su cuenta -- un login aparte
+        // reutilizaría un token de Turnstile ya gastado, así que no debe llamarse.
+        expect(AuthApi.login).not.toHaveBeenCalled();
         expect(result.current.isAuthenticated).toBe(true);
         expect(result.current.user).toEqual({ id: '1', username: 'newuser', emailVerified: false });
     });
@@ -99,7 +100,7 @@ describe("AuthContext", () => {
 
         await expect(
             act(async () => {
-                await result.current.register({ username: 'existinguser', email: 'existinguser@example.com', password: 'password' });
+                await result.current.register({ username: 'existinguser', email: 'existinguser@example.com', password: 'password', captchaToken: 'fake-captcha-token' });
             })
         ).rejects.toThrow('El nombre de usuario o el correo ya está en uso.');
 

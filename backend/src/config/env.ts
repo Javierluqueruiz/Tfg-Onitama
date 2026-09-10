@@ -10,4 +10,5 @@ export const env = {
     frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
     gmailUser: process.env.GMAIL_USER,
     gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY,
 }

@@ -10,6 +10,7 @@ import { MatchmakingRoom } from './ui/MatchmakingRoom';
 import { AuthStatus } from './ui/AuthStatus';
 import '../game/theme.css';
 
+
 export const Lobby: React.FC =  () => {
     const {
         isConnected, currentScreen, setCurrentScreen,
@@ -34,7 +35,7 @@ export const Lobby: React.FC =  () => {
 
             <div className={styles.header}
             >
-                <h1 className={styles.mainTitle}>⛩️ ONITAMA</h1>
+                <a className={styles.mainTitle} href="/">⛩️ ONITAMA</a>
                 <p className={styles.subTitle}>El Camino del Maestro</p>
             </div>
 

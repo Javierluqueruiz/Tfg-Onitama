@@ -12,6 +12,10 @@ vi.mock('../../src/auth/emailService', () => ({
     sendVerifyBeforeResetEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('../../src/auth/captchaService', () => ({
+    verifyCaptcha: vi.fn().mockResolvedValue(true),
+}));
+
 let mongoServer: MongoMemoryServer;
 
 beforeAll(async () => {

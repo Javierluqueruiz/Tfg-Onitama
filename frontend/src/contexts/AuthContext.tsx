@@ -39,8 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const register = async (payload: RegisterRequest) => {
-        await AuthApi.register(payload);
-        await login({ username: payload.username, password: payload.password });
+        // /api/auth/register ya deja la sesión iniciada (pone la cookie) en la
+        // misma petición -- no hace falta un login aparte, y además el token de
+        // Turnstile ya se habría gastado en el registro (es de un solo uso).
+        const registeredUser = await AuthApi.register(payload);
+        setUser(registeredUser);
     };
 
     const logout = async () => {

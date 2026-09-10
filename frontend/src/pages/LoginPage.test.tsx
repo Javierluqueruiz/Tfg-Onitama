@@ -1,10 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { useEffect } from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { LoginPage } from './LoginPage';
 import { useAuth } from '../contexts/AuthContext';
 
 vi.mock('../contexts/AuthContext');
+
+// No hay window.turnstile real en el entorno de test -- se simula que el
+// captcha ya se resolvió, para poder probar el envío del formulario en sí.
+vi.mock('../components/TurnstileWidget', () => ({
+    TurnstileWidget: ({ onVerify }: { onVerify: (token: string) => void }) => {
+        useEffect(() => {
+            onVerify('fake-captcha-token');
+        }, [onVerify]);
+        return null;
+    },
+}));
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -41,7 +53,7 @@ describe('LoginPage', () => {
         fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'password' } });
         fireEvent.click(screen.getByRole('button', { name: /Iniciar sesión/i }));
 
-        await waitFor(() => expect(login).toHaveBeenCalledWith({ username: 'testuser', password: 'password' }));
+        await waitFor(() => expect(login).toHaveBeenCalledWith({ username: 'testuser', password: 'password', captchaToken: 'fake-captcha-token' }));
     });
 
     it('navega a la página de inicio después de un inicio de sesión exitoso', async () => {

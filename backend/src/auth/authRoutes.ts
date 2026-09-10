@@ -3,6 +3,7 @@ import { AuthService, AuthError } from './authService';
 import { requireAuth, AuthenticatedRequest } from './authMiddleware';
 import { User } from './User.model';
 import { env } from '../config/env';
+import { verifyCaptcha } from './captchaService';
 import rateLimit from 'express-rate-limit';
 import ms from 'ms';
 
@@ -32,7 +33,13 @@ const authLimiter = rateLimit({
 });
 
 authRoutes.post('/register', authLimiter, async (req, res) => {
-    const { username, email, password } = req.body;
+    const { username, email, password, captchaToken } = req.body;
+
+    const isHuman = await verifyCaptcha(captchaToken);  
+    if (!isHuman) {
+        res.status(400).json({ message: 'Verificación de seguridad fallida' });
+        return;
+    }
 
     try {
         const user = await AuthService.register(username, email, password);
@@ -45,7 +52,13 @@ authRoutes.post('/register', authLimiter, async (req, res) => {
 });
 
 authRoutes.post('/login', authLimiter, async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, captchaToken } = req.body;
+
+    const isHuman = await verifyCaptcha(captchaToken);
+    if (!isHuman) {
+        res.status(400).json({ message: 'Verificación de seguridad fallida' });
+        return;
+    }
 
     try {
         const { user, token } = await AuthService.login(username, password);
