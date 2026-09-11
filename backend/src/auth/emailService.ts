@@ -5,8 +5,14 @@ const transporter = nodemailer.createTransport({
     // host/port/secure explícitos en vez del atajo service: 'gmail' -- son equivalentes,
     // pero el atajo no admite en sus tipos la opción `family` de más abajo.
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    // 587 + STARTTLS en vez de 465 + TLS implícito: tras arreglar el ENETUNREACH (IPv6),
+    // seguía dando timeout en el 465 -- probablemente el puerto 465 saliente está
+    // bloqueado o Gmail lo ignora desde la red de Render, algo habitual al conectar por
+    // SMTP a Gmail desde IPs de proveedores cloud. 587 usa un protocolo de negociación
+    // distinto y es la alternativa estándar cuando el 465 no responde.
+    port: 587,
+    secure: false, // con el 587, la conexión empieza sin cifrar y sube a TLS via STARTTLS
+    requireTLS: true,
     auth: {
         user: env.gmailUser,
         pass: env.gmailAppPassword,
