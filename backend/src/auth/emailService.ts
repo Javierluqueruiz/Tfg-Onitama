@@ -2,7 +2,11 @@ import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    // host/port/secure explícitos en vez del atajo service: 'gmail' -- son equivalentes,
+    // pero el atajo no admite en sus tipos la opción `family` de más abajo.
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: env.gmailUser,
         pass: env.gmailAppPassword,
@@ -10,6 +14,11 @@ const transporter = nodemailer.createTransport({
     tls: {
         rejectUnauthorized: process.env.NODE_ENV === 'production',
     },
+    // Render resuelve smtp.gmail.com a una dirección IPv6 (Node la prueba primero), pero
+    // su red saliente no la alcanza -- ENETUNREACH. Forzar IPv4 evita esa ruta rota; la
+    // propia máquina de Gmail responde igual de bien por IPv4.
+    // @ts-expect-error -- `family` sí lo soporta nodemailer en tiempo de ejecución (lo reenvía a net/tls.connect), pero @types/nodemailer no lo declara
+    family: 4,
 });
 
 export async function sendVerificationEmail(to: string, verificationUrl: string): Promise<void> {
