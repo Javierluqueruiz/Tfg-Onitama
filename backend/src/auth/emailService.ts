@@ -1,109 +1,94 @@
-import nodemailer from 'nodemailer';
 import { env } from '../config/env';
 
-const transporter = nodemailer.createTransport({
-    // host/port/secure explícitos en vez del atajo service: 'gmail' -- son equivalentes,
-    // pero el atajo no admite en sus tipos la opción `family` de más abajo.
-    host: 'smtp.gmail.com',
-    // 587 + STARTTLS en vez de 465 + TLS implícito: tras arreglar el ENETUNREACH (IPv6),
-    // seguía dando timeout en el 465 -- probablemente el puerto 465 saliente está
-    // bloqueado o Gmail lo ignora desde la red de Render, algo habitual al conectar por
-    // SMTP a Gmail desde IPs de proveedores cloud. 587 usa un protocolo de negociación
-    // distinto y es la alternativa estándar cuando el 465 no responde.
-    port: 587,
-    secure: false, // con el 587, la conexión empieza sin cifrar y sube a TLS via STARTTLS
-    requireTLS: true,
-    auth: {
-        user: env.gmailUser,
-        pass: env.gmailAppPassword,
-    },
-    tls: {
-        rejectUnauthorized: process.env.NODE_ENV === 'production',
-    },
-    // Render resuelve smtp.gmail.com a una dirección IPv6 (Node la prueba primero), pero
-    // su red saliente no la alcanza -- ENETUNREACH. Forzar IPv4 evita esa ruta rota; la
-    // propia máquina de Gmail responde igual de bien por IPv4.
-    // @ts-expect-error -- `family` sí lo soporta nodemailer en tiempo de ejecución (lo reenvía a net/tls.connect), pero @types/nodemailer no lo declara
-    family: 4,
-});
+// Brevo ofrece una API HTTP para mandar correo transaccional -- viaja por el puerto 443,
+// como cualquier petición normal, y evita el bloqueo de SMTP saliente hacia Gmail que
+// sufría la versión anterior desde la red de Render (ver bitácora del proyecto:
+// ENETUNREACH con IPv6, y después ETIMEDOUT incluso forzando IPv4 y probando el puerto 587).
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
+
+async function sendEmail(to: string, subject: string, htmlContent: string): Promise<void> {
+    const response = await fetch(BREVO_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'api-key': env.brevoApiKey ?? '',
+        },
+        body: JSON.stringify({
+            sender: { email: env.gmailUser },
+            to: [{ email: to }],
+            subject,
+            htmlContent,
+        }),
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Brevo respondió ${response.status}: ${errorBody}`);
+    }
+}
 
 export async function sendVerificationEmail(to: string, verificationUrl: string): Promise<void> {
-    await transporter.sendMail({
-        from: env.gmailUser,
-        to,
-        subject: 'Verifica tu cuenta de Onitama',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
-                <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
-                <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
-                    Gracias por registrarte. Confirma tu correo electrónico haciendo clic en el siguiente botón
-                    (el enlace caduca en 24 horas):
-                </p>
-                <p style="text-align: center; margin: 32px 0;">
-                    <a href="${verificationUrl}"
-                       style="background-color: #3f6d57; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
-                        Verificar mi correo
-                    </a>
-                </p>
-                <p style="color: #5b4c34; font-size: 13px;">
-                    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-                    <a href="${verificationUrl}" style="color: #3f6d57; word-break: break-all;">${verificationUrl}</a>
-                </p>
-            </div>
-        `,
-    });
+    await sendEmail(to, 'Verifica tu cuenta de Onitama', `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
+            <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
+            <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
+                Gracias por registrarte. Confirma tu correo electrónico haciendo clic en el siguiente botón
+                (el enlace caduca en 24 horas):
+            </p>
+            <p style="text-align: center; margin: 32px 0;">
+                <a href="${verificationUrl}"
+                   style="background-color: #3f6d57; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                    Verificar mi correo
+                </a>
+            </p>
+            <p style="color: #5b4c34; font-size: 13px;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+                <a href="${verificationUrl}" style="color: #3f6d57; word-break: break-all;">${verificationUrl}</a>
+            </p>
+        </div>
+    `);
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
-    await transporter.sendMail({
-        from: env.gmailUser,
-        to,
-        subject: 'Restablece tu contraseña de Onitama',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
-                <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
-                <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
-                    Hemos recibido una solicitud para restablecer tu contraseña. Si no has sido tú, ignora este correo.
-                    El enlace caduca en 1 hora.
-                </p>
-                <p style="text-align: center; margin: 32px 0;">
-                    <a href="${resetUrl}"
-                       style="background-color: #a8503a; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
-                        Restablecer mi contraseña
-                    </a>
-                </p>
-                <p style="color: #5b4c34; font-size: 13px;">
-                    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-                    <a href="${resetUrl}" style="color: #a8503a; word-break: break-all;">${resetUrl}</a>
-                </p>
-            </div>
-        `,
-    });
+    await sendEmail(to, 'Restablece tu contraseña de Onitama', `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
+            <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
+            <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
+                Hemos recibido una solicitud para restablecer tu contraseña. Si no has sido tú, ignora este correo.
+                El enlace caduca en 1 hora.
+            </p>
+            <p style="text-align: center; margin: 32px 0;">
+                <a href="${resetUrl}"
+                   style="background-color: #a8503a; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                    Restablecer mi contraseña
+                </a>
+            </p>
+            <p style="color: #5b4c34; font-size: 13px;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+                <a href="${resetUrl}" style="color: #a8503a; word-break: break-all;">${resetUrl}</a>
+            </p>
+        </div>
+    `);
 }
 
 export async function sendVerifyBeforeResetEmail(to: string, verificationUrl: string): Promise<void> {
-    await transporter.sendMail({
-        from: env.gmailUser,
-        to,
-        subject: 'Verifica tu correo antes de restablecer tu contraseña',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
-                <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
-                <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
-                    Has solicitado restablecer tu contraseña, pero tu cuenta todavía no tiene el correo verificado.
-                    Verifícalo primero con el siguiente botón; después podrás solicitar el restablecimiento de nuevo.
-                </p>
-                <p style="text-align: center; margin: 32px 0;">
-                    <a href="${verificationUrl}"
-                       style="background-color: #3f6d57; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
-                        Verificar mi correo
-                    </a>
-                </p>
-                <p style="color: #5b4c34; font-size: 13px;">
-                    Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
-                    <a href="${verificationUrl}" style="color: #3f6d57; word-break: break-all;">${verificationUrl}</a>
-                </p>
-            </div>
-        `,
-    });
+    await sendEmail(to, 'Verifica tu correo antes de restablecer tu contraseña', `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; background-color: #f6efdc; border-radius: 12px; border: 1px solid #c79a4b;">
+            <h2 style="color: #2c2417; margin-top: 0;">⛩️ Onitama</h2>
+            <p style="color: #2c2417; font-size: 15px; line-height: 1.5;">
+                Has solicitado restablecer tu contraseña, pero tu cuenta todavía no tiene el correo verificado.
+                Verifícalo primero con el siguiente botón; después podrás solicitar el restablecimiento de nuevo.
+            </p>
+            <p style="text-align: center; margin: 32px 0;">
+                <a href="${verificationUrl}"
+                   style="background-color: #3f6d57; color: #f6efdc; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">
+                    Verificar mi correo
+                </a>
+            </p>
+            <p style="color: #5b4c34; font-size: 13px;">
+                Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+                <a href="${verificationUrl}" style="color: #3f6d57; word-break: break-all;">${verificationUrl}</a>
+            </p>
+        </div>
+    `);
 }

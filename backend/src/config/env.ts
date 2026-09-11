@@ -13,7 +13,10 @@ export const env = {
     get jwtSecret() { return process.env.JWT_SECRET; },
     get jwtExpiresIn() { return process.env.JWT_EXPIRES_IN || '1d'; },
     get frontendOrigin() { return process.env.FRONTEND_ORIGIN || 'http://localhost:5173'; },
+    // GMAIL_USER se conserva como identidad del remitente (la dirección que se ve en el
+    // "De:" y la que se verifica en Brevo como remitente) -- ya no se usa para autenticar
+    // contra un servidor SMTP de Gmail, así que GMAIL_APP_PASSWORD ha dejado de hacer falta.
     get gmailUser() { return process.env.GMAIL_USER; },
-    get gmailAppPassword() { return process.env.GMAIL_APP_PASSWORD; },
+    get brevoApiKey() { return process.env.BREVO_API_KEY; },
     get turnstileSecretKey() { return process.env.TURNSTILE_SECRET_KEY; },
 }
