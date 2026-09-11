@@ -2,13 +2,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Cada propiedad es un getter, no un valor capturado de una vez al importar este
+// archivo -- así `env.jwtSecret` siempre refleja el process.env.JWT_SECRET actual en el
+// momento en que se lee, y no una foto congelada del instante en que algo importó este
+// módulo por primera vez (que en los tests, por el orden de carga de módulos, podía ser
+// antes de que tests/setup.ts llegara a fijar su valor de repuesto).
 export const env = {
-    port: Number(process.env.PORT) || 3000,
-    mongodbUri: process.env.MONGODB_URI,
-    jwtSecret: process.env.JWT_SECRET,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d',
-    frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
-    gmailUser: process.env.GMAIL_USER,
-    gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
-    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY,
+    get port() { return Number(process.env.PORT) || 3000; },
+    get mongodbUri() { return process.env.MONGODB_URI; },
+    get jwtSecret() { return process.env.JWT_SECRET; },
+    get jwtExpiresIn() { return process.env.JWT_EXPIRES_IN || '1d'; },
+    get frontendOrigin() { return process.env.FRONTEND_ORIGIN || 'http://localhost:5173'; },
+    get gmailUser() { return process.env.GMAIL_USER; },
+    get gmailAppPassword() { return process.env.GMAIL_APP_PASSWORD; },
+    get turnstileSecretKey() { return process.env.TURNSTILE_SECRET_KEY; },
 }
