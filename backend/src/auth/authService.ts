@@ -113,7 +113,12 @@ export class AuthService {
             throw error;
         }
 
-        await AuthService.sendVerificationEmail(user);
+        // Sin await a propósito: sendVerificationEmail ya atrapa sus propios errores (nunca
+        // rechaza), pero seguía siendo una promesa que HABÍA que esperar antes de responder
+        // -- si el envío por SMTP tarda o se cuelga, el registro entero se quedaba esperando
+        // aunque el usuario ya estuviera creado en la base de datos. El registro no debe
+        // depender de la latencia de un proveedor de correo externo.
+        void AuthService.sendVerificationEmail(user);
         return user;
     }
 
@@ -223,20 +228,25 @@ export class AuthService {
             return; // No revelar si el correo existe o no
         }
 
-        try {
-            if (!user.emailVerified) {
-                const verificationToken = AuthService.signEMailVerificationToken(user._id.toString());
-                const verificationUrl = `${env.frontendOrigin}/verify-email?token=${verificationToken}`;
-                await sendVerifyBeforeResetEmail(user.email, verificationUrl);
-                return;
-            }
-            
-            const token = AuthService.signPasswordResetToken(user);
-            const resetUrl = `${env.frontendOrigin}/reset-password?token=${token}`;
-            await sendPasswordResetEmail(user.email, resetUrl);
-        } catch (error) {
+        // Sin await en los envíos, a propósito y por dos motivos: que la latencia del SMTP
+        // no bloquee la respuesta (igual que en register()), y que no delate por el tiempo
+        // de respuesta si la cuenta existe o no -- si esta función esperase al envío, una
+        // petición contra un correo real tardaría sistemáticamente más que una contra uno
+        // inexistente, filtrando la misma información que el mensaje genérico ya oculta.
+        if (!user.emailVerified) {
+            const verificationToken = AuthService.signEMailVerificationToken(user._id.toString());
+            const verificationUrl = `${env.frontendOrigin}/verify-email?token=${verificationToken}`;
+            void sendVerifyBeforeResetEmail(user.email, verificationUrl).catch((error) => {
+                console.error('Error al enviar el correo de verificación:', error);
+            });
+            return;
+        }
+
+        const token = AuthService.signPasswordResetToken(user);
+        const resetUrl = `${env.frontendOrigin}/reset-password?token=${token}`;
+        void sendPasswordResetEmail(user.email, resetUrl).catch((error) => {
             console.error('Error al enviar el correo de restablecimiento de contraseña:', error);
-        }   
+        });
     }
 
     static async resetPassword(token: string, newPassword: string): Promise<void> {
