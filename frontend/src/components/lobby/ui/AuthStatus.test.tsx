@@ -11,7 +11,7 @@ vi.mock('../../../contexts/AuthContext');
 function mockUseAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
     vi.mocked(useAuth).mockReturnValue({
         user: null, isAuthenticated: false, isLoading: false,
-        login: vi.fn(), register: vi.fn(), logout: vi.fn(), ...overrides,
+        login: vi.fn(), register: vi.fn(), logout: vi.fn(), updateUser: vi.fn(), ...overrides,
     });
 }
 

@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Response, Request, NextFunction } from 'express';
 import { AuthService, AuthError } from './authService';
 import { requireAuth, AuthenticatedRequest } from './authMiddleware';
 import { User } from './User.model';
@@ -10,6 +10,29 @@ import ms from 'ms';
 export const authRoutes = Router();
 
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Protección CSRF: cualquier cabecera no estándar (como esta) obliga al
+// navegador a lanzar un preflight de CORS antes de mandar la petición de
+// verdad -- y ese preflight ya lo rechazamos para cualquier origen que no sea
+// el nuestro (ver app.ts). Un <form> HTML, que es el vector clásico de CSRF,
+// no puede añadir cabeceras personalizadas -- solo fetch/XHR puede, y solo
+// nuestro propio frontend lo hace. Se aplica a todo lo que no sea GET, que no
+// cambia estado.
+function requireCustomHeader(req: Request, res: Response, next: NextFunction): void {
+    if (req.method === 'GET') {
+        next();
+        return;
+    }
+
+    if (!req.header('X-Requested-With')) {
+        res.status(403).json({ message: 'Solicitud rechazada' });
+        return;
+    }
+
+    next();
+}
+
+authRoutes.use(requireCustomHeader);
 
 function setSessionCookie(res: Response, token: string): void {
     res.cookie('token', token, {

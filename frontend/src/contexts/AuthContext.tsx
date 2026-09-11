@@ -9,6 +9,7 @@ interface AuthContextState {
     login: (credentials: LoginRequest) => Promise<void>;
     register: (payload: RegisterRequest) => Promise<void>;
     logout: () => Promise<void>;
+    updateUser: (user: AuthUser) => void;
 }
 
 const AuthContext = createContext<AuthContextState>({
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextState>({
     login: async () => {},
     register: async () => {},
     logout: async () => {},
+    updateUser: () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -51,8 +53,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
     };
 
+    // Para cuando una acción fuera del propio login/register cambia al usuario
+    // en el servidor (por ejemplo, verificar el correo) y el resultado ya
+    // viaja en la respuesta de esa llamada -- evita tener que volver a pedir
+    // /me solo para refrescar el estado local.
+    const updateUser = (updatedUser: AuthUser) => {
+        setUser(updatedUser);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

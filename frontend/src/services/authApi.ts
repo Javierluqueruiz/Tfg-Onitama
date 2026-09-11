@@ -9,7 +9,13 @@ async function postJson<TResponse>(path: string, body?: unknown): Promise<TRespo
         response = await fetch(`${API_URL}${path}`, {
             method: 'POST',
             credentials: 'include',
-            headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+            // El backend exige esta cabecera en toda petición que cambia estado
+            // (protección CSRF, ver authRoutes.ts) -- un <form> HTML no puede
+            // añadirla, solo fetch/XHR puede.
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+            },
             body: body !== undefined ? JSON.stringify(body) : undefined,
         });
     } catch {
