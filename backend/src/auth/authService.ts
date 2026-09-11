@@ -193,7 +193,7 @@ export class AuthService {
     private static async sendVerificationEmail(user: IUser): Promise<void> {
         try {
             const token = AuthService.signEMailVerificationToken(user._id.toString());
-            const verificationLink = `${env.frontendOrigin}/verify-email?token=${token}`;
+            const verificationLink = `${env.publicFrontendUrl}/verify-email?token=${token}`;
             await sendVerificationEmail(user.email, verificationLink);
         } catch (error) {
             console.error('Error al enviar el correo de verificación:', error);
@@ -235,7 +235,7 @@ export class AuthService {
         // inexistente, filtrando la misma información que el mensaje genérico ya oculta.
         if (!user.emailVerified) {
             const verificationToken = AuthService.signEMailVerificationToken(user._id.toString());
-            const verificationUrl = `${env.frontendOrigin}/verify-email?token=${verificationToken}`;
+            const verificationUrl = `${env.publicFrontendUrl}/verify-email?token=${verificationToken}`;
             void sendVerifyBeforeResetEmail(user.email, verificationUrl).catch((error) => {
                 console.error('Error al enviar el correo de verificación:', error);
             });
@@ -243,7 +243,7 @@ export class AuthService {
         }
 
         const token = AuthService.signPasswordResetToken(user);
-        const resetUrl = `${env.frontendOrigin}/reset-password?token=${token}`;
+        const resetUrl = `${env.publicFrontendUrl}/reset-password?token=${token}`;
         void sendPasswordResetEmail(user.email, resetUrl).catch((error) => {
             console.error('Error al enviar el correo de restablecimiento de contraseña:', error);
         });

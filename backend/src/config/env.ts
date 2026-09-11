@@ -12,7 +12,14 @@ export const env = {
     get mongodbUri() { return process.env.MONGODB_URI; },
     get jwtSecret() { return process.env.JWT_SECRET; },
     get jwtExpiresIn() { return process.env.JWT_EXPIRES_IN || '1d'; },
+    // FRONTEND_ORIGIN admite varios orígenes separados por comas (ver app.ts, para CORS).
+    // Esta versión sin procesar solo debe usarse ahí -- para construir una URL absoluta
+    // (los enlaces de los correos, por ejemplo), usa publicFrontendUrl.
     get frontendOrigin() { return process.env.FRONTEND_ORIGIN || 'http://localhost:5173'; },
+    // El primero de la lista de FRONTEND_ORIGIN: la única URL canónica que tiene sentido
+    // para construir un enlace absoluto. Antes de esto, un enlace de verificación con
+    // varios orígenes en FRONTEND_ORIGIN salía roto -- la lista entera se colaba en la URL.
+    get publicFrontendUrl() { return (process.env.FRONTEND_ORIGIN || 'http://localhost:5173').split(',')[0].trim(); },
     // GMAIL_USER se conserva como identidad del remitente (la dirección que se ve en el
     // "De:" y la que se verifica en Brevo como remitente) -- ya no se usa para autenticar
     // contra un servidor SMTP de Gmail, así que GMAIL_APP_PASSWORD ha dejado de hacer falta.
