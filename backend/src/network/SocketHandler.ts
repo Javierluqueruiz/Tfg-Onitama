@@ -80,11 +80,7 @@ function registerRoomEvents(io: Server, socket: Socket) {
         const initialState = GameEngine.createNewGame(roomId);
         room.gameState = initialState;
 
-        if (room.mode === 'normal') {
-            room.gameState.timeRemaining = { red: 600, blue: 600 };
-        } else if (room.mode === 'fast') {
-            room.gameState.timeRemaining = { red: 300, blue: 300 };
-        } 
+        room.gameState.timeRemaining = RoomManager.getInitialTimeForMode(room.mode);
 
         const playersMapping = {
             red: room.players.red,
@@ -308,11 +304,8 @@ function registerMatchmakingEvents(io: Server, socket: Socket) {
             if (room) {
                 room.gameState = GameEngine.createNewGame(room.roomId);
                 
-                if (mode === 'normal') {
-                    room.gameState.timeRemaining = { red: 600, blue: 600 };
-                } else if (mode === 'fast') {
-                    room.gameState.timeRemaining = { red: 300, blue: 300 };
-                }
+                room.gameState.timeRemaining = RoomManager.getInitialTimeForMode(mode);
+
                 io.to(result.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
 
                 if (mode !== 'casual') {
