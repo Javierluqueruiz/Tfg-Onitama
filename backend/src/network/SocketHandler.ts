@@ -2,8 +2,9 @@ import { Server, Socket } from "socket.io";
 import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
-import { MatchmakingService } from "./MatchmakingService";
+import { MatchmakingService, QueueEntry } from "./MatchmakingService";
 import { resolvePlayerIdentity } from "./playerIdentity";
+import { EloService } from "../game/EloService";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -282,10 +283,19 @@ function registerDrawEvents(io: Server, socket: Socket) {
 //FEAT-06
 function registerMatchmakingEvents(io: Server, socket: Socket) {
         //Sub-06.1: Cola de emparejamiento
-    socket.on(SocketEvents.JOIN_QUEUE, (data: { mode: GameMode }) => {
+    socket.on(SocketEvents.JOIN_QUEUE, async (data: { mode: GameMode }) => {
         const { mode } = data;
+        
+        const identity = await resolvePlayerIdentity(socket);
+        
+        const entry: QueueEntry = {
+            socketId: socket.id,
+            name: identity.username ?? 'Invitado',
+            elo: identity.elo ?? EloService.INITIAL_ELO,
+            userId: identity.userId
+        };
 
-        const result = MatchmakingService.joinQueue(socket.id, mode);
+        const result = MatchmakingService.joinQueue(entry, mode);
         console.log(`Jugador ${socket.id} se ha unido a la cola de emparejamiento en modo ${mode}. Resultado:`, result);
         if (result.matchFound && result.roomId && result.roomCode ) {
 
