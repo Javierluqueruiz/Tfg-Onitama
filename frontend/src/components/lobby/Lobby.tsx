@@ -16,7 +16,7 @@ export const Lobby: React.FC =  () => {
         isConnected, currentScreen, setCurrentScreen,
         playerName, setPlayerName, joinCode, setJoinCode,
         createdRoomCode, errorMsg, setErrorMsg,
-        handleCreateRoom, handleJoinRoom, startMatchmaking, selectMode, setSelectMode
+        handleCreateRoom, handleJoinRoom, startMatchmaking, selectMode, setSelectMode, accountUsername
     } = useLobby();
 
     // FEAT-08: qué pestaña del menú principal está activa, solo para decidir
@@ -91,6 +91,7 @@ export const Lobby: React.FC =  () => {
                         <CreateRoom
                             playerName={playerName}
                             setPlayerName={setPlayerName}
+                            accountName={accountUsername}
                             onCreateRoom={handleCreateRoom}
                             onBack={() => {
                                 setErrorMsg(null);
@@ -113,6 +114,7 @@ export const Lobby: React.FC =  () => {
                         <JoinRoom
                             playerName={playerName}
                             setPlayerName={setPlayerName}
+                            accountName={accountUsername}
                             joinCode={joinCode}
                             setJoinCode={setJoinCode}
                             onJoinRoom={handleJoinRoom}

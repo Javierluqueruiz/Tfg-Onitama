@@ -33,6 +33,8 @@ export const useGameScreen = (
     //Perfiles y nombres
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
     const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
+    const opponentElo = isLocalRed ? playersProfile?.blue.elo : playersProfile?.red.elo;
+    const localElo = isLocalRed ? playersProfile?.red.elo : playersProfile?.blue.elo;
     
     //Cartas
     const myCards = isLocalRed ? cards.red : cards.blue;
@@ -110,7 +112,7 @@ export const useGameScreen = (
 
     return {
         ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
-        opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
+        opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
         validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, isReconnecting, lastError
     };

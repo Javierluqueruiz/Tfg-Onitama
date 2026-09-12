@@ -4,12 +4,13 @@ import { formatTime } from '../../hooks/useNetwork';
 
 interface PlayerInfoProps {
     playerName: string;
+    elo?: number;
     color: 'red' | 'blue';
     isActive: boolean;
     timeLeft?: number;
 }
 
-export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, color, isActive, timeLeft }) => {
+export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, elo, color, isActive, timeLeft }) => {
     const isRed = color === 'red';
     const isLowTime = timeLeft !== undefined && timeLeft <= 30;
 
@@ -25,7 +26,10 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, color, isAct
             </div>
 
             <div className={styles.details}>
-                <p className={styles.name}>{playerName || `Maestro ${color}`}</p>
+                <p className={styles.name}>
+                    {playerName || `Maestro ${color}`}
+                    {elo !== undefined && <span className={styles.eloBadge}>ELO {elo}</span>}
+                </p>
                 <p className={`${styles.status} ${isActive ? styles.statusActive : ''}`}>
                         {isActive ? 'Turno Activo' : 'Esperando...'}
                 </p>
