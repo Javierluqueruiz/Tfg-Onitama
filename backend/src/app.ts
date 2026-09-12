@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
-import { env } from './config/env';
 import { authRoutes } from './auth/authRoutes';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { getAllowedOrigins } from './config/corsOrigin';
 
 export const app = express();
 
@@ -14,7 +14,7 @@ app.use(helmet());
 // hay uno solo, pero en despliegue conviene poder aceptar a la vez producción y las
 // distintas ramas de Vercel (develop, preview...) contra el mismo backend de Render, sin
 // tener que tocar la variable de entorno cada vez que se prueba una rama nueva.
-const allowedOrigins = env.frontendOrigin.split(',').map((origin) => origin.trim());
+const allowedOrigins = getAllowedOrigins();
 
 app.use(cors({
     origin: (origin, callback) => {

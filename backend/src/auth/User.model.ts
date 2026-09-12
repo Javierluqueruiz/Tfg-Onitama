@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import { LastMatchEntry, MatchResult } from '../../../shared';
 
 export interface IUser extends Document {
     username: string;
@@ -8,7 +9,21 @@ export interface IUser extends Document {
     passwordChangedAt: Date;
     createdAt: Date;
     emailVerified: boolean;
+    elo: number;
+    gamesPlayed: number;
+    wins: number;
+    losses: number;
+    draws: number;
+    lastMatches: LastMatchEntry[];
 }
+
+const lastMatchSchema = new Schema({
+    opponentName: { type: String, required: true },
+    result: { type: String, enum: ['win', 'loss', 'draw'] as MatchResult[], required: true },
+    eloChange: { type: Number, required: true },
+    date: { type: Date, default: Date.now },
+}, { _id: false });
+
 
 const userSchema = new Schema<IUser>({
     username: {
@@ -45,6 +60,30 @@ const userSchema = new Schema<IUser>({
     emailVerified: {
         type: Boolean,
         default: false,
+    },
+    elo: {
+        type: Number,
+        default: 1000,
+    },
+    gamesPlayed: {
+        type: Number,
+        default: 0,
+    },
+    wins: {
+        type: Number,
+        default: 0,
+    },
+    losses: {
+        type: Number,
+        default: 0,
+    },
+    draws: {
+        type: Number,
+        default: 0,
+    },
+    lastMatches: {
+        type: [lastMatchSchema],
+        default: [],
     },
 });
 

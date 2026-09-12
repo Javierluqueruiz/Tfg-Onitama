@@ -2,6 +2,7 @@ type RedPlayer = 'red';
 type BluePlayer = 'blue';
 export type PlayerColor = RedPlayer | BluePlayer;
 export type Winner = PlayerColor | 'draw' | null;
+export type MatchResult = 'win' | 'loss' | 'draw';
 
 type StudentPiece = 'student';
 type MasterPiece = 'master';

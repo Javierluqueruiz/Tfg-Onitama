@@ -3,6 +3,7 @@ import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../.
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
 import { MatchmakingService } from "./MatchmakingService";
+import { resolvePlayerIdentity } from "./playerIdentity";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -25,10 +26,13 @@ export function registerSocketEvents(io: Server) {
 //FEAT-03
 function registerRoomEvents(io: Server, socket: Socket) {
     //CREAR LA SALA
-    socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string, mode: GameMode } ) => {
+    socket.on(SocketEvents.CREATE_ROOM, async ( data: { hostName: string, mode: GameMode } ) => {
+        const identity = await resolvePlayerIdentity(socket);
         const hostProfile: PlayerProfile = {
             socketId: socket.id,
-            name: data.hostName
+            name: data.hostName,
+            userId: identity.userId,
+            elo: identity.elo
         }
 
         const room = RoomManager.createRoom(hostProfile, data.mode);
@@ -41,11 +45,14 @@ function registerRoomEvents(io: Server, socket: Socket) {
     });
 
     //UNIRSE A LA SALA
-    socket.on(SocketEvents.JOIN_ROOM, (payload: { roomCode: string, guestName: string }) => {
+    socket.on(SocketEvents.JOIN_ROOM, async (payload: { roomCode: string, guestName: string }) => {
         const { roomCode, guestName } = payload;
+        const identity = await resolvePlayerIdentity(socket);
         const guestProfile: PlayerProfile = {
             socketId: socket.id,
-            name: guestName
+            name: guestName,
+            userId: identity.userId,
+            elo: identity.elo,
         }
 
         const room = RoomManager.getRoomByCode(roomCode);
@@ -132,14 +139,9 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
 
         try {
             const newState = GameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
-            room.gameState = newState;
+            const commitedState = RoomManager.commitProcessedState(room.roomId, newState);
 
-            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: newState });
-            
-            if (newState.status === 'finished') {
-                RoomManager.stopGameTimer(room.roomId);
-                // RoomManager.deleteRoom(room.roomId);
-            } 
+            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: commitedState });
 
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Error desconocido';
