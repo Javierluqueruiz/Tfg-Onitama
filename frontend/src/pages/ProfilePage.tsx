@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ProfileApi } from '../services/profileApi';
 import { RankBadge } from '../components/profile/RankBadge';
 import { ChangePasswordForm } from '../components/profile/ChangePasswordForm';
+import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { getRankByElo, type ProfileStats } from '../../../shared';
 import { AuthLayout } from './AuthLayout';
 import styles from './ProfilePage.module.css';
@@ -119,6 +120,8 @@ export const ProfilePage = () => {
                         <>
                             <h3 className={styles.sectionTitle}>Cambiar contraseña</h3>
                             <ChangePasswordForm />
+                            <h3 className={styles.sectionTitle}>Eliminar cuenta</h3>
+                            <DeleteAccountButton />
                         </>
                     )}
                 </div>

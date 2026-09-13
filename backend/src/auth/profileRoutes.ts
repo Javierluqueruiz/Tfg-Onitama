@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireAuth, AuthenticatedRequest } from './authMiddleware';
 import { requireCustomHeader } from './csrfMiddleware';
-import { setSessionCookie } from './sessionCookies';
+import { setSessionCookie, clearSessionCookie } from './sessionCookies';
 import { User } from './User.model';
 import { AuthService } from './authService';
 import { authLimiter, handleAuthError } from './authRoutes';
@@ -42,6 +42,18 @@ profileRoutes.patch('/password', requireAuth, authLimiter, async (req: Authentic
         const token = await AuthService.signToken(user);
         setSessionCookie(res, token);
         res.status(200).json({ message: 'Contraseña actualizada con éxito' });
+    } catch (error) {
+        handleAuthError(error, res);
+    }
+});
+
+profileRoutes.delete('/me', requireAuth, async (req: AuthenticatedRequest, res) => {
+    const { username, password } = req.body;
+
+    try {
+        await AuthService.deleteAccount(req.userId!, username, password);
+        clearSessionCookie(res);
+        res.status(200).json({ message: 'Cuenta eliminada con éxito' });
     } catch (error) {
         handleAuthError(error, res);
     }

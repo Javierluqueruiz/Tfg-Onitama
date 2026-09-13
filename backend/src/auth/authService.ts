@@ -295,6 +295,25 @@ export class AuthService {
 
         return user;
     }
+
+    //Sub-09.5
+    static async deleteAccount(userId: string, username: string, password: string): Promise<void> {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AuthError('Usuario no encontrado', 404);
+        }
+
+        if (user.username !== username) {
+            throw new AuthError('Nombre de usuario incorrecto', 401);
+        }
+
+        const isValid = await AuthService.comparePassword(password, user.passwordHash);
+        if (!isValid) {
+            throw new AuthError('Contraseña incorrecta', 401);
+        }
+
+        await User.findByIdAndDelete(userId);
+    }
 }
 
 function isDuplicateKeyError(error: unknown): error is { code: number } {

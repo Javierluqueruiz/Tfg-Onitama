@@ -11,7 +11,7 @@
 /* FEAT-08: dos fondos superpuestos que se funden entre sí (crossfade + zoom
    ligero) según la pestaña/pantalla activa, en vez de una imagen fija */
 .scene {
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: -1;
     background-size: cover;
