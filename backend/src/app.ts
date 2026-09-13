@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { authRoutes } from './auth/authRoutes';
+import { profileRoutes } from './auth/profileRoutes';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { getAllowedOrigins } from './config/corsOrigin';
@@ -36,3 +37,4 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);

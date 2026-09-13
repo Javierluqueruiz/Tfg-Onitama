@@ -1,47 +1,15 @@
-import { Router, Response, Request, NextFunction } from 'express';
+import { Router, Response } from 'express';
 import { AuthService, AuthError } from './authService';
 import { requireAuth, AuthenticatedRequest } from './authMiddleware';
 import { User } from './User.model';
-import { env } from '../config/env';
 import { verifyCaptcha } from './captchaService';
 import rateLimit from 'express-rate-limit';
-import ms from 'ms';
+import { requireCustomHeader } from './csrfMiddleware';
+import { setSessionCookie, clearSessionCookie } from './sessionCookies';
 
 export const authRoutes = Router();
 
-const isProduction = process.env.NODE_ENV === 'production';
-
-// Protección CSRF: cualquier cabecera no estándar (como esta) obliga al
-// navegador a lanzar un preflight de CORS antes de mandar la petición de
-// verdad -- y ese preflight ya lo rechazamos para cualquier origen que no sea
-// el nuestro (ver app.ts). Un <form> HTML, que es el vector clásico de CSRF,
-// no puede añadir cabeceras personalizadas -- solo fetch/XHR puede, y solo
-// nuestro propio frontend lo hace. Se aplica a todo lo que no sea GET, que no
-// cambia estado.
-function requireCustomHeader(req: Request, res: Response, next: NextFunction): void {
-    if (req.method === 'GET') {
-        next();
-        return;
-    }
-
-    if (!req.header('X-Requested-With')) {
-        res.status(403).json({ message: 'Solicitud rechazada' });
-        return;
-    }
-
-    next();
-}
-
 authRoutes.use(requireCustomHeader);
-
-function setSessionCookie(res: Response, token: string): void {
-    res.cookie('token', token, {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: ms(env.jwtExpiresIn as Parameters<typeof ms>[0]),
-    });
-}
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
@@ -93,11 +61,7 @@ authRoutes.post('/login', authLimiter, async (req, res) => {
 });
 
 authRoutes.post('/logout', (req: AuthenticatedRequest, res) => {
-    res.clearCookie('token', {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-    });
+    clearSessionCookie(res);
     res.status(200).json({ message: 'Sesión cerrada exitosamente' });
 });
 
