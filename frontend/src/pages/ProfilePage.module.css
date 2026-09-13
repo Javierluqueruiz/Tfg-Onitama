@@ -1,0 +1,130 @@
+.profile {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.username {
+    margin: 0;
+    color: var(--game-ink);
+    font-size: 22px;
+}
+
+.rankName {
+    margin: 4px 0 0;
+    color: var(--game-ink-soft);
+    font-size: 15px;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.statCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 6px;
+    background: var(--game-paper-soft);
+    border: 1px solid var(--game-line-soft);
+    border-radius: 8px;
+}
+
+.statValue {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--game-ink);
+}
+
+.statLabel {
+    font-size: 11px;
+    color: var(--game-ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sectionTitle {
+    margin: 4px 0 0;
+    color: var(--game-ink);
+    font-size: 16px;
+}
+
+.emptyState {
+    color: var(--game-ink-faint);
+    font-size: 14px;
+    margin: 0;
+}
+
+.matchList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.matchRow {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--game-paper-soft);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.matchResult {
+    font-weight: bold;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.win { background: var(--game-jade-soft); color: var(--game-jade); }
+.loss { background: var(--game-red-soft); color: var(--game-red); }
+.draw { background: var(--game-line-soft); color: var(--game-ink-soft); }
+
+.matchOpponent {
+    color: var(--game-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.matchElo {
+    font-weight: bold;
+    color: var(--game-ink-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+.matchDate {
+    color: var(--game-ink-faint);
+    font-size: 12px;
+}
+
+.error {
+    color: var(--game-red);
+    text-align: center;
+}
+
+.backLink {
+    align-self: flex-start;
+    color: var(--game-jade);
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.backLink:hover {
+    text-decoration: underline;
+}

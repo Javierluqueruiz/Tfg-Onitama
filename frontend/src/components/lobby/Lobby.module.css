@@ -128,10 +128,15 @@
     font-size: 14px;
 }
 
-.authUser {
-    color: var(--game-ink);
-    font-weight: bold;
-    font-size: 20px;
+ .authUser {
+     color: var(--game-ink);
+     font-weight: bold;
+     font-size: 20px;
+    text-decoration: none;
+}
+
+.authUser:hover {
+    text-decoration: underline;
 }
 
 .authGuest {
