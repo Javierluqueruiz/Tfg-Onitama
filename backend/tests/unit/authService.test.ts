@@ -226,3 +226,43 @@ describe('AuthService - recuperación de contraseña', () => {
         expect(emailService.sendPasswordResetEmail).not.toHaveBeenCalled();
     });
 });
+
+describe('AuthService.changePassword', () => {
+    it('lanza un error 404 si el usuario no existe', async () => {
+        vi.spyOn(User, 'findById').mockResolvedValue(null);
+
+        await expect(AuthService.changePassword('12345', 'contraseñaActual', 'nuevaContraseña'))
+            .rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('lanza un error 401 si la contraseña actual es incorrecta', async () => {
+        const hash = await AuthService.hashPassword('contraseñaActual');
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), passwordHash: hash, passwordChangedAt: new Date() } as unknown as IUser;
+        vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
+
+        await expect(AuthService.changePassword(fakeUser._id.toString(), 'contraseñaIncorrecta', 'nuevaContraseña'))
+            .rejects.toMatchObject({ statusCode: 401 });
+    });
+
+    it('lanza un error 400 si la nueva contraseña es demasiado débil', async () => {
+        const hash = await AuthService.hashPassword('contraseñaActual');
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), passwordHash: hash, passwordChangedAt: new Date() } as unknown as IUser;
+        vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
+
+        await expect(AuthService.changePassword(fakeUser._id.toString(), 'contraseñaActual', '123'))
+            .rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('actualiza la contraseña y devuelve el usuario actualizado si todo es correcto', async () => {
+        const save = vi.fn().mockResolvedValue(undefined);
+        const hashAntiguo = await AuthService.hashPassword('contraseñaActual');
+        const passwordChangedAtAntiguo = new Date('2026-01-01T00:00:00Z');
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), passwordHash: hashAntiguo, passwordChangedAt: passwordChangedAtAntiguo, save } as unknown as IUser;
+        vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
+
+        const updatedUser = await AuthService.changePassword(fakeUser._id.toString(), 'contraseñaActual', 'nuevaContraseñaSegura');
+        expect(updatedUser.passwordHash).not.toBe(hashAntiguo);
+        expect(updatedUser.passwordChangedAt.getTime()).toBeGreaterThan(passwordChangedAtAntiguo.getTime());
+        expect(save).toHaveBeenCalledOnce();
+    });
+});

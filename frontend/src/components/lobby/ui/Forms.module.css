@@ -129,3 +129,9 @@
 .switchLink a:hover {
     text-decoration: underline;
 }
+
+.success {
+    color: var(--game-jade);
+    font-weight: bold;
+    margin: 0;
+}

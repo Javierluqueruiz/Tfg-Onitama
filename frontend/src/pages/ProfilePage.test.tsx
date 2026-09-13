@@ -93,5 +93,5 @@ describe('ProfilePage', () => {
         renderWithRoutes();
 
         expect(await screen.findByText(/Error de red. No se pudo conectar con el servidor./)).toBeInTheDocument();
-    });
+    }); 
 });

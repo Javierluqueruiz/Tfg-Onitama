@@ -11,7 +11,7 @@ export const authRoutes = Router();
 
 authRoutes.use(requireCustomHeader);
 
-const authLimiter = rateLimit({
+export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
     limit: 10,
     message: { message: 'Demasiados intentos de autenticación. Por favor, inténtelo de nuevo más tarde.'},
@@ -121,7 +121,7 @@ authRoutes.post('/reset-password', async (req, res) => {
 
 
 
-function handleAuthError(error: unknown, res: Response): void {
+export function handleAuthError(error: unknown, res: Response): void {
     if (error instanceof AuthError) {
         res.status(error.statusCode).json({ message: error.message });
         return;

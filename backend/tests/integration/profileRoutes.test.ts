@@ -86,3 +86,44 @@ describe('GET /api/profile/me (Sub-09.3)', () => {
         expect(response.body.lastMatches[0].date).toBe('2026-01-01T00:00:00.000Z');
     });
 });
+
+describe('PATCH /api/profile/password (Sub-09.4)', () => {
+    it('devuelve 401 si la contraseña actual no es correcta', async () => {
+        const agent = request.agent(app);
+        await agent.post('/api/auth/register').set('X-Requested-With', 'XMLHttpRequest').send({
+            username: 'testuser3', email: 'testuser3@example.com', password: 'password123'
+        });
+
+        const response = await agent.patch('/api/profile/password').set('X-Requested-With', 'XMLHttpRequest').send({
+            currentPassword: 'wrongpassword',
+            newPassword: 'newpassword123'
+        });
+
+        expect(response.status).toBe(401);
+    });
+
+    it('la cookie de sesión se actualiza después de cambiar la contraseña', async () => {
+        const registerResponse = await request(app).post('/api/auth/register').set('X-Requested-With', 'XMLHttpRequest').send({
+            username: 'testuser4', email: 'testuser4@example.com', password: 'password123'
+        });
+
+        const cookieAntigua = registerResponse.headers['set-cookie'];
+        expect(cookieAntigua).toBeDefined();
+
+        const cambioResponse = await request(app).patch('/api/profile/password').set('X-Requested-With', 'XMLHttpRequest').set('Cookie', cookieAntigua).send({
+            currentPassword: 'password123',
+            newPassword: 'newpassword123'
+        });
+
+        expect(cambioResponse.status).toBe(200);
+        const cookieNueva = cambioResponse.headers['set-cookie'];
+        expect(cookieNueva).toBeDefined();
+
+        // La cookie antigua ya no sirve
+        const meConCookieAntigua = await request(app).get('/api/profile/me').set('X-Requested-With', 'XMLHttpRequest').set('Cookie', cookieAntigua);
+        expect(meConCookieAntigua.status).toBe(401);
+
+        const meConCookieNueva = await request(app).get('/api/profile/me').set('X-Requested-With', 'XMLHttpRequest').set('Cookie', cookieNueva);
+        expect(meConCookieNueva.status).toBe(200);
+    });
+});

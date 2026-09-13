@@ -275,6 +275,26 @@ export class AuthService {
         user.passwordChangedAt = new Date();
         await user.save();
     }
+
+    static async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<IUser> {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AuthError('Usuario no encontrado', 404);
+        }
+
+        const isValid = await AuthService.comparePassword(currentPassword, user.passwordHash);
+        if (!isValid) {
+            throw new AuthError('Contraseña actual incorrecta', 401);
+        }
+
+        AuthService.assertStrongPassword(newPassword);
+
+        user.passwordHash = await AuthService.hashPassword(newPassword);
+        user.passwordChangedAt = new Date();
+        await user.save();
+
+        return user;
+    }
 }
 
 function isDuplicateKeyError(error: unknown): error is { code: number } {

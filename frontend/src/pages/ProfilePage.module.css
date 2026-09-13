@@ -128,3 +128,53 @@
 .backLink:hover {
     text-decoration: underline;
 }
+
+.tabHeader {
+    display: flex;
+    width: 100%;
+    background-color: var(--game-paper-soft);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--game-line-soft);
+}
+
+.tabBtn {
+    flex: 1;
+    padding: 0.7rem;
+    background: transparent;
+    border: none;
+    color: var(--game-ink-faint);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.tabBtn:hover {
+    background-color: var(--game-line-soft);
+    color: var(--game-ink);
+}
+
+.activeTab {
+    background-color: var(--game-line);
+    color: var(--game-ink);
+}
+
+.activeTab:hover {
+    background-color: var(--game-line);
+    color: var(--game-ink);
+}
+
+.tabContent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
