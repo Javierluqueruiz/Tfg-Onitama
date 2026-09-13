@@ -282,7 +282,7 @@ function registerDrawEvents(io: Server, socket: Socket) {
 
 //FEAT-06
 function registerMatchmakingEvents(io: Server, socket: Socket) {
-        //Sub-06.1: Cola de emparejamiento
+        //Sub-06.1 / Sub-09.2: Cola de emparejamiento
     socket.on(SocketEvents.JOIN_QUEUE, async (data: { mode: GameMode }) => {
         const { mode } = data;
         
@@ -295,40 +295,10 @@ function registerMatchmakingEvents(io: Server, socket: Socket) {
             userId: identity.userId
         };
 
-        const result = MatchmakingService.joinQueue(entry, mode);
+        const result = MatchmakingService.joinQueue(entry, mode, io);
         console.log(`Jugador ${socket.id} se ha unido a la cola de emparejamiento en modo ${mode}. Resultado:`, result);
-        if (result.matchFound && result.roomId && result.roomCode ) {
-
-            socket.join(result.roomId);
-            const opponentSocket = io.sockets.sockets.get(result.opponentId!);
-            if (opponentSocket) {
-                opponentSocket.join(result.roomId);
-            }
-
-            io.to(result.roomId).emit(SocketEvents.MATCH_FOUND, { 
-                roomId: result.roomId, 
-                roomCode: result.roomCode,
-                mode: mode 
-            });
-
-            const room = RoomManager.getRoomById(result.roomId);
-            
-            if (room) {
-                room.gameState = GameEngine.createNewGame(room.roomId);
-                
-                room.gameState.timeRemaining = RoomManager.getInitialTimeForMode(mode);
-
-                io.to(result.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
-
-                if (mode !== 'casual') {
-                    RoomManager.startGameTimer(room.roomId,
-                        (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
-                        (finalState) => io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
-                    );
-                }
-            }
         
-        } else {
+        if (!result.matchFound) {
             socket.emit(SocketEvents.QUEUE_JOINED);
         }
     });
