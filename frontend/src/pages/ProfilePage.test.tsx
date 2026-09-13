@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { ProfilePage } from './ProfilePage';
 import { ProfileApi } from '../services/profileApi';
@@ -94,4 +94,17 @@ describe('ProfilePage', () => {
 
         expect(await screen.findByText(/Error de red. No se pudo conectar con el servidor./)).toBeInTheDocument();
     }); 
+
+    it('la pestaña de configuración muestra el formulario de cambio de contraseña y el botón de eliminar cuenta', async () => {
+        mockUseAuth({ isAuthenticated: true });
+        vi.mocked(ProfileApi.getStats).mockResolvedValue(baseStats);
+
+        renderWithRoutes();
+        await screen.findByText('testuser');
+
+        fireEvent.click(screen.getByRole('button', { name: /Configuración/i }));
+
+        expect(screen.getByRole('button', { name: /Actualizar contraseña/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Eliminar cuenta/i })).toBeInTheDocument();
+    });
 });

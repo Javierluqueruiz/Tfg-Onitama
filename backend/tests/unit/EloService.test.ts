@@ -52,4 +52,10 @@ describe('EloService.calculateNewElo', () => {
         expect(newElo).toBe(1391);
         expect(delta).toBe(-9); // Menos de la mitad del K-factor
     });
+
+    it('el ELO nunca baja de 0', () => {
+        const { newElo, delta } = EloService.calculateNewElo(10, 10, 'loss', 0);
+        expect(newElo).toBe(0);
+        expect(delta).toBe(-10); // Debería ser -32, pero se ajusta a 0
+    });
 });

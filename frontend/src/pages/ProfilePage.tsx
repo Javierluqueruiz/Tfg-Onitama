@@ -3,6 +3,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfileApi } from '../services/profileApi';
 import { RankBadge } from '../components/profile/RankBadge';
+import { FormStreak } from '../components/profile/FormStreak';
 import { ChangePasswordForm } from '../components/profile/ChangePasswordForm';
 import { DeleteAccountButton } from '../components/profile/DeleteAccountButton';
 import { getRankByElo, type ProfileStats } from '../../../shared';
@@ -97,6 +98,13 @@ export const ProfilePage = () => {
                                     <span className={styles.statLabel}>Empates</span>
                                 </div>
                             </div>
+
+                            {stats.lastMatches.length > 0 && (
+                                <>
+                                    <h3 className={styles.sectionTitle}>Racha de resultados recientes</h3>
+                                    <FormStreak matches={stats.lastMatches} />
+                                </>
+                            )}
 
                             <h3 className={styles.sectionTitle}>Últimas partidas</h3>
                             {stats.lastMatches.length === 0 ? (
