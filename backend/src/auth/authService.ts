@@ -304,7 +304,7 @@ export class AuthService {
         }
 
         if (user.username !== username) {
-            throw new AuthError('Nombre de usuario incorrecto', 401);
+            throw new AuthError('Nombre de usuario incorrecto', 400);
         }
 
         const isValid = await AuthService.comparePassword(password, user.passwordHash);
