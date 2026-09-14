@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Sin URL absoluta por defecto, a propósito: en producción las rutas
+// relativas ('/api/...') las resuelve el navegador contra el origen de
+// Vercel, que las reenvía a Render por el rewrite de vercel.json -- así la
+// cookie de sesión nunca sale hacia un origen "de terceros". En desarrollo
+// local, el proxy de Vite (vite.config.ts) hace lo mismo contra localhost:3000.
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 async function request<TResponse>(path: string, init: RequestInit): Promise<TResponse> {
     let response: Response;
