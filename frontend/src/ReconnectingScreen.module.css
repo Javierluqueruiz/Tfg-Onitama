@@ -1,0 +1,25 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 100vh;
+    background-color: var(--game-paper);
+}
+
+.torii {
+    font-size: 3rem;
+    animation: pulse 1.4s ease-in-out infinite;
+}
+
+.text {
+    color: var(--game-ink-soft);
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.92); }
+}
