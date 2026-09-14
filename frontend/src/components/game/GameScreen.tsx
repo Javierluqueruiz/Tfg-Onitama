@@ -15,17 +15,18 @@ interface GameScreenProps {
     gameState: GameState;
     localColor: PlayerColor | null;
     playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null;
+    isReconnecting: boolean;
 }
 
-export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
+export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile, isReconnecting })  => {
 
     const { 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
         opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
-        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isReconnecting
-    } = useGameScreen(gameState, localColor, playersProfile);
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError
+    } = useGameScreen(gameState, localColor, playersProfile, isReconnecting);
 
 
     return (    

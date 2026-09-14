@@ -3,11 +3,13 @@ import { useSocket } from "./contexts/SocketContext";
 import type { GameState, PlayerColor, PlayerProfile } from '../../shared';
 import { SocketEvents } from '../../shared';
 import { useSocketEvent } from "./hooks/useSocketEvent";
+import { useGameReconnection } from './components/game/hooks/useGameReconnection';
 
 type GameStartPayload = { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } };
 
 export const useApp = () => {
     const { socket } = useSocket();
+    const { isReconnecting } = useGameReconnection(socket);
     const [gameState, setGameState] = useState<GameState | null>(null);
     const [localColor, setLocalColor] = useState<PlayerColor | null>(null);
     const [playersProfile, setPlayersProfile] = useState<{ red: PlayerProfile, blue: PlayerProfile } | null>(null); 
@@ -46,5 +48,6 @@ export const useApp = () => {
         gameState,
         localColor,
         playersProfile,
+        isReconnecting,
     };
 };

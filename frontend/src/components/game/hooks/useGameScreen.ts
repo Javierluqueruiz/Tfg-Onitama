@@ -4,17 +4,16 @@ import { useSocket } from '../../../contexts/SocketContext';
 import { useNetwork } from './useNetwork';
 import { useDrawNegotiation } from './useDrawNegotiation';
 import { useRematchNegotiation } from './useRematchNegotiation';
-import { useGameReconnection } from './useGameReconnection';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
 import { getValidTargets } from '../logic/getValidTargets';
 
 export const useGameScreen = (
         gameState: GameState, 
         localColor: PlayerColor | null, 
-        playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
+        playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null,
+        isReconnecting: boolean
 ) => {
     const { socket, isConnected, lastError } = useSocket();
-    const { isReconnecting } = useGameReconnection(socket);
     const rematch = useRematchNegotiation(socket);
 
     const networkState = useNetwork(socket);
