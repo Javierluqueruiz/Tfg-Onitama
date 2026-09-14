@@ -4,6 +4,7 @@ export interface LastMatchEntry {
     opponentName: string;
     result: MatchResult;
     eloChange: number;
+    ranked: boolean;
     date: string;
 }
 
