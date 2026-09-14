@@ -10,22 +10,24 @@ import { PlayerZone } from './ui/player/PlayerZone';
 import { RematchBanner } from './ui/modals/RematchBanner';
 import { ChatBox } from './ui/chat/ChatBox';
 import './theme.css';
+import { SurrenderConfirmModal } from './ui/modals/SurrenderConfirmModal';
 
 interface GameScreenProps {
     gameState: GameState;
     localColor: PlayerColor | null;
     playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null;
+    isReconnecting: boolean;
 }
 
-export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile })  => {
+export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile, isReconnecting })  => {
 
     const { 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
-        opponentName, localName, myCards, opponentCards, neutralCard, 
+        opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
-        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isReconnecting
-    } = useGameScreen(gameState, localColor, playersProfile);
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isSurrenderModalOpen, confirmSurrender, cancelSurrender
+    } = useGameScreen(gameState, localColor, playersProfile, isReconnecting);
 
 
     return (    
@@ -42,6 +44,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             <PlayerZone 
                 isOpponent={true}
                 playerName={`Rival: ${opponentName}`}
+                elo={opponentElo}
                 color={isLocalRed ? 'blue' : 'red'}
                 isActive={!isMyTurn}
                 timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
@@ -95,6 +98,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             <PlayerZone 
                 isOpponent={false}
                 playerName={`Jugador: ${localName}`}
+                elo={localElo}
                 color={isLocalRed ? 'red' : 'blue'}
                 isActive={isMyTurn}
                 timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
@@ -130,6 +134,10 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         
             {gameState.status === 'finished' && isGameOver && isModalOpen && (
                 <GameOverModal result={gameResult} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
+            )}
+
+            {isSurrenderModalOpen && (
+                <SurrenderConfirmModal onConfirm={confirmSurrender} onCancel={cancelSurrender} />
             )}
         </div>
     );

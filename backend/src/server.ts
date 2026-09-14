@@ -1,19 +1,18 @@
-import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io'
 import { registerSocketEvents } from './network/SocketHandler';
-
-const PORT = process.env.PORT || 3000;
-const app = express();
-
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
+import { registerSocketAuth } from './network/socketAuth';
+import { connectDB } from './config/db';
+import { env } from './config/env';
+import { app } from './app';
+import { getAllowedOrigins } from './config/corsOrigin';
+import './network/socketData';
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: getAllowedOrigins(),
+        credentials: true,
         methods: ["GET", "POST"]
     },
     
@@ -23,7 +22,10 @@ const io = new Server(server, {
 })
 
 registerSocketEvents(io);
+registerSocketAuth(io);
 
-server.listen(PORT, () => {
-    console.log(`Servidor escuchando en el puerto ${PORT}`);
+connectDB().then(() => {
+    server.listen(env.port, () => {
+        console.log(`Servidor escuchando en el puerto ${env.port}`);
+    });
 })

@@ -1,0 +1,57 @@
+.dangerZone {
+    margin-top: 12px;
+    padding: 16px;
+    border: 1px solid var(--game-red);
+    border-radius: 8px;
+    background: var(--game-red-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dangerTitle {
+    margin: 0;
+    color: var(--game-red);
+    font-size: 15px;
+}
+
+.dangerText {
+    margin: 0;
+    color: var(--game-ink-soft);
+    font-size: 13px;
+}
+
+.confirmForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.confirmButtons {
+    display: flex;
+    gap: 10px;
+}
+
+.confirmButtons > * {
+    flex: 1;
+}
+
+.deleteBtn {
+    align-self: flex-start;
+    padding: 10px 18px;
+    background: var(--game-red);
+    color: var(--game-paper);
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.deleteBtn:hover {
+    opacity: 0.9;
+}
+
+.deleteBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

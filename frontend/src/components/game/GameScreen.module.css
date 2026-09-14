@@ -5,6 +5,12 @@
     gap: 30px;
     padding: 20px;
     position: relative;
+    isolation: isolate;
+    min-height: 100vh;
+    /* Transparente a propósito: deja ver el fondo del body (index.css),
+       que usa el mismo tono cálido que el resto del tema -- así no hay
+       una franja de color distinta detrás del tablero. */
+    background: transparent;
 }
 
 .centerZone {
@@ -44,7 +50,7 @@
 
 /* Sub-07.1: Chat*/
 .chatArea {
-  position: absolute;
+  position: fixed; /* FEAT-08: fijo al viewport, no al contenido -- se queda visible al hacer scroll */
   bottom: 20px;
   right: 20px;
   z-index: 100; /* Asegura que esté por encima de elementos secundarios, pero por debajo de los modales */

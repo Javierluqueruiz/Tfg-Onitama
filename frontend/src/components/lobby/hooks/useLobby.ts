@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { SocketEvents, type GameMode } from '../../../../../shared';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
+import { useAuth }  from '../../../contexts/AuthContext';
 
 type MenuScreen = 'MAIN' | 'CREATE' | 'JOIN' | 'WAITING' | 'MATCHMAKING';
 
 export const useLobby = () => {
     const { socket, isConnected, lastError: errorMsg, setLastError: setErrorMsg } = useSocket();
+    const { user } = useAuth();
 
     //Todos los estados
     const [currentScreen, setCurrentScreen] = useState<MenuScreen>('MAIN');
@@ -14,6 +16,8 @@ export const useLobby = () => {
     const [playerName, setPlayerName] = useState<string>('');
     const [joinCode, setJoinCode] = useState<string>('');
     const [createdRoomCode, setCreatedRoomCode] = useState<string>('');
+
+    const effectivePlayerName = user?.username ?? playerName;
 
     useSocketEvent(socket, SocketEvents.ROOM_CREATED, (data: { roomCode: string }) => {
         setCreatedRoomCode(data.roomCode);
@@ -23,18 +27,18 @@ export const useLobby = () => {
 
     //Todos los handle
     const handleCreateRoom = (mode: GameMode) => {
-        if (!playerName.trim()) return setErrorMsg('El nombre del jugador no puede estar vacío.');
+        if (!user && !playerName.trim()) return setErrorMsg('El nombre del jugador no puede estar vacío.');
         setErrorMsg(null);
-        socket?.emit(SocketEvents.CREATE_ROOM, { hostName: playerName, mode });
+        socket?.emit(SocketEvents.CREATE_ROOM, { hostName: effectivePlayerName, mode });
     };
 
     const handleJoinRoom = () => {
-        if (!playerName.trim()) return setErrorMsg('El nombre del jugador no puede estar vacío.');
+        if (!user && !playerName.trim()) return setErrorMsg('El nombre del jugador no puede estar vacío.');
         if (!joinCode.trim()) return setErrorMsg('El código de la sala no puede estar vacío.');
         setErrorMsg(null);
         socket?.emit(SocketEvents.JOIN_ROOM, { 
             roomCode: joinCode.trim().toUpperCase(),
-            guestName: playerName
+            guestName: effectivePlayerName
         });
     };
 
@@ -51,6 +55,7 @@ export const useLobby = () => {
         selectMode,
         playerName,
         setPlayerName,
+        accountUsername: user?.username,
         joinCode,
         setJoinCode,
         createdRoomCode,

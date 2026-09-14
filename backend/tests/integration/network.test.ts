@@ -7,6 +7,7 @@ import { Server } from 'socket.io';
 import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
 import { createServer, Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
+import { MatchmakingService } from '../../src/network/MatchmakingService';
 
 type GameStartPayload = { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } };
 type GameUpdatePayload = { gameState: GameState };
@@ -867,6 +868,7 @@ describe('FEAT-06: Gestión de la cola de emparejamiento', () => {
 
     afterAll(() => {
         stopTestServer(server);
+        MatchmakingService.stopMatchmakingLoop();
     });
 
     beforeEach(async () => {

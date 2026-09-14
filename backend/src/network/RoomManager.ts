@@ -1,5 +1,6 @@
 import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
+import { GameResultService } from "./GameResultService";
 
 export class RoomManager {
 
@@ -10,7 +11,20 @@ export class RoomManager {
     //Sub-05.3
     private static gameTimers: Map<string, NodeJS.Timeout> = new Map();
 
-    public static DISCONNECT_TIMEOUT_MS = 30000; 
+    public static DISCONNECT_TIMEOUT_MS = 30000;
+
+    // Duración inicial del reloj por modo de juego, en segundos. 'casual' vale 0
+    // a propósito: PlayerInfo.tsx solo muestra el reloj cuando timeLeft > 0.
+    private static readonly MODE_DURATIONS: Record<GameMode, number> = {
+        fast: 300,
+        normal: 600,
+        casual: 0,
+    };
+
+    public static getInitialTimeForMode(mode: GameMode): { red: number; blue: number } {
+        const seconds = this.MODE_DURATIONS[mode];
+        return { red: seconds, blue: seconds };
+    }
 
 
     public static getActiveRooms(): Map<string, RoomSession> {
@@ -47,7 +61,8 @@ export class RoomManager {
                 blue: isHostRed ? null : hostProfile
             },
             drawOfferedBy: null,
-            rematchOfferedBy: null
+            rematchOfferedBy: null,
+            resultPersisted: false
         };
 
         this.activeRooms.set(roomId, newRoom);
@@ -93,8 +108,20 @@ export class RoomManager {
             status: 'finished',
             winner: winner
         };
+        this.finalizeGameEnd(room);
         return room.gameState;
     }
+
+
+    private static finalizeGameEnd(room: RoomSession): void {
+        if (room.resultPersisted) return;
+        room.resultPersisted = true;
+        this.stopGameTimer(room.roomId);
+        void GameResultService.recordMatchResult(room).catch(err => 
+            console.error(`Error al persistir el resultado de la partida en la sala ${room.roomId}:`, err)
+        );
+    }
+
 
     //Sub-05.1
     public static surrenderGame(roomId: string, surrenderingPlayerSocketId: string): GameState | null {
@@ -174,10 +201,8 @@ export class RoomManager {
             onTick(room.gameState.timeRemaining);
 
             if(room.gameState.timeRemaining[activeColor] <= 0) {
-                this.stopGameTimer(roomId);
-                room.gameState.status = 'finished';
-                room.gameState.winner = activeColor === 'red' ? 'blue' : 'red';
-                onTimeUp(room.gameState);
+                const finalState = this.finishGame(room, activeColor === 'red' ? 'blue' : 'red');
+                onTimeUp(finalState);
             }
         }, 1000);
 
@@ -213,12 +238,8 @@ export class RoomManager {
         room.gameState = GameEngine.createNewGame(roomId);
         room.drawOfferedBy = null;
         room.rematchOfferedBy = null;
-
-        if (room.mode === 'normal') {
-            room.gameState.timeRemaining = { red: 600, blue: 600 };
-        } else if (room.mode === 'fast') {
-            room.gameState.timeRemaining = { red: 300, blue: 300 };
-        } 
+        room.resultPersisted = false;
+        room.gameState.timeRemaining = this.getInitialTimeForMode(room.mode);
 
         return room.gameState;
     }
@@ -232,5 +253,16 @@ export class RoomManager {
             }
             room.chatHistory.push(message);
         }
+    }
+
+    //Sub-09.1: Persistencia de resultados
+    public static commitProcessedState(roomId: string, newState: GameState): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room) return null;
+        room.gameState = newState;
+        if (newState.status === 'finished') {
+            this.finalizeGameEnd(room);
+        }
+        return room.gameState;
     }
 }

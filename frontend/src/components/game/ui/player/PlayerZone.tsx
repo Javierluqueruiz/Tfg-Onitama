@@ -8,6 +8,7 @@ import { NetworkStatus } from './NetworkStatus';
 interface PlayerZoneProps {
     isOpponent?: boolean; // Define si es el rival para invertir el orden
     playerName: string;
+    elo?: number; 
     color: 'red' | 'blue';
     isActive: boolean;
     timeLeft: number;
@@ -28,6 +29,7 @@ interface PlayerZoneProps {
 export const PlayerZone: React.FC<PlayerZoneProps> = ({
     isOpponent = false,
     playerName,
+    elo,
     color,
     isActive,
     timeLeft,
@@ -64,6 +66,7 @@ export const PlayerZone: React.FC<PlayerZoneProps> = ({
     const renderInfo = () => (
         <PlayerInfo
             playerName={playerName}
+            elo={elo}
             color={color}
             isActive={isActive}
             timeLeft={timeLeft}

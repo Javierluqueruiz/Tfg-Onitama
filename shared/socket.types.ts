@@ -65,12 +65,15 @@ export interface RoomSession {
     // para poder restaurarla si el destinatario se reconecta antes de que se resuelva.
     drawOfferedBy: string | null;
     rematchOfferedBy: string | null;
+    resultPersisted: boolean;
 }
 
 //Primera versión de la interfaz del perfil del jugador.
 export interface PlayerProfile {
     socketId: string;
     name: string;
+    userId?: string;
+    elo?: number;
 }
 
 export interface ReconnectPayload {

@@ -4,17 +4,16 @@ import { useSocket } from '../../../contexts/SocketContext';
 import { useNetwork } from './useNetwork';
 import { useDrawNegotiation } from './useDrawNegotiation';
 import { useRematchNegotiation } from './useRematchNegotiation';
-import { useGameReconnection } from './useGameReconnection';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
 import { getValidTargets } from '../logic/getValidTargets';
 
 export const useGameScreen = (
         gameState: GameState, 
         localColor: PlayerColor | null, 
-        playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null
+        playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null,
+        isReconnecting: boolean
 ) => {
     const { socket, isConnected, lastError } = useSocket();
-    const { isReconnecting } = useGameReconnection(socket);
     const rematch = useRematchNegotiation(socket);
 
     const networkState = useNetwork(socket);
@@ -25,6 +24,7 @@ export const useGameScreen = (
 
     //Estado global
     const [isModalOpen, setIsModalOpen] = useState(true);
+    const [isSurrenderModalOpen, setIsSurrenderModalOpen] = useState(false);
     const {board, currentTurn, cards, winner, lastMove} = gameState;
     const isLocalRed = localColor === 'red';
     const isMyTurn = currentTurn === localColor;
@@ -33,6 +33,8 @@ export const useGameScreen = (
     //Perfiles y nombres
     const opponentName = isLocalRed ? playersProfile?.blue.name : playersProfile?.red.name;
     const localName = isLocalRed ? playersProfile?.red.name : playersProfile?.blue.name;
+    const opponentElo = isLocalRed ? playersProfile?.blue.elo : playersProfile?.red.elo;
+    const localElo = isLocalRed ? playersProfile?.red.elo : playersProfile?.blue.elo;
     
     //Cartas
     const myCards = isLocalRed ? cards.red : cards.blue;
@@ -93,12 +95,19 @@ export const useGameScreen = (
 
     const handleSurrender = () => {
         if (!isGameOver) {
-            const confirmSurrender = window.confirm("¿Estás seguro de que deseas abandonar la partida? Tu oponente ganará automáticamente.");
-            if (confirmSurrender) {
-                socket?.emit(SocketEvents.SURRENDER);
-            }
+            setIsSurrenderModalOpen(true);
         }
     };
+
+    const confirmSurrender = () => {
+            setIsSurrenderModalOpen(false);
+            socket?.emit(SocketEvents.SURRENDER);
+    };
+
+    const cancelSurrender = () => {
+            setIsSurrenderModalOpen(false);
+    };
+    
 
     const handleExit = () => {
         socket?.emit(SocketEvents.LEAVE_ROOM);
@@ -110,9 +119,9 @@ export const useGameScreen = (
 
     return {
         ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
-        opponentName, localName, myCards, opponentCards, neutralCard, boardRotation,
+        opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, isReconnecting, lastError
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, isReconnecting, lastError,isSurrenderModalOpen, confirmSurrender, cancelSurrender
     };
 
 }
