@@ -21,8 +21,8 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || undefined;
 
 export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ children }) => {
     const [socket] = useState<Socket>(() => SOCKET_URL 
-        ? io(SOCKET_URL, { autoConnect: false, withCredentials: true })
-        : io({ autoConnect: false, withCredentials: true }));
+        ? io(SOCKET_URL, { autoConnect: false, withCredentials: true, transports: ['polling'] })
+        : io({ autoConnect: false, withCredentials: true, transports: ['polling'] }));
     const [isConnected, setIsConnected] = useState(false);
     const [lastError, setLastError] = useState<string | null>(null);
 
