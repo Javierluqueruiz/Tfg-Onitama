@@ -8,7 +8,7 @@ export const App = () => {
   } = useApp();
 
   if (gameState) {
-    return <GameScreen gameState={gameState} localColor={localColor} playersProfile={playersProfile}, isReconnecting={isReconnecting} />;
+    return <GameScreen gameState={gameState} localColor={localColor} playersProfile={playersProfile} isReconnecting={isReconnecting} />;
   }
 
   return <Lobby />;
