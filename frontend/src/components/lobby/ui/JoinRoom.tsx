@@ -4,27 +4,33 @@ import styles from './Forms.module.css';
 interface JoinRoomProps {
     playerName: string;
     setPlayerName: (name: string) => void;
+    accountName?: string;
     joinCode: string;
     setJoinCode: (code: string) => void;
     onJoinRoom: () => void;
     onBack: () => void;
 }
 
-export const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, setPlayerName, joinCode, setJoinCode, onJoinRoom, onBack }) => {
+export const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, setPlayerName, accountName, joinCode, setJoinCode, onJoinRoom, onBack }) => {
     return (
     <div className={styles.container}>
         <h3 className={styles.title}>Unirse a una Partida</h3>
 
-        <label className={styles.label}>
-            Tu Nombre:
-            <input 
-                type="text"
-                className={styles.input}
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                placeholder="Ej. Maestro Nuby"
-            />
-        </label> 
+        {accountName ? (
+            <></>
+        ) : (
+            <label className={styles.label}>
+                Tu Nombre:
+                <input 
+                    type="text"
+                    className={styles.input}
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    placeholder="Ej. Maestro Nuby"
+                />
+            </label> 
+        )}
+        
         <label className={styles.label}>
             Código de la Sala:
             <input

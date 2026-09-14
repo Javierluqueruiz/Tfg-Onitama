@@ -2,7 +2,9 @@ import { Server, Socket } from "socket.io";
 import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
-import { MatchmakingService } from "./MatchmakingService";
+import { MatchmakingService, QueueEntry } from "./MatchmakingService";
+import { resolvePlayerIdentity } from "./playerIdentity";
+import { EloService } from "../game/EloService";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -25,10 +27,13 @@ export function registerSocketEvents(io: Server) {
 //FEAT-03
 function registerRoomEvents(io: Server, socket: Socket) {
     //CREAR LA SALA
-    socket.on(SocketEvents.CREATE_ROOM, ( data: { hostName: string, mode: GameMode } ) => {
+    socket.on(SocketEvents.CREATE_ROOM, async ( data: { hostName: string, mode: GameMode } ) => {
+        const identity = await resolvePlayerIdentity(socket);
         const hostProfile: PlayerProfile = {
             socketId: socket.id,
-            name: data.hostName
+            name: data.hostName,
+            userId: identity.userId,
+            elo: identity.elo
         }
 
         const room = RoomManager.createRoom(hostProfile, data.mode);
@@ -41,11 +46,14 @@ function registerRoomEvents(io: Server, socket: Socket) {
     });
 
     //UNIRSE A LA SALA
-    socket.on(SocketEvents.JOIN_ROOM, (payload: { roomCode: string, guestName: string }) => {
+    socket.on(SocketEvents.JOIN_ROOM, async (payload: { roomCode: string, guestName: string }) => {
         const { roomCode, guestName } = payload;
+        const identity = await resolvePlayerIdentity(socket);
         const guestProfile: PlayerProfile = {
             socketId: socket.id,
-            name: guestName
+            name: guestName,
+            userId: identity.userId,
+            elo: identity.elo,
         }
 
         const room = RoomManager.getRoomByCode(roomCode);
@@ -132,14 +140,9 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
 
         try {
             const newState = GameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
-            room.gameState = newState;
+            const commitedState = RoomManager.commitProcessedState(room.roomId, newState);
 
-            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: newState });
-            
-            if (newState.status === 'finished') {
-                RoomManager.stopGameTimer(room.roomId);
-                // RoomManager.deleteRoom(room.roomId);
-            } 
+            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: commitedState });
 
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Error desconocido';
@@ -279,44 +282,23 @@ function registerDrawEvents(io: Server, socket: Socket) {
 
 //FEAT-06
 function registerMatchmakingEvents(io: Server, socket: Socket) {
-        //Sub-06.1: Cola de emparejamiento
-    socket.on(SocketEvents.JOIN_QUEUE, (data: { mode: GameMode }) => {
+        //Sub-06.1 / Sub-09.2: Cola de emparejamiento
+    socket.on(SocketEvents.JOIN_QUEUE, async (data: { mode: GameMode }) => {
         const { mode } = data;
-
-        const result = MatchmakingService.joinQueue(socket.id, mode);
-        console.log(`Jugador ${socket.id} se ha unido a la cola de emparejamiento en modo ${mode}. Resultado:`, result);
-        if (result.matchFound && result.roomId && result.roomCode ) {
-
-            socket.join(result.roomId);
-            const opponentSocket = io.sockets.sockets.get(result.opponentId!);
-            if (opponentSocket) {
-                opponentSocket.join(result.roomId);
-            }
-
-            io.to(result.roomId).emit(SocketEvents.MATCH_FOUND, { 
-                roomId: result.roomId, 
-                roomCode: result.roomCode,
-                mode: mode 
-            });
-
-            const room = RoomManager.getRoomById(result.roomId);
-            
-            if (room) {
-                room.gameState = GameEngine.createNewGame(room.roomId);
-                
-                room.gameState.timeRemaining = RoomManager.getInitialTimeForMode(mode);
-
-                io.to(result.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
-
-                if (mode !== 'casual') {
-                    RoomManager.startGameTimer(room.roomId,
-                        (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
-                        (finalState) => io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
-                    );
-                }
-            }
         
-        } else {
+        const identity = await resolvePlayerIdentity(socket);
+        
+        const entry: QueueEntry = {
+            socketId: socket.id,
+            name: identity.username ?? 'Invitado',
+            elo: identity.elo ?? EloService.INITIAL_ELO,
+            userId: identity.userId
+        };
+
+        const result = MatchmakingService.joinQueue(entry, mode, io);
+        console.log(`Jugador ${socket.id} se ha unido a la cola de emparejamiento en modo ${mode}. Resultado:`, result);
+        
+        if (!result.matchFound) {
             socket.emit(SocketEvents.QUEUE_JOINED);
         }
     });

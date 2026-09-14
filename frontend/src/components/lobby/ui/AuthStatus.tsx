@@ -25,7 +25,7 @@ export const AuthStatus = () => {
 
         return (
             <div className={styles.authStatus}>
-                <span className={styles.authUser}> {user.username} </span>
+                <Link to="/profile" className={styles.authUser}> {user.username} </Link>
                 {!user.emailVerified && (
                     resendStatus === 'sent' ? (
                         <span className={styles.authGuest}>Correo de verificación reenviado</span>

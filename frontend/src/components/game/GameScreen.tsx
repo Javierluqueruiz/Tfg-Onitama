@@ -21,7 +21,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
 
     const { 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
-        opponentName, localName, myCards, opponentCards, neutralCard, 
+        opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
         drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isReconnecting
@@ -42,6 +42,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             <PlayerZone 
                 isOpponent={true}
                 playerName={`Rival: ${opponentName}`}
+                elo={opponentElo}
                 color={isLocalRed ? 'blue' : 'red'}
                 isActive={!isMyTurn}
                 timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
@@ -95,6 +96,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             <PlayerZone 
                 isOpponent={false}
                 playerName={`Jugador: ${localName}`}
+                elo={localElo}
                 color={isLocalRed ? 'red' : 'blue'}
                 isActive={isMyTurn}
                 timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}

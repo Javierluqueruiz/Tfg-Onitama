@@ -275,6 +275,45 @@ export class AuthService {
         user.passwordChangedAt = new Date();
         await user.save();
     }
+
+    static async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<IUser> {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AuthError('Usuario no encontrado', 404);
+        }
+
+        const isValid = await AuthService.comparePassword(currentPassword, user.passwordHash);
+        if (!isValid) {
+            throw new AuthError('Contraseña actual incorrecta', 401);
+        }
+
+        AuthService.assertStrongPassword(newPassword);
+
+        user.passwordHash = await AuthService.hashPassword(newPassword);
+        user.passwordChangedAt = new Date();
+        await user.save();
+
+        return user;
+    }
+
+    //Sub-09.5
+    static async deleteAccount(userId: string, username: string, password: string): Promise<void> {
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AuthError('Usuario no encontrado', 404);
+        }
+
+        if (user.username !== username) {
+            throw new AuthError('Nombre de usuario incorrecto', 400);
+        }
+
+        const isValid = await AuthService.comparePassword(password, user.passwordHash);
+        if (!isValid) {
+            throw new AuthError('Contraseña incorrecta', 401);
+        }
+
+        await User.findByIdAndDelete(userId);
+    }
 }
 
 function isDuplicateKeyError(error: unknown): error is { code: number } {

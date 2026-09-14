@@ -11,7 +11,7 @@
 /* FEAT-08: dos fondos superpuestos que se funden entre sí (crossfade + zoom
    ligero) según la pestaña/pantalla activa, en vez de una imagen fija */
 .scene {
-    position: absolute;
+    position: fixed;
     inset: 0;
     z-index: -1;
     background-size: cover;
@@ -128,10 +128,15 @@
     font-size: 14px;
 }
 
-.authUser {
-    color: var(--game-ink);
-    font-weight: bold;
-    font-size: 20px;
+ .authUser {
+     color: var(--game-ink);
+     font-weight: bold;
+     font-size: 20px;
+    text-decoration: none;
+}
+
+.authUser:hover {
+    text-decoration: underline;
 }
 
 .authGuest {

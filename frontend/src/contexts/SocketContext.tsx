@@ -1,6 +1,7 @@
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext, useEffect, useRef } from "react";
 import { Socket, io } from "socket.io-client";
 import { SocketEvents } from "../../../shared";
+import { useAuth } from "./AuthContext";
 
 interface SocketContextState {
     socket: Socket | null;
@@ -19,7 +20,7 @@ const SocketContext = createContext<SocketContextState>({
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
 
 export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ children }) => {
-    const [socket] = useState<Socket>(() => io(SOCKET_URL, { autoConnect: false }));
+    const [socket] = useState<Socket>(() => io(SOCKET_URL, { autoConnect: false, withCredentials: true }));
     const [isConnected, setIsConnected] = useState(false);
     const [lastError, setLastError] = useState<string | null>(null);
 
@@ -69,6 +70,18 @@ export const SocketProvider: React.FC<{ children: React.ReactNode}> = ({ childre
         };
 
     }, [socket]);
+
+    const { isAuthenticated } = useAuth();
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        socket.disconnect();
+        socket.connect();
+    }, [isAuthenticated, socket]);
 
     return (
         <SocketContext.Provider value={{ socket, isConnected, lastError, setLastError }}>
