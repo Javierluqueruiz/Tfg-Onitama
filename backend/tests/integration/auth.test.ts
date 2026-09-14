@@ -28,6 +28,7 @@ let mongoServer: MongoMemoryServer;
 beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     await mongoose.connect(mongoServer.getUri());
+    await User.init();
 }, 60000);
 
 afterAll(async () => {
