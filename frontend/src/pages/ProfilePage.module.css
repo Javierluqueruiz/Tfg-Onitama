@@ -36,6 +36,7 @@
     background: var(--game-paper-soft);
     border: 1px solid var(--game-line-soft);
     border-radius: 8px;
+    min-width: 0;   /* NUEVO */
 }
 
 .statValue {
@@ -99,6 +100,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;   /* NUEVO -- sin esto el ellipsis nunca se activa */
 }
 
 .matchElo {

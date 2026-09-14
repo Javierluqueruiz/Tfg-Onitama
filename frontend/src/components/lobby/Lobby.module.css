@@ -194,4 +194,8 @@
     .content {
         padding: 12px 20px 20px;
     }
+    
+    .statusContainer {
+        padding: 28px 20px;
+    }
 }
