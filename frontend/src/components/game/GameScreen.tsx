@@ -10,6 +10,7 @@ import { PlayerZone } from './ui/player/PlayerZone';
 import { RematchBanner } from './ui/modals/RematchBanner';
 import { ChatBox } from './ui/chat/ChatBox';
 import './theme.css';
+import { SurrenderConfirmModal } from './ui/modals/SurrenderConfirmModal';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -25,7 +26,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
-        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isSurrenderModalOpen, confirmSurrender, cancelSurrender
     } = useGameScreen(gameState, localColor, playersProfile, isReconnecting);
 
 
@@ -133,6 +134,10 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         
             {gameState.status === 'finished' && isGameOver && isModalOpen && (
                 <GameOverModal result={gameResult} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
+            )}
+
+            {isSurrenderModalOpen && (
+                <SurrenderConfirmModal onConfirm={confirmSurrender} onCancel={cancelSurrender} />
             )}
         </div>
     );
