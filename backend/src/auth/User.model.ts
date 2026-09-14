@@ -21,6 +21,7 @@ const lastMatchSchema = new Schema({
     opponentName: { type: String, required: true },
     result: { type: String, enum: ['win', 'loss', 'draw'] as MatchResult[], required: true },
     eloChange: { type: Number, required: true },
+    ranked: { type: Boolean, default: true },
     date: { type: Date, default: Date.now },
 }, { _id: false });
 

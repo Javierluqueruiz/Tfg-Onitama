@@ -37,7 +37,7 @@ const baseStats: ProfileStats = {
     losses: 3,
     draws: 1,
     lastMatches: [
-        { opponentName: 'opponent1', result: 'win', eloChange: 18, date: '2026-01-01T00:00:00.000Z' },
+        { opponentName: 'opponent1', result: 'win', eloChange: 18, ranked: true, date: '2026-01-01T00:00:00.000Z' },
     ],
 };
 
@@ -106,5 +106,18 @@ describe('ProfilePage', () => {
 
         expect(screen.getByRole('button', { name: /Actualizar contraseña/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Eliminar cuenta/i })).toBeInTheDocument();
+    });
+
+    it('marca como "Amistosa" una partida contra un invitado, sin mostrar cambio de ELO', async () => {
+        mockUseAuth({ isAuthenticated: true });
+        vi.mocked(ProfileApi.getStats).mockResolvedValue({
+            ...baseStats,
+            lastMatches: [{ opponentName: 'invitado1', result: 'win', eloChange: 0, ranked: false, date: '2026-01-01T00:00:00.000Z' }],
+        });
+
+        renderWithRoutes();
+
+        expect(await screen.findByText('Amistosa')).toBeInTheDocument();
+        expect(screen.getByText('—')).toBeInTheDocument();
     });
 });

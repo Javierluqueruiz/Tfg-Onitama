@@ -1,3 +1,15 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.title {
+    margin: 4px 0 0;
+    color: var(--game-ink);
+    font-size: 16px;
+}
+
 .streak {
     display: flex;
     gap: 6px;
@@ -20,3 +32,9 @@
 .win { background: var(--game-jade); }
 .loss { background: var(--game-red); }
 .draw { background: var(--game-ink-faint); }
+
+.caption {
+    margin: 0;
+    color: var(--game-ink-faint);
+    font-size: 11px;
+}

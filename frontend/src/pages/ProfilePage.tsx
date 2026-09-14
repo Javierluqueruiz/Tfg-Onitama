@@ -99,12 +99,7 @@ export const ProfilePage = () => {
                                 </div>
                             </div>
 
-                            {stats.lastMatches.length > 0 && (
-                                <>
-                                    <h3 className={styles.sectionTitle}>Racha de resultados recientes</h3>
-                                    <FormStreak matches={stats.lastMatches} />
-                                </>
-                            )}
+                            <FormStreak matches={stats.lastMatches} />
 
                             <h3 className={styles.sectionTitle}>Últimas partidas</h3>
                             {stats.lastMatches.length === 0 ? (
@@ -113,11 +108,18 @@ export const ProfilePage = () => {
                                 <ul className={styles.matchList}>
                                     {stats.lastMatches.map((match, index) => (
                                         <li key={index} className={styles.matchRow}>
-                                            <span className={`${styles.matchResult} ${styles[match.result]}`}>
-                                                {match.result === 'win' ? 'Victoria' : match.result === 'loss' ? 'Derrota' : 'Empate'}
+                                            <span className={styles.matchResultCell}>
+                                                <span className={`${styles.matchResult} ${styles[match.result]}`}>
+                                                    {match.result === 'win' ? 'Victoria' : match.result === 'loss' ? 'Derrota' : 'Empate'}
+                                                </span>
+                                                {!match.ranked && <span className={styles.unrankedTag}>Amistosa</span>}
+
                                             </span>
+                                            
                                             <span className={styles.matchOpponent}>vs {match.opponentName}</span>
-                                            <span className={styles.matchElo}>{match.eloChange >= 0 ? '+' : ''}{match.eloChange}</span>
+                                            <span className={styles.matchElo}>
+                                                {match.ranked ? `${match.eloChange >= 0 ? '+' : ''}${match.eloChange}` : '—'}
+                                            </span>
                                             <span className={styles.matchDate}>{new Date(match.date).toLocaleDateString()}</span>
                                         </li>
                                     ))}

@@ -83,13 +83,47 @@ describe('GameResultService.recordMatchResult', () => {
         expect(blueUser.elo).toBe(1000);
     });
 
-    it('no actualiza el ELO de nadie si uno de los jugadores no es una cuenta registrada', async () => {
-        const findByIdSpy = vi.spyOn(User, 'findById');
+    it('guarda la partida en el historial del registrado como no clasificatoria, sin tocar su ELO, si el rival es un invitado', async () => {
+        const redUser = createFakeUser({ elo: 1000, username: 'RedPlayer' });
+        vi.spyOn(User, 'findById').mockResolvedValueOnce(redUser);
 
         await GameResultService.recordMatchResult(createRoom({
             players: {
                 red: { socketId: 'redSocket', name: 'RedPlayer', userId: 'redId' },
-                blue: { socketId: 'blueSocket', name: 'BluePlayer' }, // BluePlayer no es una cuenta registrada
+                blue: { socketId: 'blueSocket', name: 'BluePlayer' }, // invitado
+            },
+        }));
+
+        expect(redUser.elo).toBe(1000);
+        expect(redUser.gamesPlayed).toBe(0);
+        expect(redUser.wins).toBe(0);
+        expect(redUser.save).toHaveBeenCalled();
+        expect(redUser.lastMatches[0]).toMatchObject({ opponentName: 'BluePlayer', result: 'win', eloChange: 0, ranked: false });
+    });
+
+    it('lo mismo, pero cuando el registrado es el jugador azul', async () => {
+        const blueUser = createFakeUser({ elo: 1000, username: 'BluePlayer' });
+        vi.spyOn(User, 'findById').mockResolvedValueOnce(blueUser);
+
+        await GameResultService.recordMatchResult(createRoom({
+            players: {
+                red: { socketId: 'redSocket', name: 'RedPlayer' }, // invitado
+                blue: { socketId: 'blueSocket', name: 'BluePlayer', userId: 'blueId' },
+            },
+        }));
+
+        expect(blueUser.elo).toBe(1000);
+        expect(blueUser.save).toHaveBeenCalled();
+        expect(blueUser.lastMatches[0]).toMatchObject({ opponentName: 'RedPlayer', result: 'loss', eloChange: 0, ranked: false });
+    });
+
+    it('no toca nada si los dos jugadores son invitados', async () => {
+        const findByIdSpy = vi.spyOn(User, 'findById');
+
+        await GameResultService.recordMatchResult(createRoom({
+            players: {
+                red: { socketId: 'redSocket', name: 'RedPlayer' },
+                blue: { socketId: 'blueSocket', name: 'BluePlayer' },
             },
         }));
 
