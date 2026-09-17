@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../../shared";
+import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode, PlayerColor } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
 import { MatchmakingService, QueueEntry } from "./MatchmakingService";
@@ -234,6 +234,36 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
             socket.emit(SocketEvents.ERROR, { message: 'Error al procesar el intento de reconexión: ' + message });
         }
     })
+
+    //FEAT 14 (Sub-14.1)
+    socket.on(SocketEvents.DISCARD_CARD, (data: { cardName: string }) => {
+        const room = RoomManager.getRoomBySocketId(socket.id);
+
+        if (!room || !room.gameState) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala o el estado del juego' });
+        }
+
+        if (room.gameState.status !== 'waiting_for_discard') {
+            return socket.emit(SocketEvents.ERROR, { message: 'No hay ningún descarte pendiente' });
+        }
+
+        const isRed = room.players.red?.socketId === socket.id;
+        const PlayerColor: PlayerColor = isRed ? 'red' : 'blue';
+
+        if (room.gameState.currentTurn !== PlayerColor) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No es tu turno para descartar una carta' });
+        }
+
+        try {
+            const newState = GameEngine.discardCard(room.gameState, data.cardName);
+            const commitedState = RoomManager.commitProcessedState(room.roomId, newState);
+
+            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: commitedState });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Error desconocido';
+            socket.emit(SocketEvents.ERROR, { message });
+        }
+    });
 }
 
 //FEAT-05

@@ -6,6 +6,7 @@ import { useDrawNegotiation } from './useDrawNegotiation';
 import { useRematchNegotiation } from './useRematchNegotiation';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
 import { getValidTargets } from '../logic/getValidTargets';
+import { useDiscardPrompt } from './useDiscardPrompt';
 
 export const useGameScreen = (
         gameState: GameState, 
@@ -18,6 +19,7 @@ export const useGameScreen = (
 
     const networkState = useNetwork(socket);
     const drawNegotiationState = useDrawNegotiation(socket);
+    const { mustDiscard, handleDiscard } = useDiscardPrompt(socket, gameState, localColor);
 
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);
     const [selectedPiece, setSelectedPiece] = useState<Position | null>(null);
@@ -63,6 +65,14 @@ export const useGameScreen = (
         () => getValidTargets(board, selectedCard, selectedPiece, localColor, isLocalRed),
         [selectedCard, selectedPiece, isLocalRed, board, localColor]
     );  
+
+    const handleSelectCard = (card: Card) => {
+        if (mustDiscard) {
+            handleDiscard(card.name);
+            return;
+        }
+        setSelectedCard(card);
+    };
 
     //Gestión de Eventos
     const handleCellClick = (position: Position) => {
@@ -120,9 +130,7 @@ export const useGameScreen = (
     return {
         ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
         opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, boardRotation,
-        lastMove, selectedCard, setSelectedCard, selectedPiece, setSelectedPiece,
+        lastMove, selectedCard, setSelectedCard, mustDiscard, handleSelectCard, selectedPiece, setSelectedPiece,
         validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, isReconnecting, lastError,isSurrenderModalOpen, confirmSurrender, cancelSurrender
     };
-
 }
-

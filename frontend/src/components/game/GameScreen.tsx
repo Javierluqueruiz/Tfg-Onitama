@@ -11,6 +11,7 @@ import { RematchBanner } from './ui/modals/RematchBanner';
 import { ChatBox } from './ui/chat/ChatBox';
 import './theme.css';
 import { SurrenderConfirmModal } from './ui/modals/SurrenderConfirmModal';
+import { DiscardBanner } from './ui/modals/DiscardBanner';
 
 interface GameScreenProps {
     gameState: GameState;
@@ -24,7 +25,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
     const { 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
         opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, 
-        boardRotation, lastMove, selectedCard, setSelectedCard, selectedPiece, 
+        boardRotation, lastMove, selectedCard, mustDiscard, handleSelectCard,  selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
         drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isSurrenderModalOpen, confirmSurrender, cancelSurrender
     } = useGameScreen(gameState, localColor, playersProfile, isReconnecting);
@@ -92,6 +93,8 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 onRejectDraw={handleRejectDraw}
             />
 
+            <DiscardBanner mustDiscard={mustDiscard} />
+
             {lastError && <div className={styles.toastError}>{lastError}</div>}
 
             {/* Zona del Jugador Local */}
@@ -104,7 +107,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
                 cards={myCards}
                 selectedCard={selectedCard}
-                onSelectCard={setSelectedCard}
+                onSelectCard={handleSelectCard}
                 isGameOver={isGameOver}
                 isConnected={isConnected}
                 disconnectTimer={disconnectTimer}

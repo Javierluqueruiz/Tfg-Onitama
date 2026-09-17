@@ -26,6 +26,9 @@ export enum SocketEvents {
     //Sub-07.1
     SEND_MESSAGE = 'send_message',
 
+    //Sub-14.1
+    DISCARD_CARD = 'discard_card',
+
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
     ERROR = 'error',

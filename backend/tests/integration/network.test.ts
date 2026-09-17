@@ -1083,3 +1083,128 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
         }
     });
 });
+
+describe('FEAT-14: Descartar carta', () => {
+    let server: TestServer;
+    let clientSocket1: ClientSocket;
+    let clientSocket2: ClientSocket;
+    let activeRoomId: string;
+    let client1Color: PlayerColor;
+
+    beforeAll(async () => {
+        server = await startTestServer();
+    });
+
+    afterAll(() => {
+        stopTestServer(server);
+    });
+
+    beforeEach(async () => {
+        RoomManager.clearActiveRooms();
+        [clientSocket1, clientSocket2] = await connectClients(server.port, 2);
+
+        await new Promise<void>((resolve) => {
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
+            });
+
+            clientSocket1.on(SocketEvents.GAME_START, (data) => {
+                activeRoomId = data.gameState.roomId;
+                client1Color = data.players.red.socketId === clientSocket1.id ? 'red' : 'blue';
+                resolve();
+            });
+
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
+        });
+    });
+
+    afterEach(() => {
+        clientSocket1.disconnect();
+        clientSocket2.disconnect();
+    });
+
+    it('Test-14.1a: Debe permitir a un jugador descartar una carta cuando la partida esté esperando un descarte', () => {
+        return new Promise<void>((resolve, reject) => {
+            const room = RoomManager.getRoomById(activeRoomId);
+            room!.gameState.status = 'waiting_for_discard';
+
+            const activeColor = room!.gameState.currentTurn;
+            const activeCliente = activeColor === client1Color ? clientSocket1 : clientSocket2;
+            const discardedCard = (activeColor === 'red' ? room!.gameState.cards.red[0] : room!.gameState.cards.blue[0]);
+            const previousNeutral = room!.gameState.cards.neutral;
+
+            clientSocket1.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => {
+                try {
+                    const newHand = activeColor === 'red' ? data.gameState.cards.red : data.gameState.cards.blue;
+
+                    expect(data.gameState.cards.neutral.name).toBe(discardedCard.name);
+                    expect(newHand.some(c=> c.name === previousNeutral.name)).toBe(true);
+                    expect(data.gameState.currentTurn).not.toBe(activeColor);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+
+            activeCliente.emit(SocketEvents.DISCARD_CARD, { cardName: discardedCard.name });
+        });
+    });
+
+    it('Test-14.1b: Debe rechazar un descarte si la partida no está esperando un descarte', () => {
+        return new Promise<void>((resolve, reject) => {
+            const room = RoomManager.getRoomById(activeRoomId);
+            const activeColor = room!.gameState.currentTurn;
+            const activeClient = activeColor === client1Color ? clientSocket1 : clientSocket2;
+            const someCard = (activeColor === 'red' ? room!.gameState.cards.red[0] : room!.gameState.cards.blue[0]);
+
+            const failOnGameUpdate = () => reject(new Error('Se recibió GAME_UPDATE a pesar de que el descarte fue inválido.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
+            activeClient.on(SocketEvents.ERROR, (error: ErrorPayload) => {
+                try {
+                    expect(error.message).toBe('No hay ningún descarte pendiente');
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+
+            activeClient.emit(SocketEvents.DISCARD_CARD, { cardName: someCard.name });
+        });
+    });
+
+    it('Test-14.1c: Debe rechazar el descarte de quien no tiene el turno', () => {
+        return new Promise<void>((resolve, reject) => {
+            const room = RoomManager.getRoomById(activeRoomId);
+            room!.gameState.status = 'waiting_for_discard';
+
+            const activeColor = room!.gameState.currentTurn;
+            const inactiveColor = activeColor === 'red' ? 'blue' : 'red';
+            const inactiveClient = inactiveColor === client1Color ? clientSocket1 : clientSocket2;
+            
+            const victimCard = (activeColor === 'red' ? room!.gameState.cards.red[0] : room!.gameState.cards.blue[0]);
+            const failOnGameUpdate = () => reject(new Error('No debería emitirse GAME_UPDATE.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
+            inactiveClient.on(SocketEvents.ERROR, (error: ErrorPayload) => {
+                try {
+                    expect(error.message).toBe('No es tu turno para descartar una carta');
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+            inactiveClient.emit(SocketEvents.DISCARD_CARD, { cardName: victimCard.name });
+        });
+    });
+});
