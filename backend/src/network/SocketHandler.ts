@@ -5,6 +5,7 @@ import { GameEngine } from "../game/GameEngine";
 import { MatchmakingService, QueueEntry } from "./MatchmakingService";
 import { resolvePlayerIdentity } from "./playerIdentity";
 import { EloService } from "../game/EloService";
+import { AiTurnRunner } from "./AiTurnRunner";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -123,6 +124,23 @@ function registerRoomEvents(io: Server, socket: Socket) {
             console.log(`Sala ${room.roomId} eliminada}`)
         }
     });
+
+    //FEAT 14 (Sub-14.3)
+    socket.on(SocketEvents.CREATE_AI_ROOM, async (data: { hostName: string }) => {
+        const identity = await resolvePlayerIdentity(socket);
+        const hostProfile: PlayerProfile = {
+            socketId: socket.id,
+            name: data.hostName,
+            userId: identity.userId,
+            elo: identity.elo
+        };
+
+        const room = RoomManager.createAiRoom(hostProfile);
+        socket.join(room.roomId);
+
+        io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
+        AiTurnRunner.maybePlayTurn(io, room.roomId); 
+    });
 }
 
 //FEAT-04/05
@@ -139,10 +157,10 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
         }
 
         try {
-            const newState = GameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
-            const commitedState = RoomManager.commitProcessedState(room.roomId, newState);
+            const commitedState = RoomManager.applyMove(room.roomId, moveData.from, moveData.to, moveData.cardName);
 
             io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: commitedState });
+            AiTurnRunner.maybePlayTurn(io, room.roomId); // Sub-14.3
 
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Error desconocido';
@@ -255,10 +273,10 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
         }
 
         try {
-            const newState = GameEngine.discardCard(room.gameState, data.cardName);
-            const commitedState = RoomManager.commitProcessedState(room.roomId, newState);
+            const commitedState = RoomManager.applyDiscard(room.roomId, data.cardName);
 
             io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: commitedState });
+            AiTurnRunner.maybePlayTurn(io, room.roomId); // Sub-14.3
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Error desconocido';
             socket.emit(SocketEvents.ERROR, { message });

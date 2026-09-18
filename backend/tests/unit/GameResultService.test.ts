@@ -26,6 +26,7 @@ function createRoom(overrides: Partial<RoomSession> = {}): RoomSession {
         drawOfferedBy: null,
         rematchOfferedBy: null,
         resultPersisted: false,
+        countsForStats: true,
         players: {
             red: { socketId: 'redSocket', name: 'RedPlayer', userId: 'redId' },
             blue: { socketId: 'blueSocket', name: 'BluePlayer', userId: 'blueId' },
@@ -39,6 +40,14 @@ function createRoom(overrides: Partial<RoomSession> = {}): RoomSession {
 describe('GameResultService.recordMatchResult', () => {
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('no persiste nada si countsForStats es false', async () => {
+        const findById = vi.spyOn(User, 'findById');
+
+        await GameResultService.recordMatchResult(createRoom({ countsForStats: false }));
+
+        expect(findById).not.toHaveBeenCalled();
     });
 
     it('actualiza correctamente el ELO y las estadísticas de los jugadores cuando los dos son cuentas registradas', async () => {

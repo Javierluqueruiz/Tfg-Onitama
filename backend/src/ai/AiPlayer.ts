@@ -36,4 +36,29 @@ export class AiPlayer {
 
         return HeuristicEvaluator.evaluate(simulatedBoard, player, simulatedCards);
     }
+
+    //FEAT-14 (Sub-14.3): Elige qué carta descartar
+    public static selectDiscard(board: Board, player: PlayerColor, cards: GameState['cards']): string {
+        const hand: Card[] = cards[player];
+
+        let bestCard = hand[0].name;
+        let bestScore = this.scoreDiscard(board, player, cards, bestCard);
+
+        for (let i = 1; i < hand.length; i++) {
+            const candidate = hand[i].name;
+            const score = this.scoreDiscard(board, player, cards, candidate);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestCard = candidate;
+            }
+        }
+
+        return bestCard;
+    }
+
+    private static scoreDiscard(board: Board, player: PlayerColor, cards: GameState['cards'], cardToDiscard: string): number {
+        const simulatedCards = DeckManager.playCard(cards, player, cardToDiscard);
+        return HeuristicEvaluator.evaluate(board, player, simulatedCards);
+    }
 }

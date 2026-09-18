@@ -28,6 +28,8 @@ export enum SocketEvents {
 
     //Sub-14.1
     DISCARD_CARD = 'discard_card',
+    //Sub-14.3
+    CREATE_AI_ROOM = 'create_ai_room',
 
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
@@ -69,6 +71,7 @@ export interface RoomSession {
     drawOfferedBy: string | null;
     rematchOfferedBy: string | null;
     resultPersisted: boolean;
+    countsForStats: boolean; //Sub-14.3
 }
 
 //Primera versión de la interfaz del perfil del jugador.
@@ -77,6 +80,7 @@ export interface PlayerProfile {
     name: string;
     userId?: string;
     elo?: number;
+    isAi?: boolean;
 }
 
 export interface ReconnectPayload {
