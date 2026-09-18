@@ -1,5 +1,10 @@
 import { Board, Card, PlayerColor, Position, isOutOfBounds, getCellAt } from "../../../shared";
 
+export interface LegalMove {
+    from: Position;
+    to: Position;
+    cardName: string;
+}
 
 export class MoveArbitrator {
 
@@ -70,10 +75,10 @@ export class MoveArbitrator {
         return true;
     }   
 
-    //FEAT-07: Método para detectar la ausencia de movimientos válidos para un jugador
+    //FEAT-14 (Sub-14.2)
+    public static generateLegalMoves(board: Board, player: PlayerColor, handCards: Card[]): LegalMove[] {
+        const legalMoves: LegalMove[] = [];
 
-    public static hasValidMoves(board: Board, player: PlayerColor, handCards: Card[]): boolean {
-        
         for(let y = 0; y < board.length; y++){
             for(let x = 0; x < board[y].length; x++){
                 const piece = board[y][x];
@@ -88,13 +93,18 @@ export class MoveArbitrator {
                             const to: Position = { x: from.x + dx, y: from.y + dy };
 
                             if(this.getIllegalMoveReason(board, from, to, player, card) === null){
-                                return true; // Se encontró al menos un movimiento válido
+                                legalMoves.push({ from, to, cardName: card.name });
                             }
                         }
                     }   
                 }    
             }
         }
-    return false;
+        return legalMoves;
+    }
+
+    //FEAT-07: Método para detectar la ausencia de movimientos válidos para un jugador
+    public static hasValidMoves(board: Board, player: PlayerColor, handCards: Card[]): boolean {
+        return this.generateLegalMoves(board, player, handCards).length > 0;
     }
 }
