@@ -8,6 +8,7 @@ import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
 import { createServer, Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
 import { MatchmakingService } from '../../src/network/MatchmakingService';
+import { MoveArbitrator } from '../../src/game/MoveArbitrator';
 
 type GameStartPayload = { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } };
 type GameUpdatePayload = { gameState: GameState };
@@ -176,12 +177,13 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             let currentRoomCode = '';
 
             // Escuchamos GAME_START en ambos clientes
-            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
+            const handleGameStart = (client: ClientSocket) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn; // 'red' | 'blue'
                 
                 // Determinamos qué socket tiene el turno inicial
-                const isMyTurn = (activeColor === 'red' && isHost) || (activeColor === 'blue' && !isHost);
+                const clientColor: PlayerColor = data.players.red.socketId === client.id ? 'red' : 'blue';
+                const isMyTurn = clientColor === activeColor;
                 
                 if (isMyTurn) {
                     activeClient = client;
@@ -249,8 +251,8 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             clientSocket1.on(SocketEvents.GAME_UPDATE, checkGameUpdate);
             clientSocket2.on(SocketEvents.GAME_UPDATE, checkGameUpdate);
 
-            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1, true));
-            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2, false));
+            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1));
+            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2));
 
             // Flujo de arranque de sala
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
@@ -270,7 +272,8 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
-                const isInactive = (activeColor === 'red' && !isHost) || (activeColor === 'blue' && isHost);
+                const clientColor = data.players.red.socketId === client.id ? 'red' : 'blue';
+                const isInactive = clientColor !== activeColor;
 
                 // El jugador que NO tiene el turno intenta mover
                 if (isInactive) {
@@ -326,12 +329,13 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
 
     it('Test-04.3: Debe rechazar una jugada con coordenadas fuera del tablero y mantener el estado sin cambios', () =>{
         return new Promise<void>((resolve, reject) => {
-            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
+            const handleGameStart = (client: ClientSocket) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
 
                 // Solo el jugador que tiene el turno intentará hacer la trampa
-                const isMyTurn = (activeColor === 'red' && isHost) || (activeColor === 'blue' && !isHost);
+                const clientColor: PlayerColor = data.players.red.socketId === client.id ? 'red' : 'blue';
+                const isMyTurn = clientColor === activeColor;
 
                 if (isMyTurn) {
                     // 1. Obtenemos una de sus cartas reales para que esa validación pase
@@ -372,8 +376,8 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             clientSocket1.on(SocketEvents.ERROR, handleError);
             clientSocket2.on(SocketEvents.ERROR, handleError);
 
-            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1, true));
-            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2, false));
+            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1));
+            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2));
 
             // Flujo estándar de arranque de sala
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
@@ -402,6 +406,50 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
         expect(latency).toBeDefined();
         expect(typeof latency).toBe('number');
         expect(latency).toBeGreaterThanOrEqual(0);
+    });
+
+    it('Test-04.5: Debe rechazar una jugada LEGAL enviada por el jugador que no tiene el turno',() => {
+        return new Promise<void>((resolve, reject) => {
+            const handleGameStart = (client: ClientSocket) => (data: GameStartPayload) => {
+                const { gameState, players } = data;
+                const activeColor = gameState.currentTurn;
+                const clientColor = players.red.socketId === client.id ? 'red' : 'blue';
+
+                if (clientColor === activeColor) return;
+
+                const activeHand = activeColor === 'red' ? gameState.cards.red : gameState.cards.blue;
+                const [legalMove] = MoveArbitrator.generateLegalMoves(gameState.board, activeColor, activeHand);
+                client.emit(SocketEvents.PLAYER_MOVE, legalMove);
+            };
+
+            const failOnGameUpdate = () => reject(new Error('No debería emitirse GAME_UPDATE: la jugada legal fuera de turno no debe alterar el estado.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
+            const handleError = (error: ErrorPayload) => {
+                try {
+                    expect(error.message).toBe('No es tu turno.');
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            clientSocket1.on(SocketEvents.ERROR, handleError);
+            clientSocket2.on(SocketEvents.ERROR, handleError);
+
+            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1));
+            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2));
+
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
+            });
+
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+        });
     });
 });
 

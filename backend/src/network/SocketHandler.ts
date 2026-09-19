@@ -156,6 +156,11 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
             return socket.emit(SocketEvents.ERROR, { message: 'El juego ya ha terminado.' });
         }
 
+        const playerColor: PlayerColor = room.players.red?.socketId === socket.id ? 'red' : 'blue';
+        if (room.gameState.currentTurn !== playerColor) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No es tu turno.' });
+        }
+
         try {
             const commitedState = RoomManager.applyMove(room.roomId, moveData.from, moveData.to, moveData.cardName);
 
@@ -266,9 +271,9 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
         }
 
         const isRed = room.players.red?.socketId === socket.id;
-        const PlayerColor: PlayerColor = isRed ? 'red' : 'blue';
+        const playerColor: PlayerColor = isRed ? 'red' : 'blue';
 
-        if (room.gameState.currentTurn !== PlayerColor) {
+        if (room.gameState.currentTurn !== playerColor) {
             return socket.emit(SocketEvents.ERROR, { message: 'No es tu turno para descartar una carta' });
         }
 
