@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import { RoomManager } from "../../src/network/RoomManager";
 import { registerSocketEvents } from "../../src/network/SocketHandler";
 import { SocketEvents, PlayerColor, ChatMessage, GameMode, GameState, PlayerProfile } from "../../../shared/index";
@@ -1254,5 +1254,67 @@ describe('FEAT-14: Descartar carta', () => {
             });
             inactiveClient.emit(SocketEvents.DISCARD_CARD, { cardName: victimCard.name });
         });
+    });    
+});
+
+describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
+    let server: TestServer;
+    let clientSocket: ClientSocket;
+
+    beforeAll(async () => {
+        server = await startTestServer();
+    });
+
+    afterAll(() => {
+        stopTestServer(server);
+    });
+
+    beforeEach(async () => {
+        RoomManager.clearActiveRooms();
+        [clientSocket] = await connectClients(server.port, 1);
+    });
+
+    afterEach(() => {
+        clientSocket.disconnect();
+    });
+
+    it('Test-14.3a: Debe crear la sala contra la IA y hacer que la IA juegue sola su turno', async () => {
+        const updates: GameState[] = [];
+        clientSocket.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => updates.push(data.gameState));
+
+        const start = await new Promise<GameStartPayload>((resolve) => {
+            clientSocket.once(SocketEvents.GAME_START, resolve);
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1' });
+        });
+
+        const humanColor: PlayerColor = start.players.red.socketId === clientSocket.id ? 'red' : 'blue';
+        const aiColor: PlayerColor = humanColor === 'red' ? 'blue' : 'red';
+
+        expect(start.players[aiColor].isAi).toBe(true);
+        expect(start.players[humanColor].isAi).toBeFalsy();
+
+        if (start.gameState.currentTurn === humanColor) {
+            const [move] = MoveArbitrator.generateLegalMoves(start.gameState.board, humanColor, start.gameState.cards[humanColor]);
+            clientSocket.emit(SocketEvents.PLAYER_MOVE, move);
+
+            await vi.waitFor(() => expect(updates.length).toBeGreaterThan(1), { timeout: 4000 });
+            expect(updates[0].currentTurn).toBe(aiColor);
+            expect(updates[1].currentTurn).toBe(humanColor);
+        } else {
+            await vi.waitFor(() => expect(updates.length).toBeGreaterThan(0), { timeout: 4000 });
+            expect(updates[0].currentTurn).toBe(humanColor);
+        }
+    });
+
+    it('Test-14.3b: La sala contra la IA no debe arrancar el temporizador ni contar para estadísticas', async () => {
+        const start = await new Promise<GameStartPayload>((resolve) => {
+            clientSocket.once(SocketEvents.GAME_START, resolve);
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Humano' });
+        });
+
+        const room = RoomManager.getRoomById(start.gameState.roomId);
+        expect(room!.mode).toBe('casual');
+        expect(room!.countsForStats).toBe(false);
+        expect(start.gameState.timeRemaining).toEqual({ red: 0, blue: 0 });
     });
 });

@@ -41,20 +41,20 @@ export class AiPlayer {
     public static selectDiscard(board: Board, player: PlayerColor, cards: GameState['cards']): string {
         const hand: Card[] = cards[player];
 
-        let bestCard = hand[0].name;
-        let bestScore = this.scoreDiscard(board, player, cards, bestCard);
+        let bestCard = hand[0];
+        let bestScore = this.scoreDiscard(board, player, cards, bestCard.name);
 
         for (let i = 1; i < hand.length; i++) {
-            const candidate = hand[i].name;
-            const score = this.scoreDiscard(board, player, cards, candidate);
+            const candidate = hand[i];
+            const score = this.scoreDiscard(board, player, cards, candidate.name);
 
-            if (score > bestScore) {
+            if (score > bestScore || (score === bestScore && candidate.moves.length < bestCard.moves.length)) {
                 bestScore = score;
                 bestCard = candidate;
             }
         }
 
-        return bestCard;
+        return bestCard.name;
     }
 
     private static scoreDiscard(board: Board, player: PlayerColor, cards: GameState['cards'], cardToDiscard: string): number {
