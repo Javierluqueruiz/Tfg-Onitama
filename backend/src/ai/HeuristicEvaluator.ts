@@ -1,28 +1,40 @@
 import { Board, GameState, PlayerColor, Position } from '../../../shared';
 import { MoveArbitrator } from '../game/MoveArbitrator';
+import { MovementManager } from '../game/MovementManager';
 import { VictoryArbitrator, RED_MASTER_POSITION, BLUE_MASTER_POSITION } from '../game/VictoryArbitrator';
 
-//Pesos relativos
-const W_MATERIAL = 100;
-const W_TEMPLE = 10;
-const W_MOBILITY = 2;
-const W_POSITION = 1;
+export interface EvaluatorWeights {
+    material: number;
+    position: number;
+    temple: number;
+    mobility: number;
+    threat: number;
+}
+
+export const DEFAULT_EVALUATOR_WEIGHTS: EvaluatorWeights = {
+    material: 100,
+    position: 1,
+    temple: 10,
+    mobility: 2,
+    threat: 1000
+}
 
 export class HeuristicEvaluator {
     
     //FEAT-14 (Sub-14.2): Evalúa un tablero desde la perspectiva de un jugador.
     //Cuanto más alto, mejor está el jugador.
-    public static evaluate(board: Board, player: PlayerColor, cards: GameState['cards']): number {
+    public static evaluate(board: Board, player: PlayerColor, cards: GameState['cards'], weights: EvaluatorWeights = DEFAULT_EVALUATOR_WEIGHTS): number {
         const opponent: PlayerColor = player === 'red' ? 'blue' : 'red';
 
         const winner = VictoryArbitrator.checkVictory(board);
         if (winner === player) return Number.POSITIVE_INFINITY;
         if (winner === opponent) return Number.NEGATIVE_INFINITY;
 
-        return W_MATERIAL * this.materialDiff(board, player, opponent) +
-               W_TEMPLE * this.templeDiff(board, player, opponent) +
-               W_MOBILITY * this.mobilityDiff(board, player, opponent, cards) +
-               W_POSITION * this.positionalDiff(board, player, opponent);
+        return weights.material * this.materialDiff(board, player, opponent) +
+               weights.temple * this.templeDiff(board, player, opponent) +
+               weights.mobility * this.mobilityDiff(board, player, opponent, cards) +
+               weights.position * this.positionalDiff(board, player, opponent) -
+               weights.threat * this.opponentThreat(board, opponent, cards);
     }
 
     //Si llegamos a este punto, significa que ambos maestros están vivos, por lo que su valor no cuenta aquí
@@ -98,5 +110,13 @@ export class HeuristicEvaluator {
         const opponentMoves = MoveArbitrator.generateLegalMoves(board, opponent, cards[opponent]).length;
 
         return myMoves - opponentMoves;
+    }
+
+    private static opponentThreat(board: Board, opponent: PlayerColor, cards: GameState['cards']): number {
+        const canWin = MoveArbitrator.generateLegalMoves(board, opponent, cards[opponent]).some(move => {
+            return VictoryArbitrator.checkVictory(MovementManager.movePiece(board, move.from, move.to).newBoard) === opponent;
+        });
+
+        return canWin ? 1 : 0;
     }
 }

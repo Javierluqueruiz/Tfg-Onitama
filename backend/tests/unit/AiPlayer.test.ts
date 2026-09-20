@@ -35,6 +35,24 @@ describe('FEAT-14 (Sub-14.2): AiPlayer', () => {
         const move = AiPlayer.selectMove(board, 'red', cards);
         expect(move).toEqual({ from: { x: 2, y: 0 }, to: { x: 2, y: 1 }, cardName: 'Capture' });
     });
+
+    it('Debe evitar una jugada que permita al oponente ganar en el siguiente turno', () => {
+        const board = emptyBoard();
+        board[2][2] = { type: 'master', color: 'red' };
+        board[4][2] = { type: 'master', color: 'blue' };
+
+        const redCard: Card = { name: 'RedCard', description: 'Mock', color: 'red', moves: [{ x: 0, y: -1 }, { x:-1, y:-1 }] };
+        const blueCard: Card = { name: 'BlueCard', description: 'Mock', color: 'blue', moves: [{ x: 0, y: -1 }] };
+        const passiveCard: Card = { name: 'Passive', description: 'Mock', color: 'red', moves: [] };
+
+        const cards: GameState['cards'] = {
+            red: [redCard, passiveCard],
+            blue: [blueCard, passiveCard],
+            neutral: passiveCard
+        };
+
+        expect(AiPlayer.selectMove(board, 'red', cards)).toEqual({ from: { x: 2, y: 2 }, to: { x: 3, y: 3 }, cardName: 'RedCard' });
+    });
 });
 
 describe('FEAT-14 (Sub-14.3): AiPlayer.selectDiscard', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Board, Card, GameState } from '../../../shared';
-import { HeuristicEvaluator } from '../../src/ai/HeuristicEvaluator';
+import { HeuristicEvaluator, DEFAULT_EVALUATOR_WEIGHTS } from '../../src/ai/HeuristicEvaluator';
 
 describe('FEAT-14 (Sub-14.2): HeuristicEvaluator', () => {
     const emptyBoard = (): Board => Array(5).fill(null).map(() => Array(5).fill(null)) as Board;
@@ -65,6 +65,39 @@ describe('FEAT-14 (Sub-14.2): HeuristicEvaluator', () => {
         // mobilityDiff = 1 - 0 = 1 (W_MOBILITY = 2 -> +2)
         expect(HeuristicEvaluator.evaluate(board, 'red', cards)).toBe(2);
         expect(HeuristicEvaluator.evaluate(board, 'blue', cards)).toBe(-2);
+    });
+
+    describe('amenaza inmediata', () => {
+        const forwardCard: Card = { name: 'Forward', description: 'Mock', color: 'red', moves: [{ x: 0, y: -1 }] };
+        const sideCard: Card = { name: 'Side', description: 'Mock', color: 'red', moves: [{ x: 1, y: 0 }] };
+
+        const boardNearTemple = (): Board => {
+            const board = emptyBoard();
+            board[3][2] = { type: 'master', color: 'red' }; // Maestro rojo cerca del templo azul
+            board[0][0] = { type: 'master', color: 'blue' }; // Maestro azul lejos
+            return board;
+        };
+
+        const withRedHand = (card: Card): GameState['cards'] => ({
+            red: [card, noMoveCard],
+            blue: [noMoveCard, noMoveCard],
+            neutral: noMoveCard
+        });
+
+        it('Debe penalizar una posición donde el oponente puede ganar en su próximo turno', () => {
+            const cards = withRedHand(forwardCard);
+            const withThreat = HeuristicEvaluator.evaluate(boardNearTemple(), 'blue', cards);
+            const withoutThreat = HeuristicEvaluator.evaluate(boardNearTemple(), 'blue', cards, { ...DEFAULT_EVALUATOR_WEIGHTS, threat: 0 });
+            expect(withThreat).toBe(withoutThreat - 1000);
+        });
+
+        it('No debe penalizar una posición donde el oponente no puede ganar en su próximo turno', () => {
+            const cards = withRedHand(sideCard);
+            const withThreat = HeuristicEvaluator.evaluate(boardNearTemple(), 'blue', cards);
+            const withoutThreat = HeuristicEvaluator.evaluate(boardNearTemple(), 'blue', cards, { ...DEFAULT_EVALUATOR_WEIGHTS, threat: 0 });
+
+            expect(withThreat).toBe(withoutThreat);
+        });
     });
     
 });
