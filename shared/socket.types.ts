@@ -92,6 +92,7 @@ export interface ReconnectPayload {
 //Sub-06.1
 //Modos de juego
 export type GameMode = 'casual' | 'normal' | 'fast';
+export type AiDifficulty = 'easy' | 'medium' | 'hard';
 
 export interface MatchFoundPayload {
     roomId: string;

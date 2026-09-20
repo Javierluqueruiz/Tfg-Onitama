@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { Board, Card, GameState } from '../../../shared/index';
-import { AiPlayer } from '../../src/ai/AiPlayer';
+import { AiPlayer, DIFFICULTY_EPSILON } from '../../src/ai/AiPlayer';
+import { DEFAULT_EVALUATOR_WEIGHTS } from '../../src/ai/HeuristicEvaluator';
 
 describe('FEAT-14 (Sub-14.2): AiPlayer', () => {
 
@@ -94,5 +95,61 @@ describe('FEAT-14 (Sub-14.3): AiPlayer.selectDiscard', () => {
         const b = card('B', [{ x: 1, y: 0 }]);
         const cards: GameState['cards'] = { red: [a, b], blue: blueHand, neutral: card('Neutral', []) };
         expect(['A', 'B']).toContain(AiPlayer.selectDiscard(board, 'red', cards));
+    });
+});
+
+describe('FEAT-14 (Sub-14.4): AiPlayer.selectMove por dificultad', () => {
+    const emptyBoard = (): Board => Array(5).fill(null).map(() => Array(5).fill(null)) as Board;
+    const passiveCard: Card = { name: 'PassiveCard', description: 'Mock', color: 'red', moves: [] };
+
+    const trapBoard = emptyBoard();
+    trapBoard[2][2] = { type: 'master', color: 'red' };
+    trapBoard[4][2] = { type: 'master', color: 'blue' };
+
+    const redCard: Card = { name: 'RedCard', description: 'Mock', color: 'red', moves: [{ x: 0, y: -1 }, { x:-1, y:-1 }] };
+    const blueCard: Card = { name: 'BlueCard', description: 'Mock', color: 'blue', moves: [{ x: 0, y: -1 }] };
+    const trapCards: GameState['cards'] = { red: [redCard, passiveCard], blue: [blueCard, passiveCard], neutral: passiveCard };
+
+    const unsafeMove = { from: { x: 2, y: 2 }, to: { x: 2, y: 3 }, cardName: 'RedCard' };
+    const safeMove = { from: { x: 2, y: 2 }, to: { x: 3, y: 3 }, cardName: 'RedCard' };
+    
+    it('En el nivel difícil, la IA debe elegir siempre el movimiento seguro', () => {
+        const random = vi.fn(() => 0);
+
+        expect(AiPlayer.selectMove(trapBoard, 'red', trapCards, { difficulty: 'hard', random })).toEqual(safeMove);
+        expect(random).not.toHaveBeenCalled();
+    });
+
+    it.each(['medium', 'easy'] as const)('En el nivel %s, si el azar cae por debajo del epsilon, juega una jugada al azar, aunque sea mala', (difficulty) => {
+        const random = vi.fn().mockReturnValueOnce(DIFFICULTY_EPSILON[difficulty] - 0.01).mockReturnValue(0);
+
+        expect(AiPlayer.selectMove(trapBoard, 'red', trapCards, { difficulty, random })).toEqual(unsafeMove);
+    });
+
+    it.each(['medium', 'easy'] as const)('En el nivel %s, si el azar cae por encima del epsilon, juega la jugada segura', (difficulty) => {
+        const random = vi.fn().mockReturnValueOnce(DIFFICULTY_EPSILON[difficulty] + 0.01);
+
+        expect(AiPlayer.selectMove(trapBoard, 'red', trapCards, { difficulty, random })).toEqual(safeMove);
+    });
+
+    it.each(['hard', 'medium', 'easy'] as const)('En el nivel %s toma una victoria inmediata si está disponible', (difficulty) => {
+        const board = emptyBoard();
+        board[0][2] = { type: 'master', color: 'red' };
+        board[1][2] = { type: 'master', color: 'blue' };
+
+        const captureCard: Card = { name: 'Capture', description: 'Mock', color: 'red', moves: [{ x: 0, y: -1 }, { x: 1, y: 0 }] };
+
+        const cards: GameState['cards'] = { red: [captureCard, passiveCard], blue: [passiveCard, passiveCard], neutral: passiveCard };
+
+        const random = vi.fn().mockReturnValueOnce(DIFFICULTY_EPSILON[difficulty] - 0.01).mockReturnValue(0.99);
+
+        expect(AiPlayer.selectMove(board, 'red', cards, { difficulty, random })).toEqual({ from: { x: 2, y: 0 }, to: { x: 2, y: 1 }, cardName: 'Capture' });
+    });
+
+    it('El componente de amenaza hace que evite la jugada expuesta', () => {
+        const withoutThreat = { ...DEFAULT_EVALUATOR_WEIGHTS, threat: 0 };
+
+        expect(AiPlayer.selectMove(trapBoard, 'red', trapCards, { difficulty: 'hard', weights: withoutThreat })).toEqual(unsafeMove);
+        expect(AiPlayer.selectMove(trapBoard, 'red', trapCards, { difficulty: 'hard' })).toEqual(safeMove);
     });
 });

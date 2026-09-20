@@ -1,13 +1,27 @@
-import { Board, Card, GameState, PlayerColor } from "../../../shared";
+import { Board, Card, GameState, PlayerColor, AiDifficulty } from "../../../shared";
 import { MoveArbitrator, LegalMove } from "../game/MoveArbitrator";
 import { MovementManager } from "../game/MovementManager";
 import { DeckManager } from "../game/DeckManager";
-import { HeuristicEvaluator } from "./HeuristicEvaluator";
+import { HeuristicEvaluator, EvaluatorWeights, DEFAULT_EVALUATOR_WEIGHTS } from "./HeuristicEvaluator";
+
+export const DIFFICULTY_EPSILON: Record<AiDifficulty, number> = {
+    easy: 0.85,
+    medium: 0.45,
+    hard: 0
+};
+
+export interface SelectMoveOptions {
+    difficulty?: AiDifficulty;
+    random?: () => number;
+    weights?: EvaluatorWeights;
+}
 
 export class AiPlayer {
 
     //FEAT-14 (Sub-14.2): Elige el movimiento legal con mejor puntuación heurística
-    public static selectMove(board: Board, player: PlayerColor, cards: GameState['cards']): LegalMove {
+    public static selectMove(board: Board, player: PlayerColor, cards: GameState['cards'], options: SelectMoveOptions = {}): LegalMove {
+        const { difficulty = 'hard', random = Math.random, weights = DEFAULT_EVALUATOR_WEIGHTS } = options;
+
         const handCards: Card[] = cards[player];
         const legalMoves: LegalMove[] = MoveArbitrator.generateLegalMoves(board, player, handCards);
 
@@ -15,26 +29,24 @@ export class AiPlayer {
             throw new Error(`[FEAT-14] No hay movimientos legales disponibles para el jugador ${player}`);
         }
 
-        let bestMove =  legalMoves[0];
-        let bestScore = this.scoreMove(board, player, cards, bestMove);
+        const scoredMoves = legalMoves.map(move => ({ move, score: this.scoreMove(board, player, cards, move, weights) }));
+        const winningMove = scoredMoves.find(scored => scored.score === Number.POSITIVE_INFINITY);
 
-        for (let i = 1; i < legalMoves.length; i++) {
-            const move = legalMoves[i];
-            const score = this.scoreMove(board, player, cards, move);
+        if (winningMove) return winningMove.move;
 
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = move;
-            }
+        const epsilon = DIFFICULTY_EPSILON[difficulty];
+        if (epsilon > 0 && random() < epsilon) {
+            return legalMoves[Math.floor(random() * legalMoves.length)];
         }
-        return bestMove;
+
+        return scoredMoves.reduce((best, scored) => scored.score > best.score ? scored : best).move;
     }
 
-    private static scoreMove(board: Board, player: PlayerColor, cards: GameState['cards'], move: LegalMove): number {
+    private static scoreMove(board: Board, player: PlayerColor, cards: GameState['cards'], move: LegalMove, weights: EvaluatorWeights): number {
         const simulatedBoard = MovementManager.movePiece(board, move.from, move.to).newBoard;
         const simulatedCards = DeckManager.playCard(cards, player, move.cardName);
 
-        return HeuristicEvaluator.evaluate(simulatedBoard, player, simulatedCards);
+        return HeuristicEvaluator.evaluate(simulatedBoard, player, simulatedCards, weights);
     }
 
     //FEAT-14 (Sub-14.3): Elige qué carta descartar
