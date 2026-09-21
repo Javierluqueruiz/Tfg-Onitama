@@ -1,22 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Server } from 'socket.io';
-import { PlayerColor, PlayerProfile, SocketEvents } from '../../../shared/index';
+import { AiDifficulty, PlayerColor, PlayerProfile, SocketEvents } from '../../../shared/index';
 import { AiTurnRunner } from '../../src/network/AiTurnRunner';
 import { RoomManager } from '../../src/network/RoomManager';
 import { GameEngine } from '../../src/game/GameEngine';
 import { MoveArbitrator } from '../../src/game/MoveArbitrator';
+import { AiPlayer } from '../../src/ai/AiPlayer';
 
 describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
     const hostProfile: PlayerProfile = { socketId: 'hostSocket', name: 'Host' };
     let emit: ReturnType<typeof vi.fn>;
     let io: Server;
 
-    const createAiGame = () => {
-        const room = RoomManager.createAiRoom(hostProfile);
+    const createAiGame = (difficulty: AiDifficulty = 'hard') => {
+        const room = RoomManager.createAiRoom(hostProfile, difficulty);
         const aiColor: PlayerColor = room.players.red?.isAi ? 'red' : 'blue';
         const humanColor: PlayerColor = aiColor === 'red' ? 'blue' : 'red';
         return { room, aiColor, humanColor };
-        expect(room.players[aiColor]?.isAi).toBe(true);
     };
 
     beforeEach(() => {
@@ -27,6 +27,7 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         vi.useRealTimers();
     });
 
@@ -132,5 +133,24 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
             expect(room.gameState.winner).not.toBeNull();
         }
     });
+    
+    it('Debe guardar la dificultad elegida en el perfil de la IA', () => {
+        const { room, aiColor, humanColor } = createAiGame('medium');
 
+        expect(room.players[aiColor]?.isAi).toBe(true);
+        expect(room.players[aiColor]?.aiDifficulty).toBe('medium');
+        expect(room.players[humanColor]?.aiDifficulty).toBeUndefined();
+    });
+
+    it.each(['easy', 'medium', 'hard'] as const)('Debe jugar con la dificultad %s correctamente', (difficulty) => {
+        const selectMove = vi.spyOn(AiPlayer, 'selectMove');
+        const { room, aiColor } = createAiGame(difficulty);
+        room.gameState.currentTurn = aiColor;
+
+        AiTurnRunner.maybePlayTurn(io, room.roomId);
+        vi.runOnlyPendingTimers();
+
+        expect(selectMove).toHaveBeenCalledTimes(1);
+        expect(selectMove).toHaveBeenCalledWith(expect.anything(), aiColor, expect.anything(), { difficulty });
+    });
 });

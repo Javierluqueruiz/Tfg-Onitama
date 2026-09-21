@@ -81,6 +81,7 @@ export interface PlayerProfile {
     userId?: string;
     elo?: number;
     isAi?: boolean;
+    aiDifficulty?: AiDifficulty;
 }
 
 export interface ReconnectPayload {
@@ -92,7 +93,14 @@ export interface ReconnectPayload {
 //Sub-06.1
 //Modos de juego
 export type GameMode = 'casual' | 'normal' | 'fast';
-export type AiDifficulty = 'easy' | 'medium' | 'hard';
+
+//Sub-14.4
+export const AI_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
+export type AiDifficulty = typeof AI_DIFFICULTIES[number];
+
+export const isAiDifficulty = (value: unknown): value is AiDifficulty => {
+    return AI_DIFFICULTIES.some(difficulty => difficulty === value);
+}
 
 export interface MatchFoundPayload {
     roomId: string;

@@ -1,4 +1,4 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position, AiDifficulty } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 import { GameResultService } from "./GameResultService";
 
@@ -268,14 +268,15 @@ export class RoomManager {
     }
 
     //Sub-14.3
-    public static createAiRoom(hostProfile: PlayerProfile): RoomSession {
+    public static createAiRoom(hostProfile: PlayerProfile, difficulty: AiDifficulty): RoomSession {
         const room = this.createRoom(hostProfile, 'casual');
         room.countsForStats = false; // No contar partidas contra la IA para estadísticas de ELO
 
         const aiProfile: PlayerProfile = {
             socketId: `ai-${room.roomId}`,
             name: 'AI',
-            isAi: true
+            isAi: true,
+            aiDifficulty: difficulty
         };
 
         if(room.players.red === null) {
@@ -288,6 +289,11 @@ export class RoomManager {
         room.gameState.timeRemaining = this.getInitialTimeForMode(room.mode);
 
         return room;
+    }
+
+    //Sub-14.4: ¿hay un jugador AI en la sala?
+    public static hasAiPlayer(room: RoomSession): boolean {
+        return Boolean(room.players.red?.isAi || room.players.blue?.isAi);
     }
 
     //Sub-14.3: aplica un movimiento y devuelve el estado

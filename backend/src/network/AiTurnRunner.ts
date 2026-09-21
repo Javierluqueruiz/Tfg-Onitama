@@ -36,7 +36,7 @@ export class AiTurnRunner {
             const cardToDiscard = AiPlayer.selectDiscard(board, aiColor, cards);
             committedState = RoomManager.applyDiscard(roomId, cardToDiscard);
         } else {
-            const move = AiPlayer.selectMove(board, aiColor, cards);
+            const move = AiPlayer.selectMove(board, aiColor, cards, { difficulty: room.players[aiColor]?.aiDifficulty });
             committedState = RoomManager.applyMove(roomId, move.from, move.to, move.cardName);
         }
 

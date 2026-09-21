@@ -1,5 +1,5 @@
 import { Server, Socket } from "socket.io";
-import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode, PlayerColor } from "../../../shared";
+import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode, PlayerColor, RoomSession, AiDifficulty, isAiDifficulty } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
 import { MatchmakingService, QueueEntry } from "./MatchmakingService";
@@ -126,16 +126,20 @@ function registerRoomEvents(io: Server, socket: Socket) {
     });
 
     //FEAT 14 (Sub-14.3)
-    socket.on(SocketEvents.CREATE_AI_ROOM, async (data: { hostName: string }) => {
+    socket.on(SocketEvents.CREATE_AI_ROOM, async (data: { difficulty: AiDifficulty }) => {
+        if (!isAiDifficulty(data?.difficulty)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Nivel de dificultad no válido.' });
+        }
+        
         const identity = await resolvePlayerIdentity(socket);
         const hostProfile: PlayerProfile = {
             socketId: socket.id,
-            name: data.hostName,
+            name: identity.username ?? 'Invitado',
             userId: identity.userId,
             elo: identity.elo
         };
 
-        const room = RoomManager.createAiRoom(hostProfile);
+        const room = RoomManager.createAiRoom(hostProfile, data.difficulty);
         socket.join(room.roomId);
 
         io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
@@ -297,6 +301,9 @@ function registerDrawEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
 
         if (room) {
+            if (RoomManager.hasAiPlayer(room)) {
+                return socket.emit(SocketEvents.ERROR, { message: 'No se puede ofrecer empate contra un bot.' });
+            }
             room.drawOfferedBy = socket.id;
             socket.to(room.roomId).emit(SocketEvents.OFFER_DRAW);
         }
@@ -370,6 +377,13 @@ function registerRematchEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
         console.log(`Room ID para la revancha: ${room?.roomId}`);
         if (room) {
+            //Sub-14.4: contra la IA se acepta automáticamente, si la partida ha terminado.
+            if (RoomManager.hasAiPlayer(room)) {
+                if (room.gameState.status !== 'finished') {
+                    return socket.emit(SocketEvents.ERROR, { message: 'La partida aún no ha terminado.' });
+                }
+                return startRematch(io, room);
+            }
             room.rematchOfferedBy = socket.id;
             socket.to(room.roomId).emit(SocketEvents.REMATCH_OFFERED);
         }
@@ -386,23 +400,26 @@ function registerRematchEvents(io: Server, socket: Socket) {
     socket.on(SocketEvents.ACCEPT_REMATCH, () => {
         const room  = RoomManager.getRoomBySocketId(socket.id);
         if (room) {
-            const newGameState = RoomManager.resetGameForRematch(room.roomId);
-
-            if (newGameState) {
-
-                io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: newGameState, players: room.players });
-
-                if (room.mode !== 'casual') {
-                    RoomManager.startGameTimer(room.roomId,
-                        (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
-                        (finalState) => {
-                            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
-                        }
-                    );
-                }
-            }
+            startRematch(io, room);
         }    
     });
+}
+
+function startRematch(io: Server, room: RoomSession) {
+    const newGameState = RoomManager.resetGameForRematch(room.roomId);
+    if (newGameState) {
+        io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: newGameState, players: room.players });
+
+        if (room.mode !== 'casual') {
+            RoomManager.startGameTimer(room.roomId,
+                (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
+                (finalState) => {
+                    io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
+                }
+            );
+        }
+        AiTurnRunner.maybePlayTurn(io, room.roomId); // Sub-14.3
+    }
 }
 
 //FEAT-07

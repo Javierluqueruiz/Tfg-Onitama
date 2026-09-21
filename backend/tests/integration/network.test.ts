@@ -1284,7 +1284,7 @@ describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
 
         const start = await new Promise<GameStartPayload>((resolve) => {
             clientSocket.once(SocketEvents.GAME_START, resolve);
-            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1' });
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1', difficulty: 'medium' });
         });
 
         const humanColor: PlayerColor = start.players.red.socketId === clientSocket.id ? 'red' : 'blue';
@@ -1309,12 +1309,128 @@ describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
     it('Test-14.3b: La sala contra la IA no debe arrancar el temporizador ni contar para estadísticas', async () => {
         const start = await new Promise<GameStartPayload>((resolve) => {
             clientSocket.once(SocketEvents.GAME_START, resolve);
-            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Humano' });
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Humano', difficulty: 'medium' });
         });
 
         const room = RoomManager.getRoomById(start.gameState.roomId);
         expect(room!.mode).toBe('casual');
         expect(room!.countsForStats).toBe(false);
         expect(start.gameState.timeRemaining).toEqual({ red: 0, blue: 0 });
+    });
+});
+
+describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
+    let server: TestServer;
+    let clientSocket: ClientSocket;
+
+    beforeAll(async () => {
+        server = await startTestServer();
+    });
+
+    afterAll(() => {
+        stopTestServer(server);
+    });
+
+    beforeEach(async () => {
+        RoomManager.clearActiveRooms();
+        [clientSocket] = await connectClients(server.port, 1);
+    });
+
+    afterEach(() => {
+        clientSocket.disconnect();
+    });
+
+    const createAiRoom = (payload?: unknown) => new Promise<GameStartPayload>((resolve) => {
+        clientSocket.once(SocketEvents.GAME_START, resolve);
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, payload);
+    });
+
+    const nextError = () => new Promise<ErrorPayload>((resolve) => {
+        clientSocket.once(SocketEvents.ERROR, resolve);
+    });
+
+    const colorsOf = (start: GameStartPayload) => {
+        const humanColor: PlayerColor = start.players.red.socketId === clientSocket.id ? 'red' : 'blue';
+        const aiColor: PlayerColor = humanColor === 'red' ? 'blue' : 'red';
+        return { humanColor, aiColor };
+    };
+    
+    it.each(['easy', 'medium', 'hard'] as const)('Test-14.4a: Debe crear la sala contra la IA con dificultad %s', async (difficulty) => {
+        const start = await createAiRoom({ difficulty });
+        const { aiColor } = colorsOf(start);
+
+        expect(start.players[aiColor].isAi).toBe(true);
+        expect(start.players[aiColor].aiDifficulty).toBe(difficulty);
+    });
+
+    it('Test-14.4b: El nombre del jugador humano lo decide el servidor', async () => {
+        const start = await createAiRoom({ hostName: 'Humano', difficulty: 'medium' });
+        const { humanColor } = colorsOf(start);
+
+        expect(start.players[humanColor].name).toBe('Invitado');
+    });
+
+    it.each([{ difficulty: 'impossible'}, { difficulty: 1}, {}, undefined])('Test-14.4c: Debe rechazar la creación de sala contra la IA con dificultad inválida (%o)', async (invalidPayload) => {
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, invalidPayload);
+
+        expect((await errorPromise).message).toBe('Nivel de dificultad no válido.');
+        expect(RoomManager.getActiveRooms().size).toBe(0);
+    });
+
+    it('Test-14.4d: Debe rechazar ofertas de empate contra la IA', async () => {
+        const start = await createAiRoom({ difficulty: 'medium' });
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.OFFER_DRAW);
+
+        expect((await errorPromise).message).toBe('No se puede ofrecer empate contra un bot.');
+        expect(RoomManager.getRoomById(start.gameState.roomId)!.drawOfferedBy).toBeNull();
+    });
+
+    it('Test-14.4e: Debe rechazar ofertas de revancha contra la IA si la partida sigue en curso', async () => {
+        await createAiRoom({ difficulty: 'medium' });
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.OFFER_REMATCH);
+
+        expect((await errorPromise).message).toBe('La partida aún no ha terminado.');
+    });
+
+    it('Test-14.4f: La IA debe aceptar automáticamente la oferta de revancha si la partida ha terminado', async () => {
+        const start = await createAiRoom({ difficulty: 'medium' });
+        RoomManager.getRoomById(start.gameState.roomId)!.gameState.status = 'finished';
+
+        const rematch = new Promise<GameStartPayload>((resolve) => 
+            clientSocket.once(SocketEvents.GAME_START, resolve));
+        clientSocket.emit(SocketEvents.OFFER_REMATCH);
+        const restarted = await rematch;
+        const { aiColor } = colorsOf(restarted);
+
+        expect(restarted.gameState.status).not.toBe('finished');
+        expect(restarted.gameState.winner).toBeNull();
+        expect(restarted.players[aiColor].isAi).toBe(true);
+        expect(restarted.players[aiColor].aiDifficulty).toBe('medium');
+    });
+
+    it('Test-14.4g: Si la IA empieza la revancha, debe jugar su turno automáticamente', async () => {
+        const start = await createAiRoom({ difficulty: 'medium' });
+        const roomId = start.gameState.roomId;
+        const { aiColor, humanColor } = colorsOf(start);
+
+        let restarted: GameStartPayload | null = null;
+        for (let attempt = 0; attempt < 20 && restarted?.gameState.currentTurn !== aiColor; attempt++) {
+            RoomManager.getRoomById(roomId)!.gameState.status = 'finished';
+            const next = new Promise<GameStartPayload>((resolve) =>
+                clientSocket.once(SocketEvents.GAME_START, resolve));
+            clientSocket.emit(SocketEvents.OFFER_REMATCH);
+            restarted = await next;
+        }
+
+        expect(restarted!.gameState.currentTurn).toBe(aiColor);
+
+        const updates: GameState[] = [];
+        clientSocket.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => updates.push(data.gameState));
+
+        await vi.waitFor(() => expect(updates.length).toBeGreaterThan(0), { timeout: 4000 });
+        expect(updates[0].currentTurn).toBe(humanColor);
     });
 });
