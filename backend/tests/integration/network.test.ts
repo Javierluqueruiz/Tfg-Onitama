@@ -84,14 +84,14 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
                 resolve();
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
         });
     });
 
     it("Test-03.2:  Debe permitir a un segundo jugador unirse a la sala privada y comenzar el juego", () => {
         console.log("Test-03.2: Creando sala con Player1 y uniendo Player2...");
         return new Promise<void>((resolve) => {
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
 
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
@@ -119,7 +119,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
     it("Test-03.4: Debe rechazar la conexión si la sala está llena", () => {
         return new Promise<void>((resolve) => {
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
 
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 const roomCode = data.roomCode;
@@ -260,7 +260,7 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: currentRoomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
         });
     });
 
@@ -323,7 +323,7 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
         });
     });
 
@@ -384,7 +384,7 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
         });
     });
 
@@ -448,7 +448,7 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
         });
     });
 });
@@ -493,7 +493,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
                 resolve();
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'normal' });
         });
     });
 
@@ -1074,7 +1074,7 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
                 resolve();
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
         });
     });
 
@@ -1162,7 +1162,7 @@ describe('FEAT-14: Descartar carta', () => {
                 resolve();
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
         });
     });
 
@@ -1374,7 +1374,7 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
         const errorPromise = nextError();
         clientSocket.emit(SocketEvents.CREATE_AI_ROOM, invalidPayload);
 
-        expect((await errorPromise).message).toBe('Nivel de dificultad no válido.');
+        expect((await errorPromise).message).toBe('Datos de creación de sala AI inválidos.');
         expect(RoomManager.getActiveRooms().size).toBe(0);
     });
 

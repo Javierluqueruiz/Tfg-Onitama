@@ -1,11 +1,12 @@
 import { Server, Socket } from "socket.io";
-import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode, PlayerColor, RoomSession, AiDifficulty, isAiDifficulty } from "../../../shared";
+import { PlayerProfile, SocketEvents, ReconnectPayload, PlayerColor, RoomSession } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
 import { MatchmakingService, QueueEntry } from "./MatchmakingService";
 import { resolvePlayerIdentity } from "./playerIdentity";
 import { EloService } from "../game/EloService";
 import { AiTurnRunner } from "./AiTurnRunner";
+import { isCreateRoomPayload, isJoinRoomPayload, isJoinQueuePayload, isCreateAiRoomPayload, isChatPayload } from "./payloadValidation";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -28,7 +29,11 @@ export function registerSocketEvents(io: Server) {
 //FEAT-03
 function registerRoomEvents(io: Server, socket: Socket) {
     //CREAR LA SALA
-    socket.on(SocketEvents.CREATE_ROOM, async ( data: { hostName: string, mode: GameMode } ) => {
+    socket.on(SocketEvents.CREATE_ROOM, async ( data: unknown ) => {
+        if (!isCreateRoomPayload(data)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de creación de sala inválidos.' });
+        }
+        
         const identity = await resolvePlayerIdentity(socket);
         const hostProfile: PlayerProfile = {
             socketId: socket.id,
@@ -47,7 +52,10 @@ function registerRoomEvents(io: Server, socket: Socket) {
     });
 
     //UNIRSE A LA SALA
-    socket.on(SocketEvents.JOIN_ROOM, async (payload: { roomCode: string, guestName: string }) => {
+    socket.on(SocketEvents.JOIN_ROOM, async (payload: unknown) => {
+        if (!isJoinRoomPayload(payload)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de unión a la sala inválidos.' });
+        }
         const { roomCode, guestName } = payload;
         const identity = await resolvePlayerIdentity(socket);
         const guestProfile: PlayerProfile = {
@@ -126,9 +134,9 @@ function registerRoomEvents(io: Server, socket: Socket) {
     });
 
     //FEAT 14 (Sub-14.3)
-    socket.on(SocketEvents.CREATE_AI_ROOM, async (data: { difficulty: AiDifficulty }) => {
-        if (!isAiDifficulty(data?.difficulty)) {
-            return socket.emit(SocketEvents.ERROR, { message: 'Nivel de dificultad no válido.' });
+    socket.on(SocketEvents.CREATE_AI_ROOM, async (data: unknown) => {
+        if (!isCreateAiRoomPayload(data)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de creación de sala AI inválidos.' });
         }
         
         const identity = await resolvePlayerIdentity(socket);
@@ -343,7 +351,10 @@ function registerDrawEvents(io: Server, socket: Socket) {
 //FEAT-06
 function registerMatchmakingEvents(io: Server, socket: Socket) {
         //Sub-06.1 / Sub-09.2: Cola de emparejamiento
-    socket.on(SocketEvents.JOIN_QUEUE, async (data: { mode: GameMode }) => {
+    socket.on(SocketEvents.JOIN_QUEUE, async (data: unknown) => {
+        if (!isJoinQueuePayload(data)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de unión a la cola inválidos.' });
+        }
         const { mode } = data;
         
         const identity = await resolvePlayerIdentity(socket);
@@ -425,7 +436,10 @@ function startRematch(io: Server, room: RoomSession) {
 //FEAT-07
 function registerChatEvents(io: Server, socket: Socket) {
 //Sub-07.1: Chat
-    socket.on(SocketEvents.SEND_MESSAGE, (messageData: { message: string }) => {
+    socket.on(SocketEvents.SEND_MESSAGE, (messageData: unknown) => {
+        if (!isChatPayload(messageData)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de mensaje de chat inválidos.' });
+        }
         console.log(messageData.message);
         const room = RoomManager.getRoomBySocketId(socket.id);
         if (room) {
