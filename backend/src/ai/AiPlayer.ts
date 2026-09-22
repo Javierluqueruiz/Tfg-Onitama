@@ -6,7 +6,7 @@ import { HeuristicEvaluator, EvaluatorWeights, DEFAULT_EVALUATOR_WEIGHTS } from 
 
 export const DIFFICULTY_EPSILON: Record<AiDifficulty, number> = {
     easy: 0.85,
-    medium: 0.45,
+    medium: 0.25,
     hard: 0
 };
 

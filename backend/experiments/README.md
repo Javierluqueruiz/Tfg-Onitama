@@ -43,7 +43,7 @@ Ejecución de referencia sobre el código del commit `498cad0`.
 | Enfrentamiento (A vs B) | Gana A | Gana B | Sin terminar |
 |---|---|---|---|
 | hard vs medium | 47.7% | 52.3% | 0.0% |
-| medium vs easy | 43.4% | 56.6% | 0.0% |
+| medium vs easy | 39.8% | 60.2% | 0.0% |
 | hard vs easy | 38.7% | 61.3% | 0.0% |
 | hard vs random | 36.2% | 63.8% | 0.0% |
 | medium vs random | 40.6% | 59.4% | 0.0% |
@@ -53,18 +53,18 @@ Ejecución de referencia sobre el código del commit `498cad0`.
 
 | Enfrentamiento (A vs B) | Gana A | Gana B | Sin terminar |
 |---|---|---|---|
-| hard vs medium | 89.0% | 11.0% | 0.0% |
-| medium vs easy | 64.6% | 35.4% | 0.0% |
+| hard vs medium | 76.7% | 23.3% | 0.0% |
+| medium vs easy | 76.4% | 23.6% | 0.0% |
 | hard vs easy | 96.6% | 3.4% | 0.0% |
 | hard vs random | 96.0% | 4.0% | 0.0% |
-| medium vs random | 69.1% | 30.9% | 0.0% |
+| medium vs random | 79.1% | 20.9% | 0.0% |
 | easy vs random | 55.0% | 45.0% | 0.0% |
 
 ## Interpretación
 
 - **Sin detección, la IA comete un blunder de cada cinco jugadas** (20,3%), y en la práctica totalidad de los casos existía una alternativa segura. Con la detección baja a menos del 1%.
 - **Sin detección, la escalera de dificultad está invertida:** el nivel difícil pierde contra medio y el fácil; incluso un jugador aleatorio le gana en torno al 64% de las partidas. El "ruido" de los niveles no debilita a una IA que ya se autosabotea.
-- **Con detección, hay una escalera bien definida:** difícil supera a medio (89%), el medio al fácil (65%) y el difícil casi siempre gana al azar (96%).
+- **Con detección, hay una escalera bien definida:** difícil supera a medio (76%), el medio al fácil (76%) y el difícil casi siempre gana al azar (96%).
 - 
 - La detección es una **característica estática de la posición**, como la movilidad. No recorre el árbol de jugadas: el Minimax de FEAT-15 sí razonará sobre secuencias de jugadas.
 
@@ -76,5 +76,5 @@ Ejecución de referencia sobre el código del commit `498cad0`.
   cambian, pero no deben citarse los decimales como exactos.
 
 - Los rivales son **artificiales**: la escalera se ha medido entre versiones de la propia IA y contra un jugador aleatorio, no contra personas. Un humano castigará errores que el azar no ve.
-- El nivel `easy` apenas supera al azar que aprovecha victorias (53 %): es casi aleatorio. Los valores de ε (`DIFFICULTY_EPSILON`: 0 / 0,45 / 0,85) están sin afinar y se ajustarán jugando.
+- El nivel `easy` apenas supera al azar que aprovecha victorias (53 %): es casi aleatorio. Los valores de ε (`DIFFICULTY_EPSILON`: 0 / 0,25 / 0,85) están sin afinar y se ajustarán jugando.
 - El script depende de la API de `AiPlayer` y no forma parte del build ni del CI (solo del lint): si esa API cambia, hay que actualizarlo.
