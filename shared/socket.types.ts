@@ -109,6 +109,12 @@ export const isAiDifficulty = (value: unknown): value is AiDifficulty => {
     return AI_DIFFICULTIES.some(difficulty => difficulty === value);
 }
 
+export const AI_DIFFICULTY_LABELS: Record<AiDifficulty, string> = {
+    easy: 'Fácil',
+    medium: 'Medio',
+    hard: 'Difícil'
+};
+
 export interface MatchFoundPayload {
     roomId: string;
     roomCode: string;

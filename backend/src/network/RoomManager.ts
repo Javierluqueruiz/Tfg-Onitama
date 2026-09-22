@@ -1,4 +1,4 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position, AiDifficulty } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position, AiDifficulty, AI_DIFFICULTY_LABELS } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 import { GameResultService } from "./GameResultService";
 
@@ -274,7 +274,7 @@ export class RoomManager {
 
         const aiProfile: PlayerProfile = {
             socketId: `ai-${room.roomId}`,
-            name: 'AI',
+            name: `IA (${AI_DIFFICULTY_LABELS[difficulty]})`,
             isAi: true,
             aiDifficulty: difficulty
         };

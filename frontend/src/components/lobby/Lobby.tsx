@@ -16,7 +16,7 @@ export const Lobby: React.FC =  () => {
         isConnected, currentScreen, setCurrentScreen,
         playerName, setPlayerName, joinCode, setJoinCode,
         createdRoomCode, errorMsg, setErrorMsg,
-        handleCreateRoom, handleJoinRoom, startMatchmaking, selectMode, setSelectMode, accountUsername
+        handleCreateRoom, handleJoinRoom, startMatchmaking, startAiGame, selectMode, setSelectMode, accountUsername
     } = useLobby();
 
     // FEAT-08: qué pestaña del menú principal está activa, solo para decidir
@@ -64,6 +64,7 @@ export const Lobby: React.FC =  () => {
                                 setErrorMsg(null);
                                 startMatchmaking(mode);
                             }}
+                            onStartAiGame={startAiGame}
                             isConnected={isConnected}
                             activeTab={mainMenuTab}
                             onTabChange={setMainMenuTab}

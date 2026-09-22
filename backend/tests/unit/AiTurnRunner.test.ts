@@ -142,6 +142,12 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
         expect(room.players[humanColor]?.aiDifficulty).toBeUndefined();
     });
 
+    it('Debe usar el nombre "IA (Difícil) para el perfil de la IA en partidas de dificultad "hard"', () => {
+        const { room, aiColor } = createAiGame('hard');
+
+        expect(room.players[aiColor]?.name).toBe('IA (Difícil)');
+    });
+
     it.each(['easy', 'medium', 'hard'] as const)('Debe jugar con la dificultad %s correctamente', (difficulty) => {
         const selectMove = vi.spyOn(AiPlayer, 'selectMove');
         const { room, aiColor } = createAiGame(difficulty);

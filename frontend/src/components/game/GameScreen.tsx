@@ -24,7 +24,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
 
     const { 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
-        opponentName, localName, opponentElo, localElo, myCards, opponentCards, neutralCard, 
+        opponentName, localName, opponentElo, localElo, isVsAi, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, mustDiscard, handleSelectCard,  selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
         drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isSurrenderModalOpen, confirmSurrender, cancelSurrender
@@ -117,6 +117,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             <GameControls
                 status={gameState.status}
                 isGameOver={isGameOver}
+                isVsAi={isVsAi}
                 drawOfferSent={drawOfferSent}
                 drawOfferReceived={drawOfferReceived}
                 onOfferDraw={handleOfferDraw}
