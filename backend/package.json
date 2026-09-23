@@ -10,6 +10,7 @@
     "test": "vitest run",
     "lint": "eslint .",
     "demo": "ts-node src/simulatedGame.ts",
+    "experiment:ai": "ts-node experiments/aiCalibration.ts",
     "test:coverage": "vitest run --coverage"
   },
   "keywords": [],

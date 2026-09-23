@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
 import { RoomManager } from "../../src/network/RoomManager";
 import { registerSocketEvents } from "../../src/network/SocketHandler";
 import { SocketEvents, PlayerColor, ChatMessage, GameMode, GameState, PlayerProfile } from "../../../shared/index";
@@ -8,6 +8,7 @@ import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
 import { createServer, Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
 import { MatchmakingService } from '../../src/network/MatchmakingService';
+import { MoveArbitrator } from '../../src/game/MoveArbitrator';
 
 type GameStartPayload = { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } };
 type GameUpdatePayload = { gameState: GameState };
@@ -83,14 +84,14 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
                 resolve();
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
         });
     });
 
     it("Test-03.2:  Debe permitir a un segundo jugador unirse a la sala privada y comenzar el juego", () => {
         console.log("Test-03.2: Creando sala con Player1 y uniendo Player2...");
         return new Promise<void>((resolve) => {
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
 
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
@@ -118,7 +119,7 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
     it("Test-03.4: Debe rechazar la conexión si la sala está llena", () => {
         return new Promise<void>((resolve) => {
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
 
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 const roomCode = data.roomCode;
@@ -176,12 +177,13 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             let currentRoomCode = '';
 
             // Escuchamos GAME_START en ambos clientes
-            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
+            const handleGameStart = (client: ClientSocket) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn; // 'red' | 'blue'
                 
                 // Determinamos qué socket tiene el turno inicial
-                const isMyTurn = (activeColor === 'red' && isHost) || (activeColor === 'blue' && !isHost);
+                const clientColor: PlayerColor = data.players.red.socketId === client.id ? 'red' : 'blue';
+                const isMyTurn = clientColor === activeColor;
                 
                 if (isMyTurn) {
                     activeClient = client;
@@ -249,8 +251,8 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             clientSocket1.on(SocketEvents.GAME_UPDATE, checkGameUpdate);
             clientSocket2.on(SocketEvents.GAME_UPDATE, checkGameUpdate);
 
-            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1, true));
-            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2, false));
+            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1));
+            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2));
 
             // Flujo de arranque de sala
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
@@ -258,7 +260,7 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: currentRoomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
         });
     });
 
@@ -270,7 +272,8 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
-                const isInactive = (activeColor === 'red' && !isHost) || (activeColor === 'blue' && isHost);
+                const clientColor = data.players.red.socketId === client.id ? 'red' : 'blue';
+                const isInactive = clientColor !== activeColor;
 
                 // El jugador que NO tiene el turno intenta mover
                 if (isInactive) {
@@ -320,18 +323,19 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
         });
     });
 
     it('Test-04.3: Debe rechazar una jugada con coordenadas fuera del tablero y mantener el estado sin cambios', () =>{
         return new Promise<void>((resolve, reject) => {
-            const handleGameStart = (client: ClientSocket, isHost: boolean) => (data: GameStartPayload) => {
+            const handleGameStart = (client: ClientSocket) => (data: GameStartPayload) => {
                 const gameState = data.gameState;
                 const activeColor = gameState.currentTurn;
 
                 // Solo el jugador que tiene el turno intentará hacer la trampa
-                const isMyTurn = (activeColor === 'red' && isHost) || (activeColor === 'blue' && !isHost);
+                const clientColor: PlayerColor = data.players.red.socketId === client.id ? 'red' : 'blue';
+                const isMyTurn = clientColor === activeColor;
 
                 if (isMyTurn) {
                     // 1. Obtenemos una de sus cartas reales para que esa validación pase
@@ -372,15 +376,15 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
             clientSocket1.on(SocketEvents.ERROR, handleError);
             clientSocket2.on(SocketEvents.ERROR, handleError);
 
-            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1, true));
-            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2, false));
+            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1));
+            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2));
 
             // Flujo estándar de arranque de sala
             clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
                 clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, 'Player1');
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
         });
     });
 
@@ -402,6 +406,50 @@ describe('FEAT-04: Gestión del Tablero en Tiempo real', () => {
         expect(latency).toBeDefined();
         expect(typeof latency).toBe('number');
         expect(latency).toBeGreaterThanOrEqual(0);
+    });
+
+    it('Test-04.5: Debe rechazar una jugada LEGAL enviada por el jugador que no tiene el turno',() => {
+        return new Promise<void>((resolve, reject) => {
+            const handleGameStart = (client: ClientSocket) => (data: GameStartPayload) => {
+                const { gameState, players } = data;
+                const activeColor = gameState.currentTurn;
+                const clientColor = players.red.socketId === client.id ? 'red' : 'blue';
+
+                if (clientColor === activeColor) return;
+
+                const activeHand = activeColor === 'red' ? gameState.cards.red : gameState.cards.blue;
+                const [legalMove] = MoveArbitrator.generateLegalMoves(gameState.board, activeColor, activeHand);
+                client.emit(SocketEvents.PLAYER_MOVE, legalMove);
+            };
+
+            const failOnGameUpdate = () => reject(new Error('No debería emitirse GAME_UPDATE: la jugada legal fuera de turno no debe alterar el estado.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
+            const handleError = (error: ErrorPayload) => {
+                try {
+                    expect(error.message).toBe('No es tu turno.');
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            clientSocket1.on(SocketEvents.ERROR, handleError);
+            clientSocket2.on(SocketEvents.ERROR, handleError);
+
+            clientSocket1.on(SocketEvents.GAME_START, handleGameStart(clientSocket1));
+            clientSocket2.on(SocketEvents.GAME_START, handleGameStart(clientSocket2));
+
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
+            });
+
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
+        });
     });
 });
 
@@ -445,7 +493,7 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
                 resolve();
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'normal' });
         });
     });
 
@@ -1026,7 +1074,7 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
                 resolve();
             });
 
-            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1' });
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
         });
     });
 
@@ -1081,5 +1129,308 @@ describe('FEAT-07: Comunicación en tiempo real mediante chat', () => {
         for (let i = 0; i < totalMessages; i++) {
             clientSocket1.emit(SocketEvents.SEND_MESSAGE, { message: `Mensaje ${i + 1}` });
         }
+    });
+});
+
+describe('FEAT-14: Descartar carta', () => {
+    let server: TestServer;
+    let clientSocket1: ClientSocket;
+    let clientSocket2: ClientSocket;
+    let activeRoomId: string;
+    let client1Color: PlayerColor;
+
+    beforeAll(async () => {
+        server = await startTestServer();
+    });
+
+    afterAll(() => {
+        stopTestServer(server);
+    });
+
+    beforeEach(async () => {
+        RoomManager.clearActiveRooms();
+        [clientSocket1, clientSocket2] = await connectClients(server.port, 2);
+
+        await new Promise<void>((resolve) => {
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket2.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player2' });
+            });
+
+            clientSocket1.on(SocketEvents.GAME_START, (data) => {
+                activeRoomId = data.gameState.roomId;
+                client1Color = data.players.red.socketId === clientSocket1.id ? 'red' : 'blue';
+                resolve();
+            });
+
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual'});
+        });
+    });
+
+    afterEach(() => {
+        clientSocket1.disconnect();
+        clientSocket2.disconnect();
+    });
+
+    it('Test-14.1a: Debe permitir a un jugador descartar una carta cuando la partida esté esperando un descarte', () => {
+        return new Promise<void>((resolve, reject) => {
+            const room = RoomManager.getRoomById(activeRoomId);
+            room!.gameState.status = 'waiting_for_discard';
+
+            const activeColor = room!.gameState.currentTurn;
+            const activeCliente = activeColor === client1Color ? clientSocket1 : clientSocket2;
+            const discardedCard = (activeColor === 'red' ? room!.gameState.cards.red[0] : room!.gameState.cards.blue[0]);
+            const previousNeutral = room!.gameState.cards.neutral;
+
+            clientSocket1.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => {
+                try {
+                    const newHand = activeColor === 'red' ? data.gameState.cards.red : data.gameState.cards.blue;
+
+                    expect(data.gameState.cards.neutral.name).toBe(discardedCard.name);
+                    expect(newHand.some(c=> c.name === previousNeutral.name)).toBe(true);
+                    expect(data.gameState.currentTurn).not.toBe(activeColor);
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+
+            activeCliente.emit(SocketEvents.DISCARD_CARD, { cardName: discardedCard.name });
+        });
+    });
+
+    it('Test-14.1b: Debe rechazar un descarte si la partida no está esperando un descarte', () => {
+        return new Promise<void>((resolve, reject) => {
+            const room = RoomManager.getRoomById(activeRoomId);
+            const activeColor = room!.gameState.currentTurn;
+            const activeClient = activeColor === client1Color ? clientSocket1 : clientSocket2;
+            const someCard = (activeColor === 'red' ? room!.gameState.cards.red[0] : room!.gameState.cards.blue[0]);
+
+            const failOnGameUpdate = () => reject(new Error('Se recibió GAME_UPDATE a pesar de que el descarte fue inválido.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
+            activeClient.on(SocketEvents.ERROR, (error: ErrorPayload) => {
+                try {
+                    expect(error.message).toBe('No hay ningún descarte pendiente');
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+
+            activeClient.emit(SocketEvents.DISCARD_CARD, { cardName: someCard.name });
+        });
+    });
+
+    it('Test-14.1c: Debe rechazar el descarte de quien no tiene el turno', () => {
+        return new Promise<void>((resolve, reject) => {
+            const room = RoomManager.getRoomById(activeRoomId);
+            room!.gameState.status = 'waiting_for_discard';
+
+            const activeColor = room!.gameState.currentTurn;
+            const inactiveColor = activeColor === 'red' ? 'blue' : 'red';
+            const inactiveClient = inactiveColor === client1Color ? clientSocket1 : clientSocket2;
+            
+            const victimCard = (activeColor === 'red' ? room!.gameState.cards.red[0] : room!.gameState.cards.blue[0]);
+            const failOnGameUpdate = () => reject(new Error('No debería emitirse GAME_UPDATE.'));
+            clientSocket1.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+            clientSocket2.on(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+
+            inactiveClient.on(SocketEvents.ERROR, (error: ErrorPayload) => {
+                try {
+                    expect(error.message).toBe('No es tu turno para descartar una carta');
+                    setTimeout(() => {
+                        clientSocket1.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        clientSocket2.off(SocketEvents.GAME_UPDATE, failOnGameUpdate);
+                        resolve();
+                    }, 50);
+                } catch (error) {
+                    reject(error);
+                }
+            });
+            inactiveClient.emit(SocketEvents.DISCARD_CARD, { cardName: victimCard.name });
+        });
+    });    
+});
+
+describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
+    let server: TestServer;
+    let clientSocket: ClientSocket;
+
+    beforeAll(async () => {
+        server = await startTestServer();
+    });
+
+    afterAll(() => {
+        stopTestServer(server);
+    });
+
+    beforeEach(async () => {
+        RoomManager.clearActiveRooms();
+        [clientSocket] = await connectClients(server.port, 1);
+    });
+
+    afterEach(() => {
+        clientSocket.disconnect();
+    });
+
+    it('Test-14.3a: Debe crear la sala contra la IA y hacer que la IA juegue sola su turno', async () => {
+        const updates: GameState[] = [];
+        clientSocket.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => updates.push(data.gameState));
+
+        const start = await new Promise<GameStartPayload>((resolve) => {
+            clientSocket.once(SocketEvents.GAME_START, resolve);
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1', difficulty: 'medium' });
+        });
+
+        const humanColor: PlayerColor = start.players.red.socketId === clientSocket.id ? 'red' : 'blue';
+        const aiColor: PlayerColor = humanColor === 'red' ? 'blue' : 'red';
+
+        expect(start.players[aiColor].isAi).toBe(true);
+        expect(start.players[humanColor].isAi).toBeFalsy();
+
+        if (start.gameState.currentTurn === humanColor) {
+            const [move] = MoveArbitrator.generateLegalMoves(start.gameState.board, humanColor, start.gameState.cards[humanColor]);
+            clientSocket.emit(SocketEvents.PLAYER_MOVE, move);
+
+            await vi.waitFor(() => expect(updates.length).toBeGreaterThan(1), { timeout: 4000 });
+            expect(updates[0].currentTurn).toBe(aiColor);
+            expect(updates[1].currentTurn).toBe(humanColor);
+        } else {
+            await vi.waitFor(() => expect(updates.length).toBeGreaterThan(0), { timeout: 4000 });
+            expect(updates[0].currentTurn).toBe(humanColor);
+        }
+    });
+
+    it('Test-14.3b: La sala contra la IA no debe arrancar el temporizador ni contar para estadísticas', async () => {
+        const start = await new Promise<GameStartPayload>((resolve) => {
+            clientSocket.once(SocketEvents.GAME_START, resolve);
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Humano', difficulty: 'medium' });
+        });
+
+        const room = RoomManager.getRoomById(start.gameState.roomId);
+        expect(room!.mode).toBe('casual');
+        expect(room!.countsForStats).toBe(false);
+        expect(start.gameState.timeRemaining).toEqual({ red: 0, blue: 0 });
+    });
+});
+
+describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
+    let server: TestServer;
+    let clientSocket: ClientSocket;
+
+    beforeAll(async () => {
+        server = await startTestServer();
+    });
+
+    afterAll(() => {
+        stopTestServer(server);
+    });
+
+    beforeEach(async () => {
+        RoomManager.clearActiveRooms();
+        [clientSocket] = await connectClients(server.port, 1);
+    });
+
+    afterEach(() => {
+        clientSocket.disconnect();
+    });
+
+    const createAiRoom = (payload?: unknown) => new Promise<GameStartPayload>((resolve) => {
+        clientSocket.once(SocketEvents.GAME_START, resolve);
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, payload);
+    });
+
+    const nextError = () => new Promise<ErrorPayload>((resolve) => {
+        clientSocket.once(SocketEvents.ERROR, resolve);
+    });
+
+    const colorsOf = (start: GameStartPayload) => {
+        const humanColor: PlayerColor = start.players.red.socketId === clientSocket.id ? 'red' : 'blue';
+        const aiColor: PlayerColor = humanColor === 'red' ? 'blue' : 'red';
+        return { humanColor, aiColor };
+    };
+    
+    it.each(['easy', 'medium', 'hard'] as const)('Test-14.4a: Debe crear la sala contra la IA con dificultad %s', async (difficulty) => {
+        const start = await createAiRoom({ difficulty });
+        const { aiColor } = colorsOf(start);
+
+        expect(start.players[aiColor].isAi).toBe(true);
+        expect(start.players[aiColor].aiDifficulty).toBe(difficulty);
+    });
+
+    it('Test-14.4b: El nombre del jugador humano lo decide el servidor', async () => {
+        const start = await createAiRoom({ hostName: 'Humano', difficulty: 'medium' });
+        const { humanColor } = colorsOf(start);
+
+        expect(start.players[humanColor].name).toBe('Invitado');
+    });
+
+    it.each([{ difficulty: 'impossible'}, { difficulty: 1}, {}, undefined])('Test-14.4c: Debe rechazar la creación de sala contra la IA con dificultad inválida (%o)', async (invalidPayload) => {
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, invalidPayload);
+
+        expect((await errorPromise).message).toBe('Datos de creación de sala AI inválidos.');
+        expect(RoomManager.getActiveRooms().size).toBe(0);
+    });
+
+    it('Test-14.4d: Debe rechazar ofertas de empate contra la IA', async () => {
+        const start = await createAiRoom({ difficulty: 'medium' });
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.OFFER_DRAW);
+
+        expect((await errorPromise).message).toBe('No se puede ofrecer empate contra un bot.');
+        expect(RoomManager.getRoomById(start.gameState.roomId)!.drawOfferedBy).toBeNull();
+    });
+
+    it('Test-14.4e: Debe rechazar ofertas de revancha contra la IA si la partida sigue en curso', async () => {
+        await createAiRoom({ difficulty: 'medium' });
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.OFFER_REMATCH);
+
+        expect((await errorPromise).message).toBe('La partida aún no ha terminado.');
+    });
+
+    it('Test-14.4f: La IA debe aceptar automáticamente la oferta de revancha si la partida ha terminado', async () => {
+        const start = await createAiRoom({ difficulty: 'medium' });
+        RoomManager.getRoomById(start.gameState.roomId)!.gameState.status = 'finished';
+
+        const rematch = new Promise<GameStartPayload>((resolve) => 
+            clientSocket.once(SocketEvents.GAME_START, resolve));
+        clientSocket.emit(SocketEvents.OFFER_REMATCH);
+        const restarted = await rematch;
+        const { aiColor } = colorsOf(restarted);
+
+        expect(restarted.gameState.status).not.toBe('finished');
+        expect(restarted.gameState.winner).toBeNull();
+        expect(restarted.players[aiColor].isAi).toBe(true);
+        expect(restarted.players[aiColor].aiDifficulty).toBe('medium');
+    });
+
+    it('Test-14.4g: Si la IA empieza la revancha, debe jugar su turno automáticamente', async () => {
+        const start = await createAiRoom({ difficulty: 'medium' });
+        const roomId = start.gameState.roomId;
+        const { aiColor, humanColor } = colorsOf(start);
+
+        let restarted: GameStartPayload | null = null;
+        for (let attempt = 0; attempt < 20 && restarted?.gameState.currentTurn !== aiColor; attempt++) {
+            RoomManager.getRoomById(roomId)!.gameState.status = 'finished';
+            const next = new Promise<GameStartPayload>((resolve) =>
+                clientSocket.once(SocketEvents.GAME_START, resolve));
+            clientSocket.emit(SocketEvents.OFFER_REMATCH);
+            restarted = await next;
+        }
+
+        expect(restarted!.gameState.currentTurn).toBe(aiColor);
+
+        const updates: GameState[] = [];
+        clientSocket.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => updates.push(data.gameState));
+
+        await vi.waitFor(() => expect(updates.length).toBeGreaterThan(0), { timeout: 4000 });
+        expect(updates[0].currentTurn).toBe(humanColor);
     });
 });

@@ -109,3 +109,14 @@
         transform: translateY(0);
     }
 }
+
+/* Sub-14.4 */
+.aiSection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+.btnDifficulty_easy { background-color: var(--game-jade); color: var(--game-paper); }
+.btnDifficulty_medium { background-color: var(--game-wood-deep); color: var(--game-paper); }
+.btnDifficulty_hard { background-color: var(--game-red); color: var(--game-paper); }

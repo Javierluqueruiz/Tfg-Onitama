@@ -1,4 +1,4 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position, AiDifficulty, AI_DIFFICULTY_LABELS } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 import { GameResultService } from "./GameResultService";
 
@@ -62,7 +62,8 @@ export class RoomManager {
             },
             drawOfferedBy: null,
             rematchOfferedBy: null,
-            resultPersisted: false
+            resultPersisted: false,
+            countsForStats: true, //Sub-14.3
         };
 
         this.activeRooms.set(roomId, newRoom);
@@ -265,4 +266,52 @@ export class RoomManager {
         }
         return room.gameState;
     }
+
+    //Sub-14.3
+    public static createAiRoom(hostProfile: PlayerProfile, difficulty: AiDifficulty): RoomSession {
+        const room = this.createRoom(hostProfile, 'casual');
+        room.countsForStats = false; // No contar partidas contra la IA para estadísticas de ELO
+
+        const aiProfile: PlayerProfile = {
+            socketId: `ai-${room.roomId}`,
+            name: `IA (${AI_DIFFICULTY_LABELS[difficulty]})`,
+            isAi: true,
+            aiDifficulty: difficulty
+        };
+
+        if(room.players.red === null) {
+            room.players.red = aiProfile;
+        } else if(room.players.blue === null) {
+            room.players.blue = aiProfile;
+        }
+
+        room.gameState = GameEngine.createNewGame(room.roomId);
+        room.gameState.timeRemaining = this.getInitialTimeForMode(room.mode);
+
+        return room;
+    }
+
+    //Sub-14.4: ¿hay un jugador AI en la sala?
+    public static hasAiPlayer(room: RoomSession): boolean {
+        return Boolean(room.players.red?.isAi || room.players.blue?.isAi);
+    }
+
+    //Sub-14.3: aplica un movimiento y devuelve el estado
+    public static applyMove(roomId: string, from: Position, to: Position, cardName: string): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room) return null;
+
+        const newState = GameEngine.processTurn(room.gameState, from, to, cardName);
+        return this.commitProcessedState(roomId, newState);
+    }
+
+    //Sub-14.3: aplica un descarte y devuelve el estado
+    public static applyDiscard(roomId: string, cardName: string): GameState | null {
+        const room = this.getRoomById(roomId);
+        if (!room) return null;
+
+        const newState = GameEngine.discardCard(room.gameState, cardName);
+        return this.commitProcessedState(roomId, newState);
+    }
+
 }

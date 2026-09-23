@@ -1,10 +1,12 @@
 import { Server, Socket } from "socket.io";
-import { PlayerProfile, SocketEvents, ReconnectPayload, GameMode } from "../../../shared";
+import { PlayerProfile, SocketEvents, ReconnectPayload, PlayerColor, RoomSession } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { GameEngine } from "../game/GameEngine";
 import { MatchmakingService, QueueEntry } from "./MatchmakingService";
 import { resolvePlayerIdentity } from "./playerIdentity";
 import { EloService } from "../game/EloService";
+import { AiTurnRunner } from "./AiTurnRunner";
+import { isCreateRoomPayload, isJoinRoomPayload, isJoinQueuePayload, isCreateAiRoomPayload, isChatPayload } from "./payloadValidation";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -27,7 +29,11 @@ export function registerSocketEvents(io: Server) {
 //FEAT-03
 function registerRoomEvents(io: Server, socket: Socket) {
     //CREAR LA SALA
-    socket.on(SocketEvents.CREATE_ROOM, async ( data: { hostName: string, mode: GameMode } ) => {
+    socket.on(SocketEvents.CREATE_ROOM, async ( data: unknown ) => {
+        if (!isCreateRoomPayload(data)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de creación de sala inválidos.' });
+        }
+        
         const identity = await resolvePlayerIdentity(socket);
         const hostProfile: PlayerProfile = {
             socketId: socket.id,
@@ -46,7 +52,10 @@ function registerRoomEvents(io: Server, socket: Socket) {
     });
 
     //UNIRSE A LA SALA
-    socket.on(SocketEvents.JOIN_ROOM, async (payload: { roomCode: string, guestName: string }) => {
+    socket.on(SocketEvents.JOIN_ROOM, async (payload: unknown) => {
+        if (!isJoinRoomPayload(payload)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de unión a la sala inválidos.' });
+        }
         const { roomCode, guestName } = payload;
         const identity = await resolvePlayerIdentity(socket);
         const guestProfile: PlayerProfile = {
@@ -123,6 +132,27 @@ function registerRoomEvents(io: Server, socket: Socket) {
             console.log(`Sala ${room.roomId} eliminada}`)
         }
     });
+
+    //FEAT 14 (Sub-14.3)
+    socket.on(SocketEvents.CREATE_AI_ROOM, async (data: unknown) => {
+        if (!isCreateAiRoomPayload(data)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de creación de sala AI inválidos.' });
+        }
+        
+        const identity = await resolvePlayerIdentity(socket);
+        const hostProfile: PlayerProfile = {
+            socketId: socket.id,
+            name: identity.username ?? 'Invitado',
+            userId: identity.userId,
+            elo: identity.elo
+        };
+
+        const room = RoomManager.createAiRoom(hostProfile, data.difficulty);
+        socket.join(room.roomId);
+
+        io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });
+        AiTurnRunner.maybePlayTurn(io, room.roomId); 
+    });
 }
 
 //FEAT-04/05
@@ -138,11 +168,16 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
             return socket.emit(SocketEvents.ERROR, { message: 'El juego ya ha terminado.' });
         }
 
+        const playerColor: PlayerColor = room.players.red?.socketId === socket.id ? 'red' : 'blue';
+        if (room.gameState.currentTurn !== playerColor) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No es tu turno.' });
+        }
+
         try {
-            const newState = GameEngine.processTurn(room.gameState, moveData.from, moveData.to, moveData.cardName);
-            const commitedState = RoomManager.commitProcessedState(room.roomId, newState);
+            const commitedState = RoomManager.applyMove(room.roomId, moveData.from, moveData.to, moveData.cardName);
 
             io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: commitedState });
+            AiTurnRunner.maybePlayTurn(io, room.roomId); // Sub-14.3
 
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Error desconocido';
@@ -234,6 +269,36 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
             socket.emit(SocketEvents.ERROR, { message: 'Error al procesar el intento de reconexión: ' + message });
         }
     })
+
+    //FEAT 14 (Sub-14.1)
+    socket.on(SocketEvents.DISCARD_CARD, (data: { cardName: string }) => {
+        const room = RoomManager.getRoomBySocketId(socket.id);
+
+        if (!room || !room.gameState) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala o el estado del juego' });
+        }
+
+        if (room.gameState.status !== 'waiting_for_discard') {
+            return socket.emit(SocketEvents.ERROR, { message: 'No hay ningún descarte pendiente' });
+        }
+
+        const isRed = room.players.red?.socketId === socket.id;
+        const playerColor: PlayerColor = isRed ? 'red' : 'blue';
+
+        if (room.gameState.currentTurn !== playerColor) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No es tu turno para descartar una carta' });
+        }
+
+        try {
+            const commitedState = RoomManager.applyDiscard(room.roomId, data.cardName);
+
+            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: commitedState });
+            AiTurnRunner.maybePlayTurn(io, room.roomId); // Sub-14.3
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Error desconocido';
+            socket.emit(SocketEvents.ERROR, { message });
+        }
+    });
 }
 
 //FEAT-05
@@ -244,6 +309,9 @@ function registerDrawEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
 
         if (room) {
+            if (RoomManager.hasAiPlayer(room)) {
+                return socket.emit(SocketEvents.ERROR, { message: 'No se puede ofrecer empate contra un bot.' });
+            }
             room.drawOfferedBy = socket.id;
             socket.to(room.roomId).emit(SocketEvents.OFFER_DRAW);
         }
@@ -283,7 +351,10 @@ function registerDrawEvents(io: Server, socket: Socket) {
 //FEAT-06
 function registerMatchmakingEvents(io: Server, socket: Socket) {
         //Sub-06.1 / Sub-09.2: Cola de emparejamiento
-    socket.on(SocketEvents.JOIN_QUEUE, async (data: { mode: GameMode }) => {
+    socket.on(SocketEvents.JOIN_QUEUE, async (data: unknown) => {
+        if (!isJoinQueuePayload(data)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de unión a la cola inválidos.' });
+        }
         const { mode } = data;
         
         const identity = await resolvePlayerIdentity(socket);
@@ -317,6 +388,13 @@ function registerRematchEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
         console.log(`Room ID para la revancha: ${room?.roomId}`);
         if (room) {
+            //Sub-14.4: contra la IA se acepta automáticamente, si la partida ha terminado.
+            if (RoomManager.hasAiPlayer(room)) {
+                if (room.gameState.status !== 'finished') {
+                    return socket.emit(SocketEvents.ERROR, { message: 'La partida aún no ha terminado.' });
+                }
+                return startRematch(io, room);
+            }
             room.rematchOfferedBy = socket.id;
             socket.to(room.roomId).emit(SocketEvents.REMATCH_OFFERED);
         }
@@ -333,29 +411,35 @@ function registerRematchEvents(io: Server, socket: Socket) {
     socket.on(SocketEvents.ACCEPT_REMATCH, () => {
         const room  = RoomManager.getRoomBySocketId(socket.id);
         if (room) {
-            const newGameState = RoomManager.resetGameForRematch(room.roomId);
-
-            if (newGameState) {
-
-                io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: newGameState, players: room.players });
-
-                if (room.mode !== 'casual') {
-                    RoomManager.startGameTimer(room.roomId,
-                        (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
-                        (finalState) => {
-                            io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
-                        }
-                    );
-                }
-            }
+            startRematch(io, room);
         }    
     });
+}
+
+function startRematch(io: Server, room: RoomSession) {
+    const newGameState = RoomManager.resetGameForRematch(room.roomId);
+    if (newGameState) {
+        io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: newGameState, players: room.players });
+
+        if (room.mode !== 'casual') {
+            RoomManager.startGameTimer(room.roomId,
+                (timeRemaining) => io.to(room.roomId).emit(SocketEvents.TIME_TICK, { timeRemaining }),
+                (finalState) => {
+                    io.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState })
+                }
+            );
+        }
+        AiTurnRunner.maybePlayTurn(io, room.roomId); // Sub-14.3
+    }
 }
 
 //FEAT-07
 function registerChatEvents(io: Server, socket: Socket) {
 //Sub-07.1: Chat
-    socket.on(SocketEvents.SEND_MESSAGE, (messageData: { message: string }) => {
+    socket.on(SocketEvents.SEND_MESSAGE, (messageData: unknown) => {
+        if (!isChatPayload(messageData)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de mensaje de chat inválidos.' });
+        }
         console.log(messageData.message);
         const room = RoomManager.getRoomBySocketId(socket.id);
         if (room) {

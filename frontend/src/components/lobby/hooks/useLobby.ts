@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SocketEvents, type GameMode } from '../../../../../shared';
+import { SocketEvents, type GameMode, type AiDifficulty } from '../../../../../shared';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
 import { useAuth }  from '../../../contexts/AuthContext';
@@ -48,6 +48,11 @@ export const useLobby = () => {
         setCurrentScreen('MATCHMAKING');
     };
 
+    const startAiGame = (difficulty: AiDifficulty) => {
+        setErrorMsg(null);
+        socket?.emit(SocketEvents.CREATE_AI_ROOM, { difficulty });
+    };
+
     return {
         isConnected,
         currentScreen,
@@ -64,6 +69,7 @@ export const useLobby = () => {
         handleCreateRoom,
         handleJoinRoom,
         startMatchmaking,
+        startAiGame,
         setSelectMode
     };
 };

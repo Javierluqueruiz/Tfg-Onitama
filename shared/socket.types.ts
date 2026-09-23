@@ -26,6 +26,11 @@ export enum SocketEvents {
     //Sub-07.1
     SEND_MESSAGE = 'send_message',
 
+    //Sub-14.1
+    DISCARD_CARD = 'discard_card',
+    //Sub-14.3
+    CREATE_AI_ROOM = 'create_ai_room',
+
     //Servidor a Cliente
     ROOM_CREATED = 'room_created',
     ERROR = 'error',
@@ -66,6 +71,7 @@ export interface RoomSession {
     drawOfferedBy: string | null;
     rematchOfferedBy: string | null;
     resultPersisted: boolean;
+    countsForStats: boolean; //Sub-14.3
 }
 
 //Primera versión de la interfaz del perfil del jugador.
@@ -74,6 +80,8 @@ export interface PlayerProfile {
     name: string;
     userId?: string;
     elo?: number;
+    isAi?: boolean;
+    aiDifficulty?: AiDifficulty;
 }
 
 export interface ReconnectPayload {
@@ -84,7 +92,28 @@ export interface ReconnectPayload {
 
 //Sub-06.1
 //Modos de juego
-export type GameMode = 'casual' | 'normal' | 'fast';
+export const GAME_MODES = ['casual', 'normal', 'fast'] as const;
+export type GameMode = typeof GAME_MODES[number];
+
+export const isGameMode = (value: unknown): value is GameMode => {
+    return GAME_MODES.some(mode => mode === value);
+}
+
+export const MAX_CHAT_MESSAGE_LENGTH = 200; 
+
+//Sub-14.4
+export const AI_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
+export type AiDifficulty = typeof AI_DIFFICULTIES[number];
+
+export const isAiDifficulty = (value: unknown): value is AiDifficulty => {
+    return AI_DIFFICULTIES.some(difficulty => difficulty === value);
+}
+
+export const AI_DIFFICULTY_LABELS: Record<AiDifficulty, string> = {
+    easy: 'Fácil',
+    medium: 'Medio',
+    hard: 'Difícil'
+};
 
 export interface MatchFoundPayload {
     roomId: string;

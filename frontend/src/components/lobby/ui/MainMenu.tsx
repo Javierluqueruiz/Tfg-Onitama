@@ -1,19 +1,21 @@
 import React from 'react';
 import styles from './MainMenu.module.css';
-import type { GameMode } from '../../../../../shared';
+import type { GameMode, AiDifficulty } from '../../../../../shared';
+import { AI_DIFFICULTIES, AI_DIFFICULTY_LABELS } from '../../../../../shared';
 
-export type Tab = 'MATCHMAKING' | 'PRIVATE';
+export type Tab = 'MATCHMAKING' | 'PRIVATE' | 'AI';
 
 interface MainMenuProps {
     onSelectCreate: () => void;
     onSelectJoin: () => void;
     onStartMatchmaking: (mode: GameMode) => void;
+    onStartAiGame: (difficulty: AiDifficulty) => void;
     isConnected: boolean;
     activeTab: Tab;
     onTabChange: (tab: Tab) => void;
 }
 
-export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin, onStartMatchmaking, isConnected, activeTab, onTabChange }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin, onStartMatchmaking, onStartAiGame, isConnected, activeTab, onTabChange }) => {
     const statusClass = isConnected ? styles.connected : styles.disconnected;
 
     return (
@@ -30,6 +32,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin
                     onClick={() => onTabChange('PRIVATE')}
                 >
                     Partida Privada
+                </button>
+                <button
+                    className={`${styles.tabBtn} ${activeTab === 'AI' ? styles.activeTab : ''}`}
+                    onClick={() => onTabChange('AI')}
+                >
+                    Partida contra IA
                 </button>
             </div>
 
@@ -63,7 +71,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin
                             </button>
                         </div>
                     </div>
-                ) : (
+                ) : activeTab === 'PRIVATE' ? (
                     <div className={styles.privateSection}>
                         <h3 className={styles.sectionTitle}>Jugar con Amigos</h3>
                         <button 
@@ -81,6 +89,22 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin
                         >
                             Unirse a Sala
                         </button>
+                    </div>
+                ) : (
+                    <div className={styles.aiSection}>
+                        <h3 className={styles.sectionTitle}>Jugar contra IA</h3>
+                        <div className={styles.modeButtons}>
+                            {AI_DIFFICULTIES.map((difficulty) => (
+                                <button 
+                                    key={difficulty}
+                                    className={`${styles.btn} ${styles[`btnDifficulty_${difficulty}`]} ${statusClass}`}
+                                    onClick={()=> onStartAiGame(difficulty)}
+                                    disabled={!isConnected}
+                                >
+                                    {AI_DIFFICULTY_LABELS[difficulty]}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
