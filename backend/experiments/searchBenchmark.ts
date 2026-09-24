@@ -13,6 +13,7 @@ import { GameState } from "../../shared";
 import { MinimaxPlayer, SearchAlgorithm } from "../src/ai/MinimaxPlayer";
 import { GameEngine } from "../src/game/GameEngine";
 import { MoveArbitrator } from "../src/game/MoveArbitrator";
+import { DECIMAL, INTEGER, formatTable } from "./tables";
 
 const ALGORITHMS: SearchAlgorithm[] = ['minimax', 'alphabeta', 'alphabeta-ordered'];
 const DEPTHS = [2, 3, 4, 5, 6];
@@ -22,10 +23,6 @@ const MAX_DEPTH: Record<SearchAlgorithm, number> = {
     'alphabeta': 5,
     'alphabeta-ordered': 6
 };
-
-// Punto para los miles y coma decimal. Se usa 'de-DE' porque agrupa siempre los miles (con 'es-ES', números con más de tres dígitos saldría sin punto).
-const INTEGER = new Intl.NumberFormat('de-DE');
-const DECIMAL = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 // Genera una posición aleatoria a partir de un juego nuevo, haciendo entre 4 y 12 jugadas aleatorias.
 function randomPosition(): GameState {
@@ -57,13 +54,6 @@ function measure(positions: GameState[], algorithm: SearchAlgorithm, depth: numb
     return `${nodes} nodos · ${ms} ms`;
 }
 
-function formatTable(header: string[], rows: string[][]): string [] {
-    const widths = header.map((title, column) => Math.max(title.length, ...rows.map(row => row[column].length)));
-    const line = (cells: string[]) => '| ' + cells.map((cell, column) => cell.padEnd(widths[column])).join(' | ') + ' |';
-
-    return [line(header), `|${widths.map(width => '-'.repeat(width + 2)).join('|')}|`, ...rows.map(line)];
-}
-
 export function runExperiment(positionCount: number): string {
     const started = Date.now();
     const positions = Array.from({ length: positionCount }, () => randomPosition());
@@ -78,7 +68,7 @@ export function runExperiment(positionCount: number): string {
         '',
         ...formatTable(header, rows),
         '',
-        `Tiempo total: ${(Date.now() - started) / 1000}s`
+        `Tiempo total: ${DECIMAL.format((Date.now() - started) / 1000)} s`
     ].join('\n');
 }
     
