@@ -128,16 +128,26 @@ describe('FEAT-15 (Sub-15.1) - MinimaxPlayer.selectMove', () => {
             expect(MinimaxPlayer.selectMove(state, { depth: 1, weights: withoutThreat })).toEqual(unsafeMove);
         });
 
-        it('A profundidad 2, sin amenaza, evita la trampa', () => {
-            expect(MinimaxPlayer.selectMove(state, { depth: 2, weights: withoutThreat })).toEqual(safeMove);
+        it.each(['minimax', 'alphabeta', 'alphabeta-ordered'] as const)('(%s) A profundidad 2, sin amenaza, evita la trampa', (algorithm) => {
+            expect(MinimaxPlayer.selectMove(state, { depth: 2, weights: withoutThreat, algorithm })).toEqual(safeMove);
         });
 
-        it('A profundidad 2, supone que el oponente elige la mejor jugada', () => {
+        it.each(['minimax', 'alphabeta', 'alphabeta-ordered'] as const)('(%s) A profundidad 2, supone que el oponente elige la mejor jugada', (algorithm) => {
             const twoReplyBlueCard: Card = { name: 'BlueCard', description: '', color: 'blue', moves: [{ x: 0, y: -1 }, { x: 1, y: 0 }] };
 
             const twoReplyState = buildState(board, 'red', { red: [redCard, passiveCard], blue: [twoReplyBlueCard, passiveCard], neutral: passiveCard });
 
-            expect(MinimaxPlayer.selectMove(twoReplyState, { depth: 2, weights: withoutThreat })).toEqual(safeMove);
+            expect(MinimaxPlayer.selectMove(twoReplyState, { depth: 2, weights: withoutThreat, algorithm })).toEqual(safeMove);
+        });
+
+        it('Cuenta los nodos que visita la búsqueda', () => {
+            const depth1 = { nodes: 0 };
+            MinimaxPlayer.selectMove(state, { depth: 1, algorithm: 'minimax', stats: depth1 });
+            expect(depth1.nodes).toBe(2);
+
+            const depth2 = { nodes: 0 };
+            MinimaxPlayer.selectMove(state, { depth: 2, algorithm: 'minimax', stats: depth2 });
+            expect(depth2.nodes).toBe(4);
         });
     });
 
@@ -161,7 +171,7 @@ describe('FEAT-15 (Sub-15.1) - MinimaxPlayer.selectMove', () => {
             expect(MinimaxPlayer.selectDiscard(discardState([a, b]), { depth: 1 })).toBe('Inútil');
         });
 
-        it('Devuelve siempre el nombre de una cara de la mano', () => {
+        it('Devuelve siempre el nombre de una carta de la mano', () => {
             expect(['Útil', 'Inútil']).toContain(MinimaxPlayer.selectDiscard(discardState([useful, useless]), { depth: 2 }));
         });
 
@@ -170,7 +180,7 @@ describe('FEAT-15 (Sub-15.1) - MinimaxPlayer.selectMove', () => {
             expect(() => MinimaxPlayer.selectDiscard(state, { depth: 1 })).toThrowError('La partida no está esperando un descarte');
         });
 
-        it('en modo heuristic, la elección la hace ApiPlayer.selectDiscard', () => {
+        it('En modo heuristic, la elección la hace AiPlayer.selectDiscard', () => {
             vi.spyOn(AiPlayer, 'selectDiscard').mockReturnValue('Útil');
             expect(MinimaxPlayer.selectDiscard(discardState([useful, useless]), { depth: 1, discardMode: 'heuristic' })).toBe('Útil');
         });
@@ -190,7 +200,7 @@ describe('FEAT-15 (Sub-15.1) - MinimaxPlayer.selectMove', () => {
         it('En modo search, explora las dos cartas de cada nodo de descarte', () => {
             const discardSpy = vi.spyOn(GameEngine, 'discardCard');
 
-            MinimaxPlayer.selectMove(columnState(), { depth: 2, discardMode: 'search' });
+            MinimaxPlayer.selectMove(columnState(), { depth: 2, algorithm: 'minimax', discardMode: 'search' });
 
             expect(discardSpy).toHaveBeenCalledTimes(12); // 3 nodos de descarte * 2 cartas * 2 turnos
         });
@@ -199,7 +209,7 @@ describe('FEAT-15 (Sub-15.1) - MinimaxPlayer.selectMove', () => {
             const discardSpy = vi.spyOn(GameEngine, 'discardCard');
             const heuristicSpy = vi.spyOn(AiPlayer, 'selectDiscard');
 
-            MinimaxPlayer.selectMove(columnState(), { depth: 2, discardMode: 'heuristic' });
+            MinimaxPlayer.selectMove(columnState(), { depth: 2, algorithm: 'minimax', discardMode: 'heuristic' });
 
             expect(discardSpy).toHaveBeenCalledTimes(6); // 3 nodos de descarte * 1 carta * 2 turnos
             expect(heuristicSpy).toHaveBeenCalledTimes(6);
@@ -248,4 +258,54 @@ describe('FEAT-15 (Sub-15.1) - MinimaxPlayer.selectMove', () => {
         }, 30000); 
     });
     
+    describe('Poda alfa-beta', () => {
+        it('Decide igual que Minimax puro, también entre jugadas empatadas', () => {
+            for (let i = 0; i < 30; i++) {
+                const state = randomPosition(4 + Math.floor(Math.random() * 9));
+                
+                for (const random of [() => 0, () => 0.999]) {
+                    const pureMove = MinimaxPlayer.selectMove(state, { depth: 3, algorithm: 'minimax', random });
+                    const alphaBetaMove = MinimaxPlayer.selectMove(state, { depth: 3, algorithm: 'alphabeta', random });
+                    expect(pureMove).toEqual(alphaBetaMove);
+                }
+            }
+        }, 60000);
+
+        it('Visita muchos menos nodos que Minimax puro', () => {
+            const pureStats = { nodes: 0 };
+            const alphaBetaStats = { nodes: 0 };
+
+            for (let i = 0; i < 4; i++) {
+                const state = randomPosition(4 + Math.floor(Math.random() * 9));
+                MinimaxPlayer.selectMove(state, { depth: 4, algorithm: 'minimax', stats: pureStats });
+                MinimaxPlayer.selectMove(state, { depth: 4, algorithm: 'alphabeta', stats: alphaBetaStats });
+            }
+            expect(alphaBetaStats.nodes).toBeLessThan(pureStats.nodes / 2);
+        }, 60000);
+
+        it('La ordenación no cambia ninguna decisión, tampoco entre jugadas empatadas', () => {
+            for (let i = 0; i < 30; i++) {
+                const state = randomPosition(4 + Math.floor(Math.random() * 9));
+
+                for (const random of [() => 0, () => 0.999]) {
+                    const pureMove = MinimaxPlayer.selectMove(state, { depth: 3, algorithm: 'minimax', random });
+                    const alphaBetaOrdered = MinimaxPlayer.selectMove(state, { depth: 3, algorithm: 'alphabeta-ordered', random });
+
+                    expect(pureMove).toEqual(alphaBetaOrdered);
+                }
+            }
+        }, 60000);
+
+        it('Visita menos nodos con ordenación que sin ella', () => {
+            const unorderedStats = { nodes: 0 };
+            const orderedStats = { nodes: 0 };
+
+            for (let i = 0; i < 12; i++) {
+                const state = randomPosition(4 + Math.floor(Math.random() * 9));
+                MinimaxPlayer.selectMove(state, { depth: 4, algorithm: 'alphabeta', stats: unorderedStats });
+                MinimaxPlayer.selectMove(state, { depth: 4, algorithm: 'alphabeta-ordered', stats: orderedStats });
+            }
+            expect(orderedStats.nodes).toBeLessThan(unorderedStats.nodes * 0.75);
+        }, 60000);
+    });
 });

@@ -9,8 +9,9 @@
     "start": "node dist/backend/src/server.js",
     "test": "vitest run",
     "lint": "eslint .",
-    "demo": "ts-node src/simulatedGame.ts",
+    "demo": "ts-node src/simulatedGame.ts", 
     "experiment:ai": "ts-node experiments/aiCalibration.ts",
+    "experiment:search": "ts-node experiments/searchBenchmark.ts",
     "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
