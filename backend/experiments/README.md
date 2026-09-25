@@ -130,3 +130,103 @@ Tiempo total: 24.826s
 del tiempo.
 - Son **medias**. La profundidad 6 varía mucho entre posiciones (las de muchas jugadas legales dominan la media): en otra muestra de 8 posiciones llegó a tardar
 varios segundos de media. Para los niveles de dificultad habrá que tener en cuenta el peor caso, no la media (Sub-15.3).
+
+# Experimentos: calibración del oponente Minimax (FEAT-15, Sub-15.3)
+
+## Propósito
+
+Responder con datos a las tres preguntas que quedaron abiertas al construir el oponente Minimax, y con ellas decidir sus niveles de dificultad:
+
+1. **`leaf`:** ¿qué evaluador conviene en las hojas del árbol de búsqueda? (el Memorando 0034 dejó abierta la cuestión de si la integración de la amenaza seguía siendo
+válida al construir un árbol).
+2. **`versus`:** cúanto mejor juega Minimax en comparación con la heurística de la FEAT-14, usando el mismo evaluador? Es el resultado central del Objetivo 3.
+3. **`ladder`:** ¿gana cada profundidad a la anterior, y cuánto tiempo tarda cada una en partidas reales? 
+
+El script que los reproduce es `minimaxCalibration.ts`.
+
+## Método
+
+- Partidas completas con el motor real (`GameEngine`), colores alternados y un límite de 200 jugadas por partida.
+- Bots: la heurística de la FEAT-14 (`AiPlayer` con sus tres dificultades) y el oponente Minimax (`MinimaxPlayer`, alfa-beta con ordenación).
+- Tres variantes del evaluador de hoja en `leaf`: **A**, el evaluador tal cual (`evaluateWithTurn: false`); **B**, el mismo con el peso
+de la amenaza a 0; **C**, el evaluador con la amenaza que sabe a quién le toca jugar (`evaluateWithTurn: true`).
+- En `versus` y `ladder`, Minimax usa el evaluador de hoja **C**. 
+- Los tiempos de `ladder` son los de las decisiones de la profundidad máxima de cada pareja, medidas en partidas reales, con la CPU sin carga.
+
+## Cómo reproducirlo
+
+Desde `backend/`:
+
+```bash
+npm run experiment:minimax -- leaf 100
+npm run experiment:minimax -- versus 200
+npm run experiment:minimax -- ladder 200
+```
+  
+Tardan unos 28, 9 y 6 minutos respectivamente. `ladder` debe ejecutarse solo, para no falsear los tiempos de decisión.
+
+## Resultados
+
+Ejecuciones de referencia sobre el código del commit `8089b36`.
+
+### 1. Evaluador de hoja (100 partidas por enfrentamiento)
+
+| Profundidad | A vs Heurística (difícil) | B vs Heurística (difícil) | C vs Heurística (difícil) | A vs B: gana A | C vs A: gana C | C vs B: gana C |
+|-------------|---------------------------|---------------------------|---------------------------|----------------|----------------|----------------|
+| 1           | 56,0%                     | 7,0%                      | 46,0%                     | 98,0%          | 53,0%          | 97,0%          |
+| 2           | 39,0%                     | 65,0%                     | 87,0%                     | 25,0%          | 81,0%          | 81,0%          |
+| 3           | 100,0%                    | 83,0%                     | 98,0%                     | 91,0%          | 60,0%          | 85,0%          |
+| 4           | 95,0%                     | 95,0%                     | 98,0%                     | 19,0%          | 86,0%          | 86,0%          |
+| 5           | 100,0%                    | 98,0%                     | 100,0%                    | 87,0%          | 48,0%          | 85,0%          |
+
+- **En profundidades impares, C es equivalente a A** (53, 60 y 48% entre ellas): en una hoja impar le toca mover al rival, que es lo que A ya tiene en cuenta.
+- **En profundidades pares, C es muy superior**: a profundidad 2 gana el 
+87% de las partidas a la heurística difícil (A, 39% y B, 65%) y el 81% 
+a cada una de las otras variantes; a profundidad 4 gana el 86% a las dos.
+- **A gana a B en las impares y B gana a A en las pares**: es el efecto
+par/impar que ya se observó en el Memorando 0034. La variante C lo resuelve, por lo que se convierte en el evaluador por defecto de Minimax.
+
+### 2. Minimax vs heurística (200 partidas por enfrentamiento)
+
+| Victorias de...          | Heurística (easy) | Heurística (medium) | Heurística (hard) |
+|-------------------------|-------------------|---------------------|-------------------|
+| Minimax (profundidad 2) | 97,0%             | 96,0%               | 91,5%             |
+| Minimax (profundidad 3) | 99,5%             | 99,5%               | 96,5%             |
+| Minimax (profundidad 4) | 99,5%             | 99,0%               | 99,5%             |
+| Minimax (profundidad 5) | 100,0%            | 100,0%              | 100,0%            |
+
+- Con el mismo evaluador, se observa la mejora clara al aumentar la profundidad de búsqueda: a profundidad 2 ya se gana el 91,5% de las partidas a la heurística difícil; a profundidad 5 se gana el 100% de las partidas a todos los niveles.
+
+### 3. Escalera de dificultad de Minimax y coste (200 partidas por enfrentamiento)
+
+| Profundidad             | Gana a la anterior | Pierde contra la anterior | Mediana (ms) | Percentil 95 (ms) | Máximo (ms) |
+|-------------------------|--------------------|---------------------------|--------------|-------------------|-------------|
+| Minimax (profundidad 2) | 88,5%              | 11,5%                     | 0,4          | 1,3               | 24,3        |
+| Minimax (profundidad 3) | 86,5%              | 13,5%                     | 3,0          | 8,3               | 26,5        |
+| Minimax (profundidad 4) | 81,0%              | 19,0%                     | 10,3         | 34,3              | 108,2       |
+| Minimax (profundidad 5) | 83,5%              | 15,5%                     | 47,3         | 167,5             | 2.372,2     |
+
+- **Cada profundidad gana a la anterior** (entre el 81,0% y el 88,5%): la escalera de dificultad está bien definida.
+- **La profundidad 5 no es viable como nivel:** su percentil 95 es aceptable (167,5 ms), pero su máximo es de 2,4 s, muy por encima
+del límite de 300 ms que se ha fijado para no bloquear el servidor (la búsqueda es síncrona y bloquea el hilo principal).
+
+## Decisión: niveles de dificultad de Minimax
+
+|  Nivel  | Profundidad | Máximo por decisión |
+|---------|-------------|---------------------|
+| Fácil   | 2           | 24 ms               |
+| Medio   | 3           | 27 ms               |
+| Difícil | 4           | 108 ms              |
+
+Sin ruido aleatorio: la dificultad la da solo la profundidad de búsqueda. La profundidad 5 se descarta y se documenta como deuda técnica: usarla exigiría
+  un cambio de arquitectura para que la búsqueda sea asíncrona y no bloquee el hilo principal.
+
+## Limitaciones
+
+- Las partidas no tienen semilla: dos ejecuciones dan cifras algo distintas. Con 100 partidas el margen de error ronda los ±10 puntos porcentuales (95%); con
+200 baja a ±7 puntos. Solo las diferencias grandes son concluyentes.
+- Los tiempos son de un solo equipo y los máximos dependen de una única
+decisión atípica, por lo que varían más que la mediana o el percentil 95.
+- Los rivales son siempre otros bots: no se mide la fuerza de Minimax contra jugadores humanos. La escalera de dificultad puede variar frente a personas.
+- En `ladder`, un 1% de las partidas de profundidad 5 vs 4 no llegaron a terminarse: el juego no tiene reglas de repetición y dos bots pueden entrar en bucles.
+- Todas las variantes comparten el mismo evaluador salvo en `leaf`: `versus` y `ladder` miden cuánto se mira, no cómo se puntúa.
