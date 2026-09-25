@@ -10,7 +10,7 @@
 /// <reference types="node" />
 import { AiDifficulty, GameState, PlayerColor } from "../../shared";
 import { AiPlayer } from "../src/ai/AiPlayer";
-import { EvaluatorWeights } from "../src/ai/HeuristicEvaluator";
+import { EvaluatorWeights, DEFAULT_EVALUATOR_WEIGHTS } from "../src/ai/HeuristicEvaluator";
 import { DiscardMode, MinimaxPlayer } from "../src/ai/MinimaxPlayer";
 import { GameEngine } from "../src/game/GameEngine";
 import { LegalMove } from "../src/game/MoveArbitrator";
@@ -103,8 +103,29 @@ function sanityCheck(games: number): string {
     return formatTable(['Enfrentamiento (A vs B)', 'Victorias A', 'Victorias B', 'Sin terminar'], rows).join('\n');
 }
 
+const WITHOUT_THREAT: EvaluatorWeights = { ...DEFAULT_EVALUATOR_WEIGHTS, threat: 0 };
+const LEAF_DEPTHS = [1, 2, 3, 4, 5];
+
+//Experimento leaf: ¿conviene el término de amenaza en las hojas del árbol? A = con amenaza, B = sin amenaza. 
+function leafEvaluator(games: number): string {
+    const rows = LEAF_DEPTHS.map(depth => {
+        const aVsHard = matchup(minimax(depth), heuristic('hard'), games);
+        const bVsHard = matchup(minimax(depth, { weights: WITHOUT_THREAT }), heuristic('hard'), games);
+        const aVsB = matchup(minimax(depth), minimax(depth, { weights: WITHOUT_THREAT }), games);
+
+        return [
+            String(depth),
+            percent(aVsHard.winsA, games), percent(bVsHard.winsA, games),
+            percent(aVsB.winsA, games), percent(aVsB.winsB, games)
+        ];
+    });
+
+    return formatTable(['Profundidad', 'A vs Heurística (difícil)', 'B vs Heurística (difícil)', 'A vs B: gana A', 'B vs A: gana B'], rows).join('\n');
+}
+
 const EXPERIMENTS: Record<string, {title: string; run: (games: number) => string}> = {
-    sanity: { title: 'Comprobación: Minimax a profundidad 1 frente a heurística difícil', run: sanityCheck }
+    sanity: { title: 'Comprobación: Minimax a profundidad 1 frente a heurística difícil', run: sanityCheck },
+    leaf: { title: 'Experimento leaf: ¿conviene el término de amenaza en las hojas del árbol?', run: leafEvaluator }
 };
 
 if (require.main === module) {
