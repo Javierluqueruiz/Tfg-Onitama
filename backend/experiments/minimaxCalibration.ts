@@ -21,19 +21,19 @@ const MAX_PLIES = 200;
 
 type Bot = 
     | { kind: 'heuristic', difficulty: AiDifficulty }
-    | { kind: 'minimax', depth: number, weights?: EvaluatorWeights, discardMode?: DiscardMode };
+    | { kind: 'minimax', depth: number, weights?: EvaluatorWeights, discardMode?: DiscardMode, evaluateWithTurn?: boolean };
 
 const heuristic = (difficulty: AiDifficulty): Bot => ({ kind: 'heuristic', difficulty });
-const minimax = (depth: number, options: { weights?: EvaluatorWeights, discardMode?: DiscardMode } = {}): Bot => ({ kind: 'minimax', depth, ...options });
+const minimax = (depth: number, options: { weights?: EvaluatorWeights, discardMode?: DiscardMode, evaluateWithTurn?: boolean } = {}): Bot => ({ kind: 'minimax', depth, ...options });
 
 const label = (bot: Bot): string => bot.kind === 'heuristic' ? `Heurística (${bot.difficulty})` : `Minimax (profundidad ${bot.depth})`;
 
 function chooseMove(state: GameState, bot: Bot): LegalMove {
     if (bot.kind === 'heuristic') {
-        return AiPlayer.selectMove(state.board, state.currentTurn, state.cards, { difficulty: bot.difficulty } );
+        return AiPlayer.selectMove(state.board, state.currentTurn, state.cards, { difficulty: bot.difficulty  } );
     }
 
-    return MinimaxPlayer.selectMove(state, { depth: bot.depth, weights: bot.weights, discardMode: bot.discardMode });
+    return MinimaxPlayer.selectMove(state, { depth: bot.depth, weights: bot.weights, discardMode: bot.discardMode, evaluateWithTurn: bot.evaluateWithTurn });
 }
 
 function chooseDiscard(state: GameState, bot: Bot): string {
@@ -41,7 +41,7 @@ function chooseDiscard(state: GameState, bot: Bot): string {
         return AiPlayer.selectDiscard(state.board, state.currentTurn, state.cards);
     }
     
-    return MinimaxPlayer.selectDiscard(state, { depth: bot.depth, weights: bot.weights, discardMode: bot.discardMode });
+    return MinimaxPlayer.selectDiscard(state, { depth: bot.depth, weights: bot.weights, discardMode: bot.discardMode, evaluateWithTurn: bot.evaluateWithTurn });
 }
 
 type DecisionObserver = (bot: Bot, ms: number) => void;
@@ -106,26 +106,73 @@ function sanityCheck(games: number): string {
 const WITHOUT_THREAT: EvaluatorWeights = { ...DEFAULT_EVALUATOR_WEIGHTS, threat: 0 };
 const LEAF_DEPTHS = [1, 2, 3, 4, 5];
 
-//Experimento leaf: ¿conviene el término de amenaza en las hojas del árbol? A = con amenaza, B = sin amenaza. 
+//Experimento leaf: ¿conviene el término de amenaza en las hojas del árbol? A = con amenaza, B = sin amenaza, C = con amenaza según quién tiene el turno.
 function leafEvaluator(games: number): string {
     const rows = LEAF_DEPTHS.map(depth => {
-        const aVsHard = matchup(minimax(depth), heuristic('hard'), games);
-        const bVsHard = matchup(minimax(depth, { weights: WITHOUT_THREAT }), heuristic('hard'), games);
-        const aVsB = matchup(minimax(depth), minimax(depth, { weights: WITHOUT_THREAT }), games);
+        const variantA = () => minimax(depth, { evaluateWithTurn: false });
+        const variantB = () => minimax(depth, { weights: WITHOUT_THREAT });
+        const variantC = () => minimax(depth);
+
+        const aVsHard = matchup(variantA(), heuristic('hard'), games);
+        const bVsHard = matchup(variantB(), heuristic('hard'), games);
+        const cVsHard = matchup(variantC(), heuristic('hard'), games);
+        const aVsB = matchup(variantA(), variantB(), games);
+        const cVsA = matchup(variantC(), variantA(), games);
+        const cVsB = matchup(variantC(), variantB(), games);
 
         return [
             String(depth),
-            percent(aVsHard.winsA, games), percent(bVsHard.winsA, games),
-            percent(aVsB.winsA, games), percent(aVsB.winsB, games)
+            percent(aVsHard.winsA, games), percent(bVsHard.winsA, games), percent(cVsHard.winsA, games),
+            percent(aVsB.winsA, games), percent(cVsA.winsA, games), percent(cVsB.winsA, games)
         ];
     });
 
-    return formatTable(['Profundidad', 'A vs Heurística (difícil)', 'B vs Heurística (difícil)', 'A vs B: gana A', 'B vs A: gana B'], rows).join('\n');
+    return formatTable(['Profundidad', 'A vs Heurística (difícil)', 'B vs Heurística (difícil)', 'C vs Heurística (difícil)', 'A vs B: gana A', 'C vs A: gana C', 'C vs B: gana C'], rows).join('\n');
+}
+
+const VERSUS_DEPTHS = [2, 3, 4, 5];
+const HEURISTIC_DIFFICULTIES: AiDifficulty[] = ['easy', 'medium', 'hard'];  
+
+//Experimento versus: ¿Cuánto mejora Minimax con respecto a la heurística de la FEAT-14? Minimax con el evaluador C
+function versus(games: number): string {
+    const rows = VERSUS_DEPTHS.flatMap(depth => [
+        label(minimax(depth)),
+        ...HEURISTIC_DIFFICULTIES.map(difficulty => percent(matchup(minimax(depth), heuristic(difficulty), games).winsA, games))
+    ]);
+
+    return formatTable(['Vctorias de...', ...HEURISTIC_DIFFICULTIES.map(d => label(heuristic(difficulty)))], rows).join('\n');
+}
+
+const LADDER_DEPTHS = [ 2, 3, 4, 5];
+
+const percentile = (sortedValues: number[], p: number): number => {
+    sortedValues[Math.min(sortedValues.length - 1, Math.floor(p * sortedValues.length))];
+}
+
+//Experimento ladder: ¿cada profundidad gana a la anterior? ¿Cuánto tarta cada decisión en partidas reales (mediana, percentil 95 y máximo)?
+function ladder(games: number): string {
+    const rows = LADDER_DEPTHS.map(depth => {
+        const result = matchup(minimax(depth), minimax(depth - 1), games);
+        const times = [...result.msA].sort((a, b) => a - b);
+
+        return [
+            label(minimax(depth)),
+            percent(result.winsA, games),
+            percent(result.winsB, games),
+            DECIMAL.format(percentile(times, 0.5)),
+            DECIMAL.format(percentile(times, 0.95)),
+            DECIMAL.format(times[times.length - 1])
+        ];
+    });
+
+    return formatTable(['Profundidad', 'Gana a la anterior', 'Pierde contra la anterior', 'Mediana (ms)', 'Percentil 95 (ms)', 'Máximo (ms)'], rows).join('\n');
 }
 
 const EXPERIMENTS: Record<string, {title: string; run: (games: number) => string}> = {
     sanity: { title: 'Comprobación: Minimax a profundidad 1 frente a heurística difícil', run: sanityCheck },
-    leaf: { title: 'Experimento leaf: ¿conviene el término de amenaza en las hojas del árbol?', run: leafEvaluator }
+    leaf: { title: 'Experimento leaf: ¿conviene el término de amenaza en las hojas del árbol?', run: leafEvaluator },
+    versus: { title: 'Experimento versus: Minimax frente a la heurística de la FEAT-14', run: versus },
+    ladder: { title: 'Experimento ladder: cada profundidad frente a la anterior y tiempo por decisión', run: ladder }
 };
 
 if (require.main === module) {
