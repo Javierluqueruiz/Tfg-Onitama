@@ -308,4 +308,48 @@ describe('FEAT-15 (Sub-15.1) - MinimaxPlayer.selectMove', () => {
             expect(orderedStats.nodes).toBeLessThan(unorderedStats.nodes * 0.75);
         }, 60000);
     });
+
+    //FEAT-15 (Sub-15.3)
+    describe('La victoria en dos jugadas a profundidad 2', () => {
+        const diagonalCard = (name: string): Card => ({ name, description: '', color: 'red', moves: [{ x: 1, y: -1 }, { x: -1, y: -1 }] });
+        const rightCard: Card = ({ name: 'Right', description: '', color: 'red', moves: [{ x: 1, y: 0 }] });
+
+        const board: Board = emptyBoard();
+        board[1][3] = { type: 'master', color: 'red' };
+        board[4][2] = { type: 'master', color: 'blue' };
+
+        const state = buildState(board, 'red', {
+            red: [rightCard, diagonalCard('RedDiagonal')],
+            blue: [diagonalCard('BlueDiagonal'), diagonalCard('BlueDiagonal2')],
+            neutral: diagonalCard('NeutralDiagonal')
+        });
+
+        const missedMove = { from: { x: 3, y: 1 }, to: { x: 2, y: 1 }, cardName: 'Right' };
+        const winningMove = { from: { x: 3, y: 1 }, to: { x: 2, y: 2 }, cardName: 'RedDiagonal' };
+
+        it('Sin evaluateWithTurn, a profundidad 2 no ve la victoria forzada', () => {
+            expect(MinimaxPlayer.selectMove(state, { depth: 2, evaluateWithTurn: false })).toEqual(missedMove);
+        });
+
+        it('Con evaluateWithTurn, a profundidad 2 ve la victoria forzada', () => {
+            expect(MinimaxPlayer.selectMove(state, { depth: 2, evaluateWithTurn: true })).toEqual(winningMove);
+        });
+
+        it('Por defecto, a profundidad 2 también ve la victoria forzada', () => {
+            expect(MinimaxPlayer.selectMove(state, { depth: 2 })).toEqual(winningMove);
+        });
+    });
+
+    it('A profundidad impar, evaluateWithTurn no cambia ninguna decisión', () => {
+        for (let i = 0; i < 30; i++) {
+            const state = randomPosition(4 + Math.floor(Math.random() * 9));
+
+            for (const random of [() => 0, () => 0.999]) {
+                const withoutTurn = MinimaxPlayer.selectMove(state, { depth: 3, random, evaluateWithTurn: false });
+                const withTurn = MinimaxPlayer.selectMove(state, { depth: 3, random, evaluateWithTurn: true });
+
+                expect(withoutTurn).toEqual(withTurn);
+            }
+        }
+    }, 60000);
 });

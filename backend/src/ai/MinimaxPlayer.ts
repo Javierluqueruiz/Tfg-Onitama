@@ -18,6 +18,7 @@ export interface MinimaxOptions {
     discardMode?: DiscardMode;
     random?: () => number;
     weights?: EvaluatorWeights;
+    evaluateWithTurn?: boolean;
     stats?: SearchStats;
 }
 
@@ -27,6 +28,7 @@ interface SearchContext {
     discardMode: DiscardMode;
     prune?: boolean;
     order?: boolean;
+    withTurn?: boolean;
     stats?: SearchStats;
 }
 
@@ -34,11 +36,11 @@ export class MinimaxPlayer {
 
     //FEAT-15 (Sub-15.1)
     public static selectMove(state: GameState, options: MinimaxOptions): LegalMove {
-        const { depth, algorithm='alphabeta-ordered', weights = DEFAULT_EVALUATOR_WEIGHTS, discardMode = 'search', random = Math.random, stats } = options;
+        const { depth, algorithm='alphabeta-ordered', weights = DEFAULT_EVALUATOR_WEIGHTS, discardMode = 'search', random = Math.random, evaluateWithTurn = true, stats } = options;
         this.validateDepth(depth);
 
         const player = state.currentTurn;
-        const context: SearchContext = { player, weights, discardMode, prune: algorithm !== 'minimax', order: algorithm === 'alphabeta-ordered', stats };
+        const context: SearchContext = { player, weights, discardMode, prune: algorithm !== 'minimax', order: algorithm === 'alphabeta-ordered', withTurn: evaluateWithTurn, stats };
         const legalMoves = MoveArbitrator.generateLegalMoves(state.board, player, state.cards[player]);
 
         if ( legalMoves.length === 0 ) {
@@ -65,14 +67,14 @@ export class MinimaxPlayer {
     }
 
     public static selectDiscard(state: GameState, options: MinimaxOptions): string {
-        const { depth, algorithm='alphabeta-ordered', weights = DEFAULT_EVALUATOR_WEIGHTS, discardMode = 'search', random = Math.random, stats } = options;
+        const { depth, algorithm='alphabeta-ordered', weights = DEFAULT_EVALUATOR_WEIGHTS, discardMode = 'search', random = Math.random, evaluateWithTurn = true, stats } = options;
         this.validateDepth(depth);
 
         if (state.status !== 'waiting_for_discard') {
             throw new Error('La partida no está esperando un descarte');
         }
 
-        const context: SearchContext = { player: state.currentTurn, weights, discardMode, prune: algorithm !== 'minimax', order: algorithm === 'alphabeta-ordered', stats };
+        const context: SearchContext = { player: state.currentTurn, weights, discardMode, prune: algorithm !== 'minimax', order: algorithm === 'alphabeta-ordered', withTurn: evaluateWithTurn, stats };
         const scoredCards = this.discardOptions(state, discardMode).map(cardName => ({
             cardName,
             child: GameEngine.discardCard(state, cardName),
@@ -98,7 +100,7 @@ export class MinimaxPlayer {
     private static search(state: GameState, depth: number, alpha: number, beta: number, context: SearchContext): number {
         if (context.stats) context.stats.nodes++;
         if (depth === 0 || state.status === 'finished') {
-            return HeuristicEvaluator.evaluate(state.board, context.player, state.cards, context.weights);
+            return HeuristicEvaluator.evaluate(state.board, context.player, state.cards, context.weights, context.withTurn ? state.currentTurn : undefined);
         }
 
         const maximizing = state.currentTurn === context.player;
@@ -157,7 +159,7 @@ export class MinimaxPlayer {
             0 : (a.value > b.value ? -1 : 1);
 
         return items
-            .map(item => ({ item, value: HeuristicEvaluator.evaluate(stateOf(item).board, context.player, stateOf(item).cards, context.weights) }))
+            .map(item => ({ item, value: HeuristicEvaluator.evaluate(stateOf(item).board, context.player, stateOf(item).cards, context.weights, context.withTurn ? stateOf(item).currentTurn : undefined) }))
             .sort(maximizing ? descending : (a, b) => descending(b, a))
             .map(entry => entry.item);
     }

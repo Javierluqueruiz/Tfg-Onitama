@@ -23,7 +23,7 @@ export class HeuristicEvaluator {
     
     //FEAT-14 (Sub-14.2): Evalúa un tablero desde la perspectiva de un jugador.
     //Cuanto más alto, mejor está el jugador.
-    public static evaluate(board: Board, player: PlayerColor, cards: GameState['cards'], weights: EvaluatorWeights = DEFAULT_EVALUATOR_WEIGHTS): number {
+    public static evaluate(board: Board, player: PlayerColor, cards: GameState['cards'], weights: EvaluatorWeights = DEFAULT_EVALUATOR_WEIGHTS, turn?: PlayerColor): number {
         const opponent: PlayerColor = player === 'red' ? 'blue' : 'red';
 
         const winner = VictoryArbitrator.checkVictory(board);
@@ -33,8 +33,8 @@ export class HeuristicEvaluator {
         return weights.material * this.materialDiff(board, player, opponent) +
                weights.temple * this.templeDiff(board, player, opponent) +
                weights.mobility * this.mobilityDiff(board, player, opponent, cards) +
-               weights.position * this.positionalDiff(board, player, opponent) -
-               weights.threat * this.opponentThreat(board, opponent, cards);
+               weights.position * this.positionalDiff(board, player, opponent) +
+               weights.threat * this.inmediateWin(board, player, opponent, cards, turn ?? opponent);
     }
 
     //Si llegamos a este punto, significa que ambos maestros están vivos, por lo que su valor no cuenta aquí
@@ -112,11 +112,17 @@ export class HeuristicEvaluator {
         return myMoves - opponentMoves;
     }
 
-    private static opponentThreat(board: Board, opponent: PlayerColor, cards: GameState['cards']): number {
-        const canWin = MoveArbitrator.generateLegalMoves(board, opponent, cards[opponent]).some(move => {
-            return VictoryArbitrator.checkVictory(MovementManager.movePiece(board, move.from, move.to).newBoard) === opponent;
-        });
+    //Sub-15.3
 
-        return canWin ? 1 : 0;
+    private static inmediateWin(board: Board, player: PlayerColor, opponent: PlayerColor, cards: GameState['cards'], turn: PlayerColor): number {
+        if (turn === player) return this.canWinNow(board, player, cards) ? 1: 0;
+
+        return this.canWinNow(board, opponent, cards) ? -1: 0;
+    }
+
+    private static canWinNow(board: Board, color: PlayerColor, cards: GameState['cards']): boolean {
+        return MoveArbitrator.generateLegalMoves(board, color, cards[color]).some(move => {
+            return VictoryArbitrator.checkVictory(MovementManager.movePiece(board, move.from, move.to).newBoard) === color;
+        });
     }
 }
