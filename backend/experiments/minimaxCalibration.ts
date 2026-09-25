@@ -135,18 +135,18 @@ const HEURISTIC_DIFFICULTIES: AiDifficulty[] = ['easy', 'medium', 'hard'];
 
 //Experimento versus: ¿Cuánto mejora Minimax con respecto a la heurística de la FEAT-14? Minimax con el evaluador C
 function versus(games: number): string {
-    const rows = VERSUS_DEPTHS.flatMap(depth => [
+    const rows = VERSUS_DEPTHS.map(depth => [
         label(minimax(depth)),
         ...HEURISTIC_DIFFICULTIES.map(difficulty => percent(matchup(minimax(depth), heuristic(difficulty), games).winsA, games))
     ]);
 
-    return formatTable(['Vctorias de...', ...HEURISTIC_DIFFICULTIES.map(d => label(heuristic(difficulty)))], rows).join('\n');
+    return formatTable(['Victorias de...', ...HEURISTIC_DIFFICULTIES.map(d => label(heuristic(d)))], rows).join('\n');
 }
 
 const LADDER_DEPTHS = [ 2, 3, 4, 5];
 
 const percentile = (sortedValues: number[], p: number): number => {
-    sortedValues[Math.min(sortedValues.length - 1, Math.floor(p * sortedValues.length))];
+    return sortedValues[Math.min(sortedValues.length - 1, Math.floor(p * sortedValues.length))];
 }
 
 //Experimento ladder: ¿cada profundidad gana a la anterior? ¿Cuánto tarta cada decisión en partidas reales (mediana, percentil 95 y máximo)?
