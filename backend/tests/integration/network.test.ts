@@ -9,6 +9,7 @@ import { createServer, Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
 import { MatchmakingService } from '../../src/network/MatchmakingService';
 import { MoveArbitrator } from '../../src/game/MoveArbitrator';
+import { MinimaxPlayer } from '../../src/ai/MinimaxPlayer';
 
 type GameStartPayload = { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } };
 type GameUpdatePayload = { gameState: GameState };
@@ -1275,16 +1276,18 @@ describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         clientSocket.disconnect();
     });
 
-    it('Test-14.3a: Debe crear la sala contra la IA y hacer que la IA juegue sola su turno', async () => {
+    it.each(['heuristic', 'minimax'] as const)('Test-14.3a: Debe crear la sala contra la IA con motor $enginey hacer que la IA juegue sola su turno', async (engine) => {
+        const minimaxMove = vi.spyOn(MinimaxPlayer, 'selectMove');
         const updates: GameState[] = [];
         clientSocket.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => updates.push(data.gameState));
 
         const start = await new Promise<GameStartPayload>((resolve) => {
             clientSocket.once(SocketEvents.GAME_START, resolve);
-            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1', engine: 'heuristic', difficulty: 'medium' });
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1', engine, difficulty: 'medium' });
         });
 
         const humanColor: PlayerColor = start.players.red.socketId === clientSocket.id ? 'red' : 'blue';
@@ -1304,6 +1307,8 @@ describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
             await vi.waitFor(() => expect(updates.length).toBeGreaterThan(0), { timeout: 4000 });
             expect(updates[0].currentTurn).toBe(humanColor);
         }
+
+        expect(minimaxMove).toHaveBeenCalledTimes(engine === 'minimax' ? 1 : 0);
     });
 
     it('Test-14.3b: La sala contra la IA no debe arrancar el temporizador ni contar para estadísticas', async () => {
