@@ -1,4 +1,4 @@
-import { AiDifficulty, GameMode, MAX_CHAT_MESSAGE_LENGTH, isAiDifficulty, isGameMode } from "../../../shared";
+import { AiDifficulty, AiEngine, GameMode, MAX_CHAT_MESSAGE_LENGTH, isAiDifficulty, isAiEngine, isGameMode } from "../../../shared";
 
 //Los payloads de los eventos vienen del cliente y no se pueden dar por buenos. Los handlers los reciben
 //como `unknown`, así que el compilador solo les deja usarlos después de pasar por una de estas guardas.
@@ -23,8 +23,8 @@ export const isJoinQueuePayload = (data: unknown): data is { mode: GameMode } =>
     return isRecord(data) && isGameMode(data.mode);
 }
 
-export const isCreateAiRoomPayload = (data: unknown): data is { difficulty: AiDifficulty } => {
-    return isRecord(data) && isAiDifficulty(data.difficulty);
+export const isCreateAiRoomPayload = (data: unknown): data is { engine: AiEngine, difficulty: AiDifficulty } => {
+    return isRecord(data) && isAiEngine(data.engine) && isAiDifficulty(data.difficulty);
 }
 export const isChatPayload = (data: unknown): data is { message: string } => {
     return isRecord(data) && isNotEmptyString(data.message) && data.message.length <= MAX_CHAT_MESSAGE_LENGTH;

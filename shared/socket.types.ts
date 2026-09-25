@@ -115,6 +115,19 @@ export const AI_DIFFICULTY_LABELS: Record<AiDifficulty, string> = {
     hard: 'Difícil'
 };
 
+//Sub-15.4
+export const AI_ENGINES = ['heuristic', 'minimax'] as const;
+export type AiEngine = typeof AI_ENGINES[number];
+
+export const isAiEngine = (value: unknown): value is AiEngine => {
+    return AI_ENGINES.some(engine => engine === value);
+}
+
+export const AI_ENGINE_LABELS: Record<AiEngine, string> = {
+    heuristic: 'Heurística',
+    minimax: 'Minimax'
+};
+
 export interface MatchFoundPayload {
     roomId: string;
     roomCode: string;

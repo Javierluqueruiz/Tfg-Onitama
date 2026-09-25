@@ -48,7 +48,7 @@ describe('Validación de los payloads de los eventos', () => {
 
     const createAiRoom = () => new Promise<void>((resolve) => {
         client.once(SocketEvents.GAME_START, () => resolve());
-        client.emit(SocketEvents.CREATE_AI_ROOM, { difficulty: 'hard' });
+        client.emit(SocketEvents.CREATE_AI_ROOM, { engine: 'heuristic', difficulty: 'hard' });
     });
 
     const nextError = () => new Promise<{ message: string }>((resolve) => client.once(SocketEvents.ERROR, resolve));
