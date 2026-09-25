@@ -1,4 +1,4 @@
-import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position, AiDifficulty, AI_DIFFICULTY_LABELS } from "../../../shared";
+import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position, AiDifficulty, AI_DIFFICULTY_LABELS, AiEngine, AI_ENGINE_LABELS } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
 import { GameResultService } from "./GameResultService";
 
@@ -268,14 +268,15 @@ export class RoomManager {
     }
 
     //Sub-14.3
-    public static createAiRoom(hostProfile: PlayerProfile, difficulty: AiDifficulty): RoomSession {
+    public static createAiRoom(hostProfile: PlayerProfile, engine: AiEngine, difficulty: AiDifficulty): RoomSession {
         const room = this.createRoom(hostProfile, 'casual');
         room.countsForStats = false; // No contar partidas contra la IA para estadísticas de ELO
 
         const aiProfile: PlayerProfile = {
             socketId: `ai-${room.roomId}`,
-            name: `IA (${AI_DIFFICULTY_LABELS[difficulty]})`,
+            name: `IA ${AI_ENGINE_LABELS[engine]} (${AI_DIFFICULTY_LABELS[difficulty]})`,
             isAi: true,
+            aiEngine: engine,
             aiDifficulty: difficulty
         };
 

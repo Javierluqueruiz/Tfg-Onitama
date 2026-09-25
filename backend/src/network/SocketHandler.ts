@@ -147,7 +147,7 @@ function registerRoomEvents(io: Server, socket: Socket) {
             elo: identity.elo
         };
 
-        const room = RoomManager.createAiRoom(hostProfile, data.difficulty);
+        const room = RoomManager.createAiRoom(hostProfile, data.engine, data.difficulty);
         socket.join(room.roomId);
 
         io.to(room.roomId).emit(SocketEvents.GAME_START, { gameState: room.gameState, players: room.players });

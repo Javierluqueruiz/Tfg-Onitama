@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Server } from 'socket.io';
-import { AiDifficulty, PlayerColor, PlayerProfile, SocketEvents } from '../../../shared/index';
+import { AiDifficulty, AiEngine, PlayerColor, PlayerProfile, SocketEvents } from '../../../shared/index';
 import { AiTurnRunner } from '../../src/network/AiTurnRunner';
 import { RoomManager } from '../../src/network/RoomManager';
 import { GameEngine } from '../../src/game/GameEngine';
@@ -12,8 +12,8 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
     let emit: ReturnType<typeof vi.fn>;
     let io: Server;
 
-    const createAiGame = (difficulty: AiDifficulty = 'hard') => {
-        const room = RoomManager.createAiRoom(hostProfile, difficulty);
+    const createAiGame = (difficulty: AiDifficulty = 'hard', engine: AiEngine = 'heuristic') => {
+        const room = RoomManager.createAiRoom(hostProfile, engine, difficulty);
         const aiColor: PlayerColor = room.players.red?.isAi ? 'red' : 'blue';
         const humanColor: PlayerColor = aiColor === 'red' ? 'blue' : 'red';
         return { room, aiColor, humanColor };
@@ -142,10 +142,24 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
         expect(room.players[humanColor]?.aiDifficulty).toBeUndefined();
     });
 
-    it('Debe usar el nombre "IA (Difícil) para el perfil de la IA en partidas de dificultad "hard"', () => {
-        const { room, aiColor } = createAiGame('hard');
+    it.each([
+        { engine: 'heuristic', difficulty: 'easy' }, { engine: 'heuristic', difficulty: 'medium' }, { engine: 'heuristic', difficulty: 'hard' },
+        { engine: 'minimax', difficulty: 'easy' }, { engine: 'minimax', difficulty: 'medium' }, { engine: 'minimax', difficulty: 'hard' }
+    ] as const)('Debe guardar el motor $engine y la dificultad $difficulty elegidos en el perfil de la IA', ({ engine, difficulty }) => {
+        const { room, aiColor, humanColor } = createAiGame(difficulty, engine);
 
-        expect(room.players[aiColor]?.name).toBe('IA (Difícil)');
+        expect(room.players[aiColor]?.aiEngine).toBe(engine);
+        expect(room.players[aiColor]?.aiDifficulty).toBe(difficulty);
+        expect(room.players[humanColor]?.aiEngine).toBeUndefined();
+    });
+
+    it.each([
+        { engine: 'heuristic', difficulty: 'easy', name : 'IA Heurística (Fácil)' },
+        { engine: 'minimax', difficulty: 'hard', name : 'IA Minimax (Difícil)' }
+    ] as const)('Debe usar el nombre "$name" para el perfil de la IA en partidas de dificultad "$difficulty"', ({ engine, difficulty, name }) => {
+        const { room, aiColor } = createAiGame(difficulty, engine);
+
+        expect(room.players[aiColor]?.name).toBe(name);
     });
 
     it.each(['easy', 'medium', 'hard'] as const)('Debe jugar con la dificultad %s correctamente', (difficulty) => {

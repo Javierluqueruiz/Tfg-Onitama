@@ -81,6 +81,7 @@ export interface PlayerProfile {
     userId?: string;
     elo?: number;
     isAi?: boolean;
+    aiEngine?: AiEngine;
     aiDifficulty?: AiDifficulty;
 }
 

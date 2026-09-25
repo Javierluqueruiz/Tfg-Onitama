@@ -1355,12 +1355,20 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
         return { humanColor, aiColor };
     };
     
-    it.each(['easy', 'medium', 'hard'] as const)('Test-14.4a: Debe crear la sala contra la IA con dificultad %s', async (difficulty) => {
-        const start = await createAiRoom({ engine: 'heuristic', difficulty });
+    it.each([
+        { engine: 'heuristic', difficulty: 'easy' },
+        { engine: 'heuristic', difficulty: 'medium' },
+        { engine: 'heuristic', difficulty: 'hard' },
+        { engine: 'minimax', difficulty: 'easy' },
+        { engine: 'minimax', difficulty: 'medium' },
+        { engine: 'minimax', difficulty: 'hard' }
+    ] as const )('Test-14.4a: Debe crear la sala contra la IA con motor $engine y dificultad $difficulty', async ({ engine, difficulty }) => {
+        const start = await createAiRoom({ engine, difficulty });
         const { aiColor } = colorsOf(start);
 
         expect(start.players[aiColor].isAi).toBe(true);
         expect(start.players[aiColor].aiDifficulty).toBe(difficulty);
+        expect(start.players[aiColor].aiEngine).toBe(engine);
     });
 
     it('Test-14.4b: El nombre del jugador humano lo decide el servidor', async () => {
@@ -1410,7 +1418,7 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
     });
 
     it('Test-14.4f: La IA debe aceptar automáticamente la oferta de revancha si la partida ha terminado', async () => {
-        const start = await createAiRoom({ engine: 'heuristic', difficulty: 'medium' });
+        const start = await createAiRoom({ engine: 'minimax', difficulty: 'medium' });
         RoomManager.getRoomById(start.gameState.roomId)!.gameState.status = 'finished';
 
         const rematch = new Promise<GameStartPayload>((resolve) => 
@@ -1423,6 +1431,7 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
         expect(restarted.gameState.winner).toBeNull();
         expect(restarted.players[aiColor].isAi).toBe(true);
         expect(restarted.players[aiColor].aiDifficulty).toBe('medium');
+        expect(restarted.players[aiColor].aiEngine).toBe('minimax');
     });
 
     it('Test-14.4g: Si la IA empieza la revancha, debe jugar su turno automáticamente', async () => {
