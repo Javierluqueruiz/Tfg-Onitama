@@ -107,7 +107,7 @@ Con 20 posiciones tarda unos 25 segundos aproximadamente.
 
 ## Resultados (20 posiciones)
 
-Ejecución de referencia sobre el código del commit `<0b38588>`.
+Ejecución de referencia sobre el código del commit `0b38588`.
 
 # Eficiencia de la búsqueda (20 posiciones de medio juego aleatorias, media por decisión)
 
@@ -139,8 +139,9 @@ Responder con datos a las tres preguntas que quedaron abiertas al construir el o
 
 1. **`leaf`:** ¿qué evaluador conviene en las hojas del árbol de búsqueda? (el Memorando 0034 dejó abierta la cuestión de si la integración de la amenaza seguía siendo
 válida al construir un árbol).
-2. **`versus`:** cúanto mejor juega Minimax en comparación con la heurística de la FEAT-14, usando el mismo evaluador? Es el resultado central del Objetivo 3.
+2. **`versus`:** ¿cuánto mejor juega Minimax en comparación con la heurística de la FEAT-14, usando el mismo evaluador? Es el resultado central del Objetivo 3.
 3. **`ladder`:** ¿gana cada profundidad a la anterior, y cuánto tiempo tarda cada una en partidas reales? 
+4. **`discard`:** ¿con qué frecuencia se produce un descarte, y hay diferencia entre el modo de descarte de la heurística y el de Minimax?  
 
 El script que los reproduce es `minimaxCalibration.ts`.
 
@@ -161,13 +162,14 @@ Desde `backend/`:
 npm run experiment:minimax -- leaf 100
 npm run experiment:minimax -- versus 200
 npm run experiment:minimax -- ladder 200
+npm run experiment:minimax -- discard 500
 ```
   
-Tardan unos 28, 9 y 6 minutos respectivamente. `ladder` debe ejecutarse solo, para no falsear los tiempos de decisión.
+Tardan unos 28, 9, 6 y unos 8 minutos respectivamente. `ladder` debe ejecutarse solo, para no falsear los tiempos de decisión.
 
 ## Resultados
 
-Ejecuciones de referencia sobre el código del commit `8089b36`.
+Ejecuciones de referencia sobre el código del commit `bb4f240`.
 
 ### 1. Evaluador de hoja (100 partidas por enfrentamiento)
 
@@ -210,6 +212,30 @@ par/impar que ya se observó en el Memorando 0034. La variante C lo resuelve, po
 - **La profundidad 5 no es viable como nivel:** su percentil 95 es aceptable (167,5 ms), pero su máximo es de 2,4 s, muy por encima
 del límite de 300 ms que se ha fijado para no bloquear el servidor (la búsqueda es síncrona y bloquea el hilo principal).
 
+### 4. Descarte forzoso (500 partidas)
+
+- **Frecuencia de descarte**
+
+| Enfrentamiento                                     | Partidas | Partidas con descartes | Descartes totales |
+|----------------------------------------------------|----------|------------------------|-------------------|
+| Minimax (profundidad 3) vs Heurística (easy)       | 500      | 0                      | 0                 |
+| Minimax (profundidad 3) vs Heurística (hard)       | 500      | 0                      | 0                 |
+| Minimax (profundidad 3) vs Minimax (profundidad 3) | 500      | 0                      | 0                 |
+| Minimax (profundidad 4) vs Minimax (profundidad 2) | 500      | 0                      | 0                 |
+
+- **Comparación de modos de descarte** 
+
+| Profundidad             | Gana "search" | Gana "heuristic" | Partidas con descartes |
+|-------------------------|---------------|------------------|------------------------|
+| Minimax (profundidad 2) | 53,0%         | 46,8%            | 0                      |
+| Minimax (profundidad 3) | 46,6%         | 52,8%            | 0                      |
+| Minimax (profundidad 4) | 50,0%         | 49,4%            | 0                      |
+
+- **En 3.500 partidas no ocurrió ningún descarte.** Con 95% de confianza, su frecuencia real es menor que 3/3500, es decir, **inferior a una de cada 1.100 partidas** (regla de tres). Una búsqueda previa sobre 30.000 partidas al azar 
+tampoco dio descartes.
+- **Los dos modos de descarte juegan igual, porque nunca se llega a un descarte:** las diferencias (47 a 53%) son ruido del desempate aleatorio, dentro del margen de error (±4,4 puntos con 500 partidas).
+- El descarte solo aparece en situaciones muy concretas. Ambos modos siguen probados con posiciones personalizadas en `MinimaxPlayer.test.ts`.
+
 ## Decisión: niveles de dificultad de Minimax
 
 |  Nivel  | Profundidad | Máximo por decisión |
@@ -219,7 +245,9 @@ del límite de 300 ms que se ha fijado para no bloquear el servidor (la búsqued
 | Difícil | 4           | 108 ms              |
 
 Sin ruido aleatorio: la dificultad la da solo la profundidad de búsqueda. La profundidad 5 se descarta y se documenta como deuda técnica: usarla exigiría
-  un cambio de arquitectura para que la búsqueda sea asíncrona y no bloquee el hilo principal.
+un cambio de arquitectura para que la búsqueda sea asíncrona y no bloquee el hilo principal.
+
+El modo de descarte por defecto sigue siendo 'search' (explora ambas cartas), por ser el más completo y fiel al juego real; en la práctica es irrelevante.
 
 ## Limitaciones
 
@@ -230,3 +258,4 @@ decisión atípica, por lo que varían más que la mediana o el percentil 95.
 - Los rivales son siempre otros bots: no se mide la fuerza de Minimax contra jugadores humanos. La escalera de dificultad puede variar frente a personas.
 - En `ladder`, un 1% de las partidas de profundidad 5 vs 4 no llegaron a terminarse: el juego no tiene reglas de repetición y dos bots pueden entrar en bucles.
 - Todas las variantes comparten el mismo evaluador salvo en `leaf`: `versus` y `ladder` miden cuánto se mira, no cómo se puntúa.
+- La frecuencia de descarte solo se ha medido con los bots del experimento, no con jugadores humanos.
