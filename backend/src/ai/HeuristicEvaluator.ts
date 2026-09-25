@@ -34,7 +34,7 @@ export class HeuristicEvaluator {
                weights.temple * this.templeDiff(board, player, opponent) +
                weights.mobility * this.mobilityDiff(board, player, opponent, cards) +
                weights.position * this.positionalDiff(board, player, opponent) +
-               weights.threat * this.inmediateWin(board, player, opponent, cards, turn ?? opponent);
+               weights.threat * this.immediateWin(board, player, opponent, cards, turn ?? opponent);
     }
 
     //Si llegamos a este punto, significa que ambos maestros están vivos, por lo que su valor no cuenta aquí
@@ -114,7 +114,7 @@ export class HeuristicEvaluator {
 
     //Sub-15.3
 
-    private static inmediateWin(board: Board, player: PlayerColor, opponent: PlayerColor, cards: GameState['cards'], turn: PlayerColor): number {
+    private static immediateWin(board: Board, player: PlayerColor, opponent: PlayerColor, cards: GameState['cards'], turn: PlayerColor): number {
         if (turn === player) return this.canWinNow(board, player, cards) ? 1: 0;
 
         return this.canWinNow(board, opponent, cards) ? -1: 0;

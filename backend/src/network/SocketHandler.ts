@@ -6,7 +6,7 @@ import { MatchmakingService, QueueEntry } from "./MatchmakingService";
 import { resolvePlayerIdentity } from "./playerIdentity";
 import { EloService } from "../game/EloService";
 import { AiTurnRunner } from "./AiTurnRunner";
-import { isCreateRoomPayload, isJoinRoomPayload, isJoinQueuePayload, isCreateAiRoomPayload, isChatPayload } from "./payloadValidation";
+import { isCreateRoomPayload, isJoinRoomPayload, isJoinQueuePayload, isCreateAiRoomPayload, isDiscardCardPayload, isChatPayload } from "./payloadValidation";
 
 export function registerSocketEvents(io: Server) {
     io.on('connection', (socket: Socket) => {
@@ -70,6 +70,10 @@ function registerRoomEvents(io: Server, socket: Socket) {
         //¿EXISTE LA SALA?
         if (!room) {
             return socket.emit(SocketEvents.ERROR, { message: 'Código incorrecto o la sala no existe.' });
+        }
+
+        if(RoomManager.hasAiPlayer(room)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'La sala está llena.' });
         }
 
         const roomId = room.roomId;
@@ -146,6 +150,10 @@ function registerRoomEvents(io: Server, socket: Socket) {
             userId: identity.userId,
             elo: identity.elo
         };
+
+        if (RoomManager.getRoomBySocketId(socket.id)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Ya estás en una sala. No puedes crear otra.' });
+        }
 
         const room = RoomManager.createAiRoom(hostProfile, data.engine, data.difficulty);
         socket.join(room.roomId);
@@ -271,7 +279,11 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
     })
 
     //FEAT 14 (Sub-14.1)
-    socket.on(SocketEvents.DISCARD_CARD, (data: { cardName: string }) => {
+    socket.on(SocketEvents.DISCARD_CARD, (data: unknown) => {
+        if (!isDiscardCardPayload(data)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'Datos de descarte inválidos.' });
+        }
+        
         const room = RoomManager.getRoomBySocketId(socket.id);
 
         if (!room || !room.gameState) {

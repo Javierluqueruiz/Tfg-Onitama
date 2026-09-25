@@ -86,7 +86,7 @@ function matchup(a: Bot, b: Bot, games: number): MatchUpResult {
             result.discards++;
             discardsInThisGame++;
         }
-        (bot === a ? result.msA.push(ms) : result.msB.push(ms));
+        (bot === a ? result.msA : result.msB).push(ms);
     };
 
     for (let game = 0; game < games; game++) {

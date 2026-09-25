@@ -1405,6 +1405,29 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
         expect(RoomManager.getActiveRooms().size).toBe(0);
     });
 
+    it('Test-15.4b: Nadie más puede unirse a una sala contra la IA, aunque conozca su código', async () => {
+        const start = await createAiRoom({ engine: 'minimax', difficulty: 'easy' });
+        const room = RoomManager.getRoomById(start.gameState.roomId)!;
+        const playersBefore = { ...room.players };
+        const [intruder] = await connectClients(server.port, 1);
+
+        const errorPromise = new Promise<ErrorPayload>((resolve) => intruder.once(SocketEvents.ERROR, resolve));
+        intruder.emit(SocketEvents.JOIN_ROOM, { roomCode: room.roomCode, guestName: 'Intruso' });
+
+        expect((await errorPromise).message).toBe('La sala está llena.');
+        expect(room.players).toEqual(playersBefore);
+        intruder.disconnect();
+    });
+
+    it('Test-15.4c: Si el mismo jugador pide dos salas contra la IA seguidas, solo se crea una', async () => {
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { engine: 'minimax', difficulty: 'hard' });
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { engine: 'minimax', difficulty: 'hard' });
+
+        expect((await errorPromise).message).toBe('Ya estás en una sala. No puedes crear otra.');
+        expect(RoomManager.getActiveRooms().size).toBe(1);
+    });
+
     it('Test-14.4d: Debe rechazar ofertas de empate contra la IA', async () => {
         const start = await createAiRoom({ engine: 'heuristic', difficulty: 'medium' });
         const errorPromise = nextError();

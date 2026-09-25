@@ -26,6 +26,11 @@ export const isJoinQueuePayload = (data: unknown): data is { mode: GameMode } =>
 export const isCreateAiRoomPayload = (data: unknown): data is { engine: AiEngine, difficulty: AiDifficulty } => {
     return isRecord(data) && isAiEngine(data.engine) && isAiDifficulty(data.difficulty);
 }
+
+export const isDiscardCardPayload = (data: unknown): data is { cardName: string } => {
+    return isRecord(data) && isNotEmptyString(data.cardName);
+}
+
 export const isChatPayload = (data: unknown): data is { message: string } => {
     return isRecord(data) && isNotEmptyString(data.message) && data.message.length <= MAX_CHAT_MESSAGE_LENGTH;
 }
