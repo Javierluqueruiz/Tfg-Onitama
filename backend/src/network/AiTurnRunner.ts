@@ -1,9 +1,12 @@
 import { Server } from "socket.io";
-import { GameState, PlayerColor, RoomSession, SocketEvents } from "../../../shared";
+import { AiDifficulty, GameState, PlayerColor, RoomSession, SocketEvents } from "../../../shared";
 import { RoomManager } from "./RoomManager";
 import { AiPlayer } from "../ai/AiPlayer";
+import { MinimaxPlayer } from "../ai/MinimaxPlayer";
 
 const AI_THINKING_DELAY = 750;
+
+const MINIMAX_DEPTH: Record<AiDifficulty, number> = { easy: 2, medium: 3, hard: 4 };
 
 export class AiTurnRunner {
 
@@ -30,13 +33,20 @@ export class AiTurnRunner {
         if (!room || room.gameState.status === 'finished' || room.gameState.currentTurn !== aiColor) return;
 
         const { board, cards, status } = room.gameState;
+        const profile = room.players[aiColor];
+        const useMinimax = profile?.aiEngine === 'minimax';
+        const minimaxOptions = { depth: MINIMAX_DEPTH[profile?.aiDifficulty ?? 'hard'] };
         let committedState: GameState | null;
 
         if (status === 'waiting_for_discard') {
-            const cardToDiscard = AiPlayer.selectDiscard(board, aiColor, cards);
+            const cardToDiscard = useMinimax 
+                ? MinimaxPlayer.selectDiscard(room.gameState, minimaxOptions)
+                : AiPlayer.selectDiscard(board, aiColor, cards);
             committedState = RoomManager.applyDiscard(roomId, cardToDiscard);
         } else {
-            const move = AiPlayer.selectMove(board, aiColor, cards, { difficulty: room.players[aiColor]?.aiDifficulty });
+            const move = useMinimax
+                ? MinimaxPlayer.selectMove(room.gameState, minimaxOptions)
+                : AiPlayer.selectMove(board, aiColor, cards, { difficulty: profile?.aiDifficulty });
             committedState = RoomManager.applyMove(roomId, move.from, move.to, move.cardName);
         }
 
