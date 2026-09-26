@@ -99,5 +99,54 @@ describe('FEAT-14 (Sub-14.2): HeuristicEvaluator', () => {
             expect(withThreat).toBe(withoutThreat);
         });
     });
-    
+
+    describe('FEAT-15 (Sub-15.3): quién mueve en la hoja', () => {
+        const captureCard: Card = { name: 'Capture', description: 'Mock', color: 'red', moves: [{ x: 0, y: -1 }] };
+        const withouhThreat = { ...DEFAULT_EVALUATOR_WEIGHTS, threat: 0 };
+
+        const adjacentMasters = (): Board => {
+            const board = emptyBoard();
+            board[2][2] = { type: 'master', color: 'red' };
+            board[3][2] = { type: 'master', color: 'blue' };
+            return board;
+        };
+
+        const hands = (red: Card, blue: Card): GameState['cards'] => ({
+            red: [red, noMoveCard],
+            blue: [blue, noMoveCard],
+            neutral: noMoveCard
+        });
+
+        const bothCapture = hands(captureCard, captureCard);
+        const base = HeuristicEvaluator.evaluate(adjacentMasters(), 'red', bothCapture, withouhThreat);
+
+        it('Si no se indica el turno, se comporta como si le tocara al rival', () => {
+            const withoutTurn = HeuristicEvaluator.evaluate(adjacentMasters(), 'red', bothCapture);
+            const rivalTurn = HeuristicEvaluator.evaluate(adjacentMasters(), 'red', bothCapture, DEFAULT_EVALUATOR_WEIGHTS, 'blue');
+
+            expect(withoutTurn).toBe(rivalTurn);
+        });
+
+        it('Si le toca al rival y puede ganar, se penaliza', () => {
+            expect(HeuristicEvaluator.evaluate(adjacentMasters(), 'red', bothCapture, DEFAULT_EVALUATOR_WEIGHTS, 'blue')).toBe(base - DEFAULT_EVALUATOR_WEIGHTS.threat);
+        });
+
+        it('Si le toca al jugador y puede ganar, se premia', () => {
+            expect(HeuristicEvaluator.evaluate(adjacentMasters(), 'red', bothCapture, DEFAULT_EVALUATOR_WEIGHTS, 'red')).toBe(base + DEFAULT_EVALUATOR_WEIGHTS.threat);
+        });
+
+        it('Si le toca al jugador y solo el rival puede ganar, no penaliza', () => {
+            const onlyRivalCanWin = hands(noMoveCard, captureCard);
+            const noThreatScore = HeuristicEvaluator.evaluate(adjacentMasters(), 'red', onlyRivalCanWin, withouhThreat);
+
+            expect(HeuristicEvaluator.evaluate(adjacentMasters(), 'red', onlyRivalCanWin, DEFAULT_EVALUATOR_WEIGHTS, 'red')).toBe(noThreatScore);
+        });
+
+        it('Si le toca al rival y solo el jugador puede ganar, no premia', () => {
+            const onlyPlayerCanWin = hands(captureCard, noMoveCard);
+            const noThreatScore = HeuristicEvaluator.evaluate(adjacentMasters(), 'red', onlyPlayerCanWin, withouhThreat);
+
+            expect(HeuristicEvaluator.evaluate(adjacentMasters(), 'red', onlyPlayerCanWin, DEFAULT_EVALUATOR_WEIGHTS, 'blue')).toBe(noThreatScore);
+        });
+    });
 });

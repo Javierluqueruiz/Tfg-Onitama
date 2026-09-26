@@ -1,15 +1,18 @@
 import React from 'react';
 import styles from './MainMenu.module.css';
-import type { GameMode, AiDifficulty } from '../../../../../shared';
-import { AI_DIFFICULTIES, AI_DIFFICULTY_LABELS } from '../../../../../shared';
+import type { GameMode, AiDifficulty, AiEngine } from '../../../../../shared';
+import { AI_DIFFICULTIES, AI_DIFFICULTY_LABELS, AI_ENGINES, AI_ENGINE_LABELS } from '../../../../../shared';
 
 export type Tab = 'MATCHMAKING' | 'PRIVATE' | 'AI';
+
+//FEAT 15 (Sub-15.4): escalera de niveles contra la IA
+const AI_LEVELS = AI_ENGINES.flatMap(engine => AI_DIFFICULTIES.map(difficulty => ({ engine, difficulty })));
 
 interface MainMenuProps {
     onSelectCreate: () => void;
     onSelectJoin: () => void;
     onStartMatchmaking: (mode: GameMode) => void;
-    onStartAiGame: (difficulty: AiDifficulty) => void;
+    onStartAiGame: (engine: AiEngine, difficulty: AiDifficulty) => void;
     isConnected: boolean;
     activeTab: Tab;
     onTabChange: (tab: Tab) => void;
@@ -94,14 +97,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin
                     <div className={styles.aiSection}>
                         <h3 className={styles.sectionTitle}>Jugar contra IA</h3>
                         <div className={styles.modeButtons}>
-                            {AI_DIFFICULTIES.map((difficulty) => (
+                            {AI_LEVELS.map(({ engine, difficulty }) => (
                                 <button 
-                                    key={difficulty}
+                                    key={`${engine}-${difficulty}`}
                                     className={`${styles.btn} ${styles[`btnDifficulty_${difficulty}`]} ${statusClass}`}
-                                    onClick={()=> onStartAiGame(difficulty)}
+                                    onClick={() => onStartAiGame(engine, difficulty)}
                                     disabled={!isConnected}
                                 >
-                                    {AI_DIFFICULTY_LABELS[difficulty]}
+                                    {AI_ENGINE_LABELS[engine]} · {AI_DIFFICULTY_LABELS[difficulty]}
                                 </button>
                             ))}
                         </div>

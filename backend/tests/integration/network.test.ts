@@ -9,6 +9,7 @@ import { createServer, Server as HttpServer } from 'http';
 import type { AddressInfo } from 'net';
 import { MatchmakingService } from '../../src/network/MatchmakingService';
 import { MoveArbitrator } from '../../src/game/MoveArbitrator';
+import { MinimaxPlayer } from '../../src/ai/MinimaxPlayer';
 
 type GameStartPayload = { gameState: GameState, players: { red: PlayerProfile, blue: PlayerProfile } };
 type GameUpdatePayload = { gameState: GameState };
@@ -1275,16 +1276,18 @@ describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
     });
 
     afterEach(() => {
+        vi.restoreAllMocks();
         clientSocket.disconnect();
     });
 
-    it('Test-14.3a: Debe crear la sala contra la IA y hacer que la IA juegue sola su turno', async () => {
+    it.each(['heuristic', 'minimax'] as const)('Test-14.3a: Debe crear la sala contra la IA con motor $enginey hacer que la IA juegue sola su turno', async (engine) => {
+        const minimaxMove = vi.spyOn(MinimaxPlayer, 'selectMove');
         const updates: GameState[] = [];
         clientSocket.on(SocketEvents.GAME_UPDATE, (data: GameUpdatePayload) => updates.push(data.gameState));
 
         const start = await new Promise<GameStartPayload>((resolve) => {
             clientSocket.once(SocketEvents.GAME_START, resolve);
-            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1', difficulty: 'medium' });
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Player1', engine, difficulty: 'medium' });
         });
 
         const humanColor: PlayerColor = start.players.red.socketId === clientSocket.id ? 'red' : 'blue';
@@ -1304,12 +1307,14 @@ describe('FEAT-14 (Sub-14.3): Partida contra la IA por socket', () => {
             await vi.waitFor(() => expect(updates.length).toBeGreaterThan(0), { timeout: 4000 });
             expect(updates[0].currentTurn).toBe(humanColor);
         }
+
+        expect(minimaxMove).toHaveBeenCalledTimes(engine === 'minimax' ? 1 : 0);
     });
 
     it('Test-14.3b: La sala contra la IA no debe arrancar el temporizador ni contar para estadísticas', async () => {
         const start = await new Promise<GameStartPayload>((resolve) => {
             clientSocket.once(SocketEvents.GAME_START, resolve);
-            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Humano', difficulty: 'medium' });
+            clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { hostName: 'Humano', engine: 'heuristic', difficulty: 'medium' });
         });
 
         const room = RoomManager.getRoomById(start.gameState.roomId);
@@ -1355,16 +1360,24 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
         return { humanColor, aiColor };
     };
     
-    it.each(['easy', 'medium', 'hard'] as const)('Test-14.4a: Debe crear la sala contra la IA con dificultad %s', async (difficulty) => {
-        const start = await createAiRoom({ difficulty });
+    it.each([
+        { engine: 'heuristic', difficulty: 'easy' },
+        { engine: 'heuristic', difficulty: 'medium' },
+        { engine: 'heuristic', difficulty: 'hard' },
+        { engine: 'minimax', difficulty: 'easy' },
+        { engine: 'minimax', difficulty: 'medium' },
+        { engine: 'minimax', difficulty: 'hard' }
+    ] as const )('Test-14.4a: Debe crear la sala contra la IA con motor $engine y dificultad $difficulty', async ({ engine, difficulty }) => {
+        const start = await createAiRoom({ engine, difficulty });
         const { aiColor } = colorsOf(start);
 
         expect(start.players[aiColor].isAi).toBe(true);
         expect(start.players[aiColor].aiDifficulty).toBe(difficulty);
+        expect(start.players[aiColor].aiEngine).toBe(engine);
     });
 
     it('Test-14.4b: El nombre del jugador humano lo decide el servidor', async () => {
-        const start = await createAiRoom({ hostName: 'Humano', difficulty: 'medium' });
+        const start = await createAiRoom({ hostName: 'Humano', engine: 'heuristic', difficulty: 'medium' });
         const { humanColor } = colorsOf(start);
 
         expect(start.players[humanColor].name).toBe('Invitado');
@@ -1378,8 +1391,45 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
         expect(RoomManager.getActiveRooms().size).toBe(0);
     });
 
+    it.each([
+        { difficulty: 'medium' },
+        { engine: 'random', difficulty: 'hard' },
+        { engine: 1, difficulty: 'easy' },
+        { engine: 'minimax' },
+        { engine: 'minimax', difficulty: 'impossible' }
+    ])('Test-15.4a: Debe rechazar la creación de sala contra la IA con motor o dificultad inválidos (%o)', async (invalidPayload) => {
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, invalidPayload);
+
+        expect((await errorPromise).message).toBe('Datos de creación de sala AI inválidos.');
+        expect(RoomManager.getActiveRooms().size).toBe(0);
+    });
+
+    it('Test-15.4b: Nadie más puede unirse a una sala contra la IA, aunque conozca su código', async () => {
+        const start = await createAiRoom({ engine: 'minimax', difficulty: 'easy' });
+        const room = RoomManager.getRoomById(start.gameState.roomId)!;
+        const playersBefore = { ...room.players };
+        const [intruder] = await connectClients(server.port, 1);
+
+        const errorPromise = new Promise<ErrorPayload>((resolve) => intruder.once(SocketEvents.ERROR, resolve));
+        intruder.emit(SocketEvents.JOIN_ROOM, { roomCode: room.roomCode, guestName: 'Intruso' });
+
+        expect((await errorPromise).message).toBe('La sala está llena.');
+        expect(room.players).toEqual(playersBefore);
+        intruder.disconnect();
+    });
+
+    it('Test-15.4c: Si el mismo jugador pide dos salas contra la IA seguidas, solo se crea una', async () => {
+        const errorPromise = nextError();
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { engine: 'minimax', difficulty: 'hard' });
+        clientSocket.emit(SocketEvents.CREATE_AI_ROOM, { engine: 'minimax', difficulty: 'hard' });
+
+        expect((await errorPromise).message).toBe('Ya estás en una sala. No puedes crear otra.');
+        expect(RoomManager.getActiveRooms().size).toBe(1);
+    });
+
     it('Test-14.4d: Debe rechazar ofertas de empate contra la IA', async () => {
-        const start = await createAiRoom({ difficulty: 'medium' });
+        const start = await createAiRoom({ engine: 'heuristic', difficulty: 'medium' });
         const errorPromise = nextError();
         clientSocket.emit(SocketEvents.OFFER_DRAW);
 
@@ -1388,7 +1438,7 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
     });
 
     it('Test-14.4e: Debe rechazar ofertas de revancha contra la IA si la partida sigue en curso', async () => {
-        await createAiRoom({ difficulty: 'medium' });
+        await createAiRoom({ engine: 'heuristic', difficulty: 'medium' });
         const errorPromise = nextError();
         clientSocket.emit(SocketEvents.OFFER_REMATCH);
 
@@ -1396,7 +1446,7 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
     });
 
     it('Test-14.4f: La IA debe aceptar automáticamente la oferta de revancha si la partida ha terminado', async () => {
-        const start = await createAiRoom({ difficulty: 'medium' });
+        const start = await createAiRoom({ engine: 'minimax', difficulty: 'medium' });
         RoomManager.getRoomById(start.gameState.roomId)!.gameState.status = 'finished';
 
         const rematch = new Promise<GameStartPayload>((resolve) => 
@@ -1409,10 +1459,11 @@ describe('FEAT-14 (Sub-14.4): Partida contra la IA con dificultad', () => {
         expect(restarted.gameState.winner).toBeNull();
         expect(restarted.players[aiColor].isAi).toBe(true);
         expect(restarted.players[aiColor].aiDifficulty).toBe('medium');
+        expect(restarted.players[aiColor].aiEngine).toBe('minimax');
     });
 
     it('Test-14.4g: Si la IA empieza la revancha, debe jugar su turno automáticamente', async () => {
-        const start = await createAiRoom({ difficulty: 'medium' });
+        const start = await createAiRoom({ engine: 'heuristic', difficulty: 'medium' });
         const roomId = start.gameState.roomId;
         const { aiColor, humanColor } = colorsOf(start);
 

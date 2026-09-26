@@ -1,19 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Server } from 'socket.io';
-import { AiDifficulty, PlayerColor, PlayerProfile, SocketEvents } from '../../../shared/index';
+import { AiDifficulty, AiEngine, PlayerColor, PlayerProfile, SocketEvents } from '../../../shared/index';
 import { AiTurnRunner } from '../../src/network/AiTurnRunner';
 import { RoomManager } from '../../src/network/RoomManager';
 import { GameEngine } from '../../src/game/GameEngine';
 import { MoveArbitrator } from '../../src/game/MoveArbitrator';
 import { AiPlayer } from '../../src/ai/AiPlayer';
+import { MinimaxPlayer } from '../../src/ai/MinimaxPlayer';
 
 describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
     const hostProfile: PlayerProfile = { socketId: 'hostSocket', name: 'Host' };
     let emit: ReturnType<typeof vi.fn>;
     let io: Server;
 
-    const createAiGame = (difficulty: AiDifficulty = 'hard') => {
-        const room = RoomManager.createAiRoom(hostProfile, difficulty);
+    const createAiGame = (difficulty: AiDifficulty = 'hard', engine: AiEngine = 'heuristic') => {
+        const room = RoomManager.createAiRoom(hostProfile, engine, difficulty);
         const aiColor: PlayerColor = room.players.red?.isAi ? 'red' : 'blue';
         const humanColor: PlayerColor = aiColor === 'red' ? 'blue' : 'red';
         return { room, aiColor, humanColor };
@@ -108,9 +109,9 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
         expect(emit).not.toHaveBeenCalled();
     });
 
-    it('Debe completar partidas enteras contra un humano que juega al azar, sin erores ni bloqueos', () => {
-        for (let game = 0; game < 20; game++) {
-            const { room, humanColor } = createAiGame();
+    const playGamesAgainstRandomHuman = (games: number, difficulty: AiDifficulty, engine: AiEngine) => {
+        for (let game = 0; game < games; game++) {
+            const { room, humanColor } = createAiGame(difficulty, engine);
 
             for (let step = 0; step < 300 && room.gameState.status !== 'finished'; step++) {
                 const state = room.gameState;
@@ -132,6 +133,10 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
             expect(room.gameState.status).toBe('finished');
             expect(room.gameState.winner).not.toBeNull();
         }
+    }
+
+    it('Debe completar partidas enteras contra un humano que juega al azar, sin erores ni bloqueos', () => {
+        playGamesAgainstRandomHuman(20, 'hard', 'heuristic');
     });
     
     it('Debe guardar la dificultad elegida en el perfil de la IA', () => {
@@ -142,10 +147,24 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
         expect(room.players[humanColor]?.aiDifficulty).toBeUndefined();
     });
 
-    it('Debe usar el nombre "IA (Difícil) para el perfil de la IA en partidas de dificultad "hard"', () => {
-        const { room, aiColor } = createAiGame('hard');
+    it.each([
+        { engine: 'heuristic', difficulty: 'easy' }, { engine: 'heuristic', difficulty: 'medium' }, { engine: 'heuristic', difficulty: 'hard' },
+        { engine: 'minimax', difficulty: 'easy' }, { engine: 'minimax', difficulty: 'medium' }, { engine: 'minimax', difficulty: 'hard' }
+    ] as const)('Debe guardar el motor $engine y la dificultad $difficulty elegidos en el perfil de la IA', ({ engine, difficulty }) => {
+        const { room, aiColor, humanColor } = createAiGame(difficulty, engine);
 
-        expect(room.players[aiColor]?.name).toBe('IA (Difícil)');
+        expect(room.players[aiColor]?.aiEngine).toBe(engine);
+        expect(room.players[aiColor]?.aiDifficulty).toBe(difficulty);
+        expect(room.players[humanColor]?.aiEngine).toBeUndefined();
+    });
+
+    it.each([
+        { engine: 'heuristic', difficulty: 'easy', name : 'IA Heurística (Fácil)' },
+        { engine: 'minimax', difficulty: 'hard', name : 'IA Minimax (Difícil)' }
+    ] as const)('Debe usar el nombre "$name" para el perfil de la IA en partidas de dificultad "$difficulty"', ({ engine, difficulty, name }) => {
+        const { room, aiColor } = createAiGame(difficulty, engine);
+
+        expect(room.players[aiColor]?.name).toBe(name);
     });
 
     it.each(['easy', 'medium', 'hard'] as const)('Debe jugar con la dificultad %s correctamente', (difficulty) => {
@@ -158,5 +177,77 @@ describe('FEAT-14 (Sub-14.3): AiTurnRunner', () => {
 
         expect(selectMove).toHaveBeenCalledTimes(1);
         expect(selectMove).toHaveBeenCalledWith(expect.anything(), aiColor, expect.anything(), { difficulty });
+    });
+
+    //FEAT-15 (Sub-15.4)
+    const MINIMAX_LEVELS = [
+        { difficulty: 'easy', depth: 2 },
+        { difficulty: 'medium', depth: 3 },
+        { difficulty: 'hard', depth: 4 }
+    ] as const;
+
+    it.each(MINIMAX_LEVELS)('Con Minimax en dificultad $difficulty, debe usar profundidad $depth', ({ difficulty, depth }) => {
+        const minimaxMove = vi.spyOn(MinimaxPlayer, 'selectMove');
+        const heuristicMove = vi.spyOn(AiPlayer, 'selectMove');
+        const { room, aiColor } = createAiGame(difficulty, 'minimax');
+        room.gameState.currentTurn = aiColor;
+
+        AiTurnRunner.maybePlayTurn(io, room.roomId);
+        vi.runOnlyPendingTimers();
+
+        expect(minimaxMove).toHaveBeenCalledTimes(1);
+        expect(minimaxMove).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ depth }));
+        expect(heuristicMove).not.toHaveBeenCalled();
+    });
+
+    it.each(['easy', 'medium', 'hard'] as const)('Con la heurística en dificultad %s, no debe usar Minimax', (difficulty) => {
+        const minimaxMove = vi.spyOn(MinimaxPlayer, 'selectMove');
+        const heuristicMove = vi.spyOn(AiPlayer, 'selectMove');
+        const { room, aiColor } = createAiGame(difficulty, 'heuristic');
+
+        room.gameState.currentTurn = aiColor;
+        AiTurnRunner.maybePlayTurn(io, room.roomId);
+        vi.runOnlyPendingTimers();
+
+        room.gameState.currentTurn = aiColor;
+        room.gameState.status = 'waiting_for_discard';
+        AiTurnRunner.maybePlayTurn(io, room.roomId);
+        vi.runOnlyPendingTimers();
+
+        expect(heuristicMove).toHaveBeenCalled();
+        expect(minimaxMove).not.toHaveBeenCalled();
+    });
+
+    it.each(MINIMAX_LEVELS)('Con Minimax en dificultad $difficulty, debe usar profundidad $depth al descartar', ({ difficulty, depth }) => {
+        const minimaxDiscard = vi.spyOn(MinimaxPlayer, 'selectDiscard');
+        const heuristicDiscard = vi.spyOn(AiPlayer, 'selectDiscard');
+        const { room, aiColor, humanColor } = createAiGame(difficulty, 'minimax');
+        room.gameState.currentTurn = aiColor;
+        room.gameState.status = 'waiting_for_discard';
+
+        AiTurnRunner.maybePlayTurn(io, room.roomId);
+        vi.runOnlyPendingTimers();
+
+        expect(minimaxDiscard).toHaveBeenCalledTimes(1);
+        expect(minimaxDiscard).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ depth }));
+        expect(heuristicDiscard).not.toHaveBeenCalled();
+        expect(room.gameState.currentTurn).toBe(humanColor);
+    });
+
+    it.each(MINIMAX_LEVELS)('Debe completar partidas enteras con Minimax en dificultad $difficulty contra un humano que juega al azar, sin erores ni bloqueos', ({ difficulty }) => {
+        playGamesAgainstRandomHuman(5, difficulty, 'minimax');
+    }, 30_000);
+
+    it('Con Minimax y sin dificultad en el perfil, la IA busca a produndidad 4 ("hard") por defecto', () => {
+        const minimaxMove = vi.spyOn(MinimaxPlayer, 'selectMove');
+        const { room, aiColor } = createAiGame('easy', 'minimax');
+        room.players[aiColor]!.aiDifficulty = undefined;
+        room.gameState.currentTurn = aiColor;
+
+        AiTurnRunner.maybePlayTurn(io, room.roomId);
+        vi.runOnlyPendingTimers();
+
+        expect(minimaxMove).toHaveBeenCalledTimes(1);
+        expect(minimaxMove).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ depth: 4 }));
     });
 });

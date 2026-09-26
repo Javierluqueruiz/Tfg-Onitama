@@ -48,7 +48,7 @@ describe('Validación de los payloads de los eventos', () => {
 
     const createAiRoom = () => new Promise<void>((resolve) => {
         client.once(SocketEvents.GAME_START, () => resolve());
-        client.emit(SocketEvents.CREATE_AI_ROOM, { difficulty: 'hard' });
+        client.emit(SocketEvents.CREATE_AI_ROOM, { engine: 'heuristic', difficulty: 'hard' });
     });
 
     const nextError = () => new Promise<{ message: string }>((resolve) => client.once(SocketEvents.ERROR, resolve));
@@ -76,7 +76,10 @@ describe('Validación de los payloads de los eventos', () => {
             { event: SocketEvents.JOIN_ROOM, payload: { roomCode: 'ABCDE', guestName: '   ' }, message: 'Datos de unión a la sala inválidos.' },
             { event: SocketEvents.JOIN_QUEUE, payload: { mode: 'invalid_mode' }, message: 'Datos de unión a la cola inválidos.' },
             { event: SocketEvents.SEND_MESSAGE, payload: { message: '   ' }, message: 'Datos de mensaje de chat inválidos.' },
-            { event: SocketEvents.SEND_MESSAGE, payload: { message: 'a'.repeat(MAX_CHAT_MESSAGE_LENGTH + 1) }, message: 'Datos de mensaje de chat inválidos.' }
+            { event: SocketEvents.SEND_MESSAGE, payload: { message: 'a'.repeat(MAX_CHAT_MESSAGE_LENGTH + 1) }, message: 'Datos de mensaje de chat inválidos.' },
+            { event: SocketEvents.DISCARD_CARD, payload: { cardName: '   ' }, message: 'Datos de descarte inválidos.' },
+            { event: SocketEvents.DISCARD_CARD, payload: { cardName: 67 }, message: 'Datos de descarte inválidos.' },
+            { event: SocketEvents.DISCARD_CARD, payload: {}, message: 'Datos de descarte inválidos.' },
         ])('Debe responder con un error a $event con $payload', async ({ event, payload, message }) => {
             const errorPromise = nextError();
             client.emit(event, payload);
