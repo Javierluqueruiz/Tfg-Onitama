@@ -84,7 +84,7 @@ Ejecución de referencia sobre el código del commit `498cad0`.
 ## Propósito
 
 Cuantificar cuánto trabajo ahorran la poda alfa-beta y la ordenación de los movimientos respecto a Minimax puro. Las tres variantes son 
-**exactamente la misma deicisión** (lo comprueban los tests de `MinimaxPlayer.test.ts`); solo cambia el coste. El script que lo reproduce es
+**exactamente la misma decisión** (lo comprueban los tests de `MinimaxPlayer.test.ts`); solo cambia el coste. El script que lo reproduce es
 `searchBenchmark.ts`.
 
 ## Método
@@ -100,7 +100,7 @@ Cuantificar cuánto trabajo ahorran la poda alfa-beta y la ordenación de los mo
 Desde `backend/`:
 
 ```bash
-npm run experiment:search --20
+npm run experiment:search -- 20
 ```
 
 Con 20 posiciones tarda unos 25 segundos aproximadamente.
@@ -122,7 +122,7 @@ Ejecución de referencia sobre el código del commit `0b38588`.
 Tiempo total: 24.826s
 
 - A profundidad 4, la poda reduce 8,3 veces los nodos y 6,5 veces el tiempo; con ordenación, 28,6 y 15,2 veces.
-- A ~220 ms, Minimax puro llega a profundidad 4; alfa-beta llega a profundidad 5 en 95 m y a profundidad 6 en 600 ms.
+- A ~220 ms, Minimax puro llega a profundidad 4; alfa-beta llega a profundidad 5 en 95 ms y a profundidad 6 en 600 ms.
 
 ## Limitaciones
 
