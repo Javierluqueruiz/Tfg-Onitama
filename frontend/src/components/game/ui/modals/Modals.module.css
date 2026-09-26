@@ -258,3 +258,21 @@
     justify-content: center;
     width: 100%;
 }
+
+/* Sub-14.1: Aviso de descarte forzoso */
+.discardBanner {
+  background-color: var(--game-paper);
+  color: var(--game-ink);
+  border: 1px solid var(--game-line-soft);
+  padding: 1.2rem;
+  border-radius: 10px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: var(--game-shadow-soft);
+}
+
+.discardBanner p {
+  margin: 0;
+  font-size: 1.05rem;
+}

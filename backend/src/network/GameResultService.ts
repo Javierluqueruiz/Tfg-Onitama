@@ -7,6 +7,8 @@ export class GameResultService {
     private static readonly MAX_LAST_MATCHES = 20;
 
     public static async recordMatchResult(room: RoomSession): Promise<void> {
+        if (!room.countsForStats) return; // Sub-14.3
+
         const { red, blue } = room.players;
         const winner = room.gameState.winner;
         if (!winner) return;

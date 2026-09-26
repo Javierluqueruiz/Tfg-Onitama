@@ -85,4 +85,18 @@ export class GameEngine {
         finalState.lastMove = { from, to };
         return finalState;
     }
+
+    //FEAT-14 (Sub-14.1): Descartar una carta cuando no hay movimientos válidos
+    public static discardCard(state: GameState, cardName: string): GameState {
+        const newState: GameState = { ...state };
+
+        const hand = newState.currentTurn === 'red' ? newState.cards.red : newState.cards.blue;
+        const cardToDiscard = hand.find(card => card.name === cardName);
+
+        if (!cardToDiscard) throw new Error(`[FEAT-14] La carta ${cardName} no está en la mano del jugador ${newState.currentTurn}`);
+
+        newState.cards = DeckManager.playCard(newState.cards, newState.currentTurn, cardName);
+
+        return this.switchTurn(newState);
+    }
 }

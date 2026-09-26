@@ -1,8 +1,8 @@
 import { Board, PlayerColor } from "../../../shared";
 
-const RED_MASTER_POSITION = { x: 2, y: 0 };
-const BLUE_MASTER_POSITION = { x: 2, y: 4 };
-
+export const RED_MASTER_POSITION = { x: 2, y: 0 };
+export const BLUE_MASTER_POSITION = { x: 2, y: 4 };
+    
 export class VictoryArbitrator {
 
     //FEAT-09: Determinar si se ha cumplido alguna condición de victoria

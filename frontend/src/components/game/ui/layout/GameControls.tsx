@@ -4,6 +4,7 @@ import styles from "./Layout.module.css";
 interface GameControlsProps {
     status: string;
     isGameOver: boolean;
+    isVsAi: boolean;
     drawOfferSent: boolean;
     drawOfferReceived: boolean;
     onOfferDraw: () => void;
@@ -14,6 +15,7 @@ interface GameControlsProps {
 export const GameControls: React.FC<GameControlsProps> = ({
     status,
     isGameOver,
+    isVsAi,
     drawOfferSent,
     drawOfferReceived,
     onOfferDraw,
@@ -22,7 +24,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
 }) => {
     return (
         <div className={styles.gameControls}>
-            {status !== 'finished' && (
+            {status !== 'finished' && !isVsAi && (
                 <button
                     className={styles.btnOfferDraw}
                     onClick={onOfferDraw}
