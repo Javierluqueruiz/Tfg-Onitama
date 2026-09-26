@@ -38,6 +38,7 @@ export class AiTurnRunner {
         const minimaxOptions = { depth: MINIMAX_DEPTH[profile?.aiDifficulty ?? 'hard'] };
         let committedState: GameState | null;
 
+        const started = performance.now();
         if (status === 'waiting_for_discard') {
             const cardToDiscard = useMinimax 
                 ? MinimaxPlayer.selectDiscard(room.gameState, minimaxOptions)
@@ -50,6 +51,7 @@ export class AiTurnRunner {
             committedState = RoomManager.applyMove(roomId, move.from, move.to, move.cardName);
         }
 
+        console.log(`[IA] ${profile?.aiEngine ?? 'heuristic'} (${profile?.aiDifficulty ?? 'hard'}): decisión en ${(performance.now() - started).toFixed(1)} ms`);
         io.to(roomId).emit(SocketEvents.GAME_UPDATE, { gameState: committedState });
     }
 }
