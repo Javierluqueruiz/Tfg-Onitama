@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Modals.module.css';
+import btnStyles from '../../../shared/ui/Button.module.css';
 
 interface DrawBannerProps {
     drawOfferReceived: boolean;
@@ -26,8 +27,14 @@ drawOfferReceived, drawRejectedMessage, onAcceptDraw, onRejectDraw
                 <div className={styles.drawBanner}>
                     <p>Tu oponente ha ofrecido un empate. ¿Aceptas?</p>
                     <div className={styles.drawActions}>
-                        <button className={styles.btnAccept} onClick={onAcceptDraw}>Aceptar</button>
-                        <button className={styles.btnReject} onClick={onRejectDraw}>Rechazar</button>
+                        <button className={`${styles.btnAccept} ${btnStyles.btnCarved}`} onClick={onAcceptDraw}>
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                            Aceptar
+                        </button>
+                        <button className={`${styles.btnReject} ${btnStyles.btnCarved}`} onClick={onRejectDraw}>
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                            Rechazar
+                        </button>
                     </div>
                 </div>
             )}

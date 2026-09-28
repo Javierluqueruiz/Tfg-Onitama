@@ -2,6 +2,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useState, type SubmitEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "../components/lobby/ui/Forms.module.css";
+import btnStyles from "../components/shared/ui/Button.module.css";
 import { AuthLayout } from "./AuthLayout";
 import { TurnstileWidget } from "../components/TurnstileWidget";
 
@@ -71,7 +72,8 @@ export const LoginPage = () => {
 
                 <div className={styles.buttonGroup}>
                     <Link to="/" className={styles.btnBack}>Volver</Link>
-                    <button type="submit" className={`${styles.btnSubmit} ${styles.btnCreate}`} disabled={isSubmitting}>
+                    <button type="submit" className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`} disabled={isSubmitting}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                         {isSubmitting ? "Entrando..." : "Iniciar sesión"}
                     </button>
                 </div>

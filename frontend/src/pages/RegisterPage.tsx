@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthLayout } from './AuthLayout';
 import styles from '../components/lobby/ui/Forms.module.css';
+import btnStyles from '../components/shared/ui/Button.module.css';
 import { TurnstileWidget } from '../components/TurnstileWidget';
 
 export const RegisterPage = () => {
@@ -48,7 +49,10 @@ export const RegisterPage = () => {
                         Te hemos enviado un correo de verificación a <strong>{registeredEmail}</strong>.
                         Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar tu cuenta.
                     </p>
-                    <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate}`}>Continuar</Link>
+                    <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                        Continuar
+                    </Link>
                 </div>
             </AuthLayout>
         );
@@ -76,8 +80,12 @@ export const RegisterPage = () => {
                 {error && <p className={styles.error}>{error}</p>}
 
                 <div className={styles.buttonGroup}>
-                    <Link to="/" className={styles.btnBack}>Volver</Link>
-                    <button type="submit" className={`${styles.btnSubmit} ${styles.btnCreate}`} disabled={isSubmitting}>
+                    <Link to="/" className={`${styles.btnBack} ${btnStyles.btnCarved}`}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                        Volver
+                    </Link>
+                    <button type="submit" className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`} disabled={isSubmitting}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                         {isSubmitting ? 'Creando cuenta...' : 'Registrarse'}
                     </button>
                 </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Forms.module.css';
+import btnStyles from '../../shared/ui/Button.module.css';
 
 interface JoinRoomProps {
     playerName: string;
@@ -43,12 +44,14 @@ export const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, setPlayerName, a
             />
         </label>
 
-        <button className={`${styles.btnSubmit} ${styles.btnJoin}`} 
+        <button className={`${styles.btnSubmit} ${styles.btnJoin} ${btnStyles.btnCarved}`} 
             onClick={onJoinRoom}>
+            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
             Unirse a la Sala
         </button>
 
-        <button className={styles.btnBack} onClick={onBack}>
+        <button className={`${styles.btnBack} ${btnStyles.btnCarved}`} onClick={onBack}>
+            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
             ←Volver
         </button>
     </div>

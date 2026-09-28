@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Modals.module.css';
+import btnStyles from '../../../shared/ui/Button.module.css';
 
 interface SurrenderConfirmModalProps {
     onConfirm: () => void;
@@ -16,8 +17,14 @@ export const SurrenderConfirmModal: React.FC<SurrenderConfirmModalProps> = ({ on
                 <div className={styles.modalBody}>
                     <p className={styles.modalMessage}>Tu oponente ganará automáticamente. Esta acción no se puede deshacer.</p>
                     <div className={styles.modalActions}>
-                        <button className={styles.btnExit} onClick={onCancel}>Seguir jugando</button>
-                        <button className={styles.btnExit} onClick={onConfirm}>Rendirse</button>
+                        <button className={`${styles.btnExit} ${btnStyles.btnCarved}`} onClick={onCancel}>
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                            Seguir jugando
+                        </button>
+                        <button className={`${styles.btnExit} ${btnStyles.btnCarved}`} onClick={onConfirm}>
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                            Rendirse
+                        </button>
                     </div>
                 </div>
             </div>

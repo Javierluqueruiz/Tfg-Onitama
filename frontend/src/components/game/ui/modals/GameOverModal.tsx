@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './Modals.module.css';
+import btnStyles from '../../../shared/ui/Button.module.css';
 
 interface GameOverModalProps {
     result: 'win' | 'lose' | 'draw';
@@ -42,15 +43,17 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ result, onCloseMod
                     </p>       
                     <div className={styles.modalActions}>
                         <button 
-                            className={styles.btnExit}
+                            className={`${styles.btnExit} ${btnStyles.btnCarved}`}
                             onClick={onCloseModal}
                         >
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Ver Tablero final
                         </button>
                         <button 
-                        className={styles.btnExit} 
+                        className={`${styles.btnExit} ${btnStyles.btnCarved}`} 
                         onClick={onExit} 
                         >
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Volver al Menú
                         </button>
                     </div> 

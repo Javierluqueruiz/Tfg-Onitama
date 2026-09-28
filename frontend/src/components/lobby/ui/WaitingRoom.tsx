@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './WaitingRoom.module.css';
+import btnStyles from '../..//shared/ui/Button.module.css';
 
 interface WaitingRoomProps {
     roomCode: string;
@@ -23,9 +24,10 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({ roomCode, onCancel }) 
             </p>
 
             <button 
-                className={styles.btnCancel}
+                className={`${styles.btnCancel} ${btnStyles.btnCarved}`}
                 onClick={onCancel}
             >
+                <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                 Cancelar y Salir
             </button>
         </div>

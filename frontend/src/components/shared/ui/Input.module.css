@@ -1,0 +1,59 @@
+.field {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--game-ink-faint);
+    border-radius: 0;
+    padding: 10px 2px 12px;
+    font-size: 15px;
+    color: var(--game-ink);
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+.field:focus {
+    outline: none;
+    border-bottom-color: var(--game-jade);
+}
+.field.error {
+    border-bottom-color: var(--game-red);
+}
+.field:disabled {
+    border-bottom-color: var(--game-line-soft);
+    color: var(--game-ink-faint);
+    cursor: not-allowed;
+}
+
+/* A partir de aquí, solo hace falta si quieres el trazo de pincel (I7) encima
+   de .field. Para quedarte solo con I2: usa únicamente la clase .field en el
+   input, sin fieldWrap/fieldBrush ni el <svg>, y ya tienes el campo cerrado. */
+
+.fieldWrap {
+    position: relative;
+}
+.fieldBrush:focus {
+    border-bottom-color: transparent;
+}
+.fieldWrap.error .fieldBrush {
+    border-bottom-color: transparent;
+}
+.brush {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 9px;
+    pointer-events: none;
+}
+.brush path {
+    fill: var(--game-jade);
+    opacity: 0.95;
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.45s cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+.fieldBrush:focus ~ .brush path {
+    clip-path: inset(0 0% 0 0);
+}
+.fieldWrap.error .brush path {
+    fill: var(--game-red);
+    clip-path: inset(0 0% 0 0);
+}

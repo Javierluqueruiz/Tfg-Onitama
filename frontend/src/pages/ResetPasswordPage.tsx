@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { AuthApi } from '../services/authApi';
 import { AuthLayout } from './AuthLayout';
 import styles from '../components/lobby/ui/Forms.module.css';
+import btnStyles from '../components/shared/ui/Button.module.css';
 
 export const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
@@ -44,7 +45,10 @@ export const ResetPasswordPage = () => {
                 <h3 className={styles.title}>Contraseña actualizada con éxito</h3>
                 <div className={styles.container}>
                     <p>Ya puedes iniciar sesión con tu nueva contraseña.</p>
-                    <Link to="/login" className={` ${styles.btnSubmit} ${styles.btnCreate}`}>Volver al inicio de sesión</Link>
+                    <Link to="/login" className={` ${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                        Volver al inicio de sesión
+                    </Link>
                 </div>
             </AuthLayout>
         );
@@ -66,8 +70,12 @@ export const ResetPasswordPage = () => {
                 {error && <p className={styles.error}>{error}</p>}
 
                 <div className={styles.buttonGroup}>
-                    <Link to="/login" className={styles.btnBack}>Volver a inicio de sesión</Link>
-                    <button type="submit" className={` ${styles.btnSubmit} ${styles.btnCreate}`} disabled={isSubmitting}>
+                    <Link to="/login" className={`${styles.btnBack} ${btnStyles.btnCarved}`}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                        Volver a inicio de sesión
+                    </Link>
+                    <button type="submit" className={` ${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`} disabled={isSubmitting}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                         {isSubmitting ? 'Restableciendo...' : 'Restablecer contraseña'}
                     </button>
                 </div>

@@ -4,6 +4,7 @@ import { AuthApi } from '../services/authApi';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthLayout } from './AuthLayout';
 import styles from '../components/lobby/ui/Forms.module.css';
+import btnStyles from '../components/shared/ui/Button.module.css';
 
 type VerifyEmailStatus = 'loading' | 'success' | 'error';
 
@@ -45,14 +46,20 @@ export const VerifyEmailPage = () => {
                 {status === 'success' && (
                     <>
                         <p>¡Correo electrónico verificado con éxito!</p>
-                        <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate}`}>Volver a la página principal</Link>
+                        <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`}>
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                            Volver a la página principal
+                        </Link>
                     </>
                 )}
 
                 {status === 'error' && (
                     <>
                         <p className={styles.error}>{errorMessage}</p>
-                        <Link to="/" className={styles.btnBack}>Volver a la página principal</Link>
+                        <Link to="/" className={`${styles.btnBack} ${btnStyles.btnCarved}`}>
+                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                            Volver a la página principal
+                        </Link>
                     </>
                 )}
             </div>

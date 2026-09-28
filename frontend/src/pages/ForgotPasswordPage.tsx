@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthApi } from '../services/authApi';
 import { AuthLayout } from './AuthLayout';
 import styles from '../components/lobby/ui/Forms.module.css';
+import btnStyles from '../components/shared/ui/Button.module.css';
 
 export const ForgotPasswordPage = () => {
     const [email, setEmail] = useState('');
@@ -31,7 +32,10 @@ export const ForgotPasswordPage = () => {
                 <h3 className={styles.title}>Instrucciones enviadas. Revisa tu correo.</h3>
                 <div className={styles.container}>
                     <p> Si existe una cuenta asociada a ese correo, recibirás un email con instrucciones para restablecer tu contraseña.</p>
-                    <Link to="/login" className={` ${styles.btnSubmit} ${styles.btnCreate}`}>Volver al inicio de sesión</Link>
+                    <Link to="/login" className={` ${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                        Volver al inicio de sesión
+                    </Link>
                 </div>
             </AuthLayout>
         );
@@ -49,8 +53,12 @@ export const ForgotPasswordPage = () => {
                 {error && <p className={styles.error}>{error}</p>}
 
                 <div className={styles.buttonGroup}>
-                    <Link to="/login" className={styles.btnBack}>Volver a inicio de sesión</Link>
-                    <button type="submit" className={` ${styles.btnSubmit} ${styles.btnCreate}`} disabled={isSubmitting}>
+                    <Link to="/login" className={`${styles.btnBack} ${btnStyles.btnCarved}`}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                        Volver a inicio de sesión
+                    </Link>
+                    <button type="submit" className={` ${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`} disabled={isSubmitting}>
+                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                         {isSubmitting ? 'Enviando...' : 'Enviar instrucciones'}
                     </button>
                 </div>
