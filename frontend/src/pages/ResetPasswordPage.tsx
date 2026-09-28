@@ -72,7 +72,7 @@ export const ResetPasswordPage = () => {
                     Confirmar nueva contraseña:
                     <div className={fieldStyles.fieldWrap}>
                         <input type="password" className={`${fieldStyles.field} ${fieldStyles.fieldBrush}`} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
-                        <svg className={fieldStyles.brush} viewBox="0 0 320_10" preserveAspectRatio="none" aria-hidden="true">
+                        <svg className={fieldStyles.brush} viewBox="0 0 320 10" preserveAspectRatio="none" aria-hidden="true">
                             <path d="M2 6 C8 2,22 1,36 3 C58 6,80 7,102 4 C130 1,158 2,186 5 C214 8,242 7,266 4 C284 1,304 1,316 4 C304 8,282 9,258 8 C230 6,202 9,174 7 C146 5,116 8,88 8 C58 7,28 9,10 8 C4 7,2 7,2 6 Z"/>
                         </svg>
                     </div>

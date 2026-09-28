@@ -8,31 +8,31 @@
     background-color: var(--game-paper);
 }
 
-/* FEAT-08: dos fondos superpuestos que se funden entre sí (crossfade + zoom
-   ligero) según la pestaña/pantalla activa, en vez de una imagen fija */
-.scene {
+/* FEAT-08/16: tres fondos superpuestos, cada uno con su propio encuadre de
+   reposo (escala + desplazamiento + rotación), que convergen al activarse.
+   El desenfoque que se aclara al asentarse vende la sensación de movimiento
+   de cámara, no un simple fundido. */
+.sceneWorld {
     position: fixed;
     inset: 0;
     z-index: -1;
-    background-size: cover;
+    overflow: hidden;
+    background-color: var(--game-paper);
+}
+
+.sceneCanvas {
+    position: absolute;
+    inset: 0;
+    background-image: url('../../assets/menu-paisaje5.jpeg');
     background-repeat: no-repeat;
-    background-position: right center;
-    opacity: 0;
-    transform: scale(1.06);
-    transition: opacity 1s ease, transform 1.2s ease;
+    background-size: 220% auto;
+    filter: blur(0);
+    transition: background-position 1400ms cubic-bezier(.65,.05,.36,1), filter 850ms ease-out;
 }
 
-.sceneActive {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.sceneMain {
-    background-image: url('../../assets/lobby-background.png');
-}
-
-.scenePrivate {
-    background-image: url('../../assets/fight-background2.jpeg');
+.sceneCanvasPanning {
+    filter: blur(6px);
+    transition: background-position 1400ms cubic-bezier(.65,.05,.36,1), filter 420ms ease-in;
 }
 
 .header {
@@ -162,10 +162,8 @@
 /* Responsive: pantallas estrechas (móvil) */
 @media (max-width: 700px) {
     .sceneMain,
-    .scenePrivate {
-        /* Degradado hacia el papel superpuesto a la imagen, para que el texto
-           siga siendo legible aunque el recorte "cover" muestre sobre todo
-           la zona con más detalle en vertical */
+    .scenePrivate,
+    .sceneAi {
         background-image:
             linear-gradient(to right, var(--game-paper) 0%, color-mix(in srgb, var(--game-paper) 55%, transparent) 45%, transparent 75%),
             var(--scene-image);
@@ -174,7 +172,8 @@
     }
 
     .sceneMain { --scene-image: url('../../assets/lobby-background.png'); }
-    .scenePrivate { --scene-image: url('../../assets/fight-background.jpeg'); }
+    .scenePrivate { --scene-image: url('../../assets/private-background.jpeg'); }
+    .sceneAi { --scene-image: url('../../assets/fight-background2.jpeg'); }
 
     .header {
         padding: 32px 20px 12px;
@@ -198,4 +197,45 @@
     .statusContainer {
         padding: 28px 20px;
     }
+}
+
+
+.panelWrap {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 480px;
+}
+
+.mainTabs {
+    display: flex;
+    gap: 4px;
+}
+
+.mainTab {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    background: var(--game-wood-shadow);
+    color: var(--game-paper-soft);
+    font-weight: bold;
+    font-size: 0.8rem;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    opacity: 0.72;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.mainTab:hover {
+    opacity: 0.9;
+}
+
+.mainTabActive {
+    background: var(--game-paper);
+    color: var(--game-ink);
+    opacity: 1;
+}
+
+.statusContainerTabbed {
+    border-top-left-radius: 0;
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MainMenu, type Tab } from './ui/MainMenu';
 import { CreateRoom } from './ui/CreateRoom';
 import { JoinRoom } from './ui/JoinRoom';
@@ -24,14 +24,41 @@ export const Lobby: React.FC =  () => {
     const [mainMenuTab, setMainMenuTab] = useState<Tab>('MATCHMAKING');
 
     const isPrivateFlow = currentScreen === 'CREATE' || currentScreen === 'JOIN' || currentScreen === 'WAITING';
-    const backgroundScene = isPrivateFlow || (currentScreen === 'MAIN' && mainMenuTab === 'PRIVATE')
-        ? 'private'
-        : 'main';
+    const backgroundScene: 'main' | 'private' | 'ai' =
+        isPrivateFlow || (currentScreen === 'MAIN' && mainMenuTab === 'PRIVATE') ? 'private' :
+        currentScreen === 'MAIN' && mainMenuTab === 'AI' ? 'ai' :
+        'main';
+    
+    // Coordenadas de cada escena dentro del lienzo grande (en vw/vh, no en
+    // píxeles, para que escale igual en cualquier tamaño de pantalla). No tienen
+    // por qué estar en fila -- es un boceto de un lienzo en dos dimensiones.
+    const SCENE_FOCUS: Record<'main' | 'private' | 'ai', string> = {
+        main: '25% 5%',
+        private: '100% 85%',
+        ai: '20% 60%',
+    };
+    const focus = SCENE_FOCUS[backgroundScene];
+
+    const [isPanning, setIsPanning] = useState(false);
+    const isFirstRender = useRef(true);
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        setIsPanning(true);
+        const timer = setTimeout(() => setIsPanning(false), 550);
+        return () => clearTimeout(timer);
+    }, [backgroundScene]);
 
     return (
         <div className={`${styles.wrapper} gameTheme`}>
-            <div className={`${styles.scene} ${styles.sceneMain} ${backgroundScene === 'main' ? styles.sceneActive : ''}`} />
-            <div className={`${styles.scene} ${styles.scenePrivate} ${backgroundScene === 'private' ? styles.sceneActive : ''}`} />
+            <div className={styles.sceneWorld}>
+                <div
+                    className={`${styles.sceneCanvas} ${isPanning ? styles.sceneCanvasPanning : ''}`}
+                    style={{ backgroundPosition: focus }}
+                />
+            </div>
 
             <div className={styles.header}
             >
@@ -40,36 +67,58 @@ export const Lobby: React.FC =  () => {
             </div>
 
             <div className={styles.content}>
-                <div className={styles.statusContainer}>
-                    <AuthStatus />
-                    <div className={styles.statusHeader}>
-                        <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`}/>
-                        <span className={styles.statusText}>
-                            {isConnected ? 'Servidor Online' : 'Conectando...'}
-                        </span>
-                    </div>
-
-                    {/* ---PANTALLA PRINCIPAL --- */}
+                <div className={styles.panelWrap}>
                     {currentScreen === 'MAIN' && (
-                        <MainMenu 
-                            onSelectCreate={() => {
-                                setErrorMsg(null);
-                                setCurrentScreen('CREATE');
-                            }}
-                            onSelectJoin={() => {
-                                setErrorMsg(null);
-                                setCurrentScreen('JOIN');
-                            }}
-                            onStartMatchmaking={(mode: GameMode) => {
-                                setErrorMsg(null);
-                                startMatchmaking(mode);
-                            }}
-                            onStartAiGame={startAiGame}
-                            isConnected={isConnected}
-                            activeTab={mainMenuTab}
-                            onTabChange={setMainMenuTab}
-                        />
+                        <div className={styles.mainTabs}>
+                            <button
+                                className={`${styles.mainTab} ${mainMenuTab === 'MATCHMAKING' ? styles.mainTabActive : ''}`}
+                                onClick={() => setMainMenuTab('MATCHMAKING')}
+                            >
+                                Partida Pública
+                            </button>
+                            <button
+                                className={`${styles.mainTab} ${mainMenuTab === 'PRIVATE' ? styles.mainTabActive : ''}`}
+                                onClick={() => setMainMenuTab('PRIVATE')}
+                            >
+                                Partida Privada
+                            </button>
+                            <button
+                                className={`${styles.mainTab} ${mainMenuTab === 'AI' ? styles.mainTabActive : ''}`}
+                                onClick={() => setMainMenuTab('AI')}
+                            >
+                                Contra IA
+                            </button>
+                        </div>
                     )}
+                    <div className={`${styles.statusContainer} ${currentScreen === 'MAIN' ? styles.statusContainerTabbed : ''}`}>
+                        <AuthStatus />
+                        <div className={styles.statusHeader}>
+                            <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`}/>
+                            <span className={styles.statusText}>
+                                {isConnected ? 'Servidor Online' : 'Conectando...'}
+                            </span>
+                        </div>
+
+                        {/* ---PANTALLA PRINCIPAL --- */}
+                        {currentScreen === 'MAIN' && (
+                            <MainMenu 
+                                onSelectCreate={() => {
+                                    setErrorMsg(null);
+                                    setCurrentScreen('CREATE');
+                                }}
+                                onSelectJoin={() => {
+                                    setErrorMsg(null);
+                                    setCurrentScreen('JOIN');
+                                }}
+                                onStartMatchmaking={(mode: GameMode) => {
+                                    setErrorMsg(null);
+                                    startMatchmaking(mode);
+                                }}
+                                onStartAiGame={startAiGame}
+                                isConnected={isConnected}
+                                activeTab={mainMenuTab}
+                            />
+                        )}
 
                     {/* ---PANTALLA: MATCHMAKING --- */}
                     {currentScreen === 'MATCHMAKING' && selectMode && (
@@ -132,6 +181,7 @@ export const Lobby: React.FC =  () => {
                         </div>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     ); 

@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from './WaitingRoom.module.css';
-import btnStyles from '../..//shared/ui/Button.module.css';
+import btnStyles from '../../shared/ui/Button.module.css';
 
 interface WaitingRoomProps {
     roomCode: string;

@@ -16,35 +16,13 @@ interface MainMenuProps {
     onStartAiGame: (engine: AiEngine, difficulty: AiDifficulty) => void;
     isConnected: boolean;
     activeTab: Tab;
-    onTabChange: (tab: Tab) => void;
 }
 
-export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin, onStartMatchmaking, onStartAiGame, isConnected, activeTab, onTabChange }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onSelectCreate, onSelectJoin, onStartMatchmaking, onStartAiGame, isConnected, activeTab }) => {
     const statusClass = isConnected ? styles.connected : styles.disconnected;
 
     return (
         <div className={styles.container}>
-            <div className={styles.tabHeader}>
-                <button
-                    className={`${styles.tabBtn} ${activeTab === 'MATCHMAKING' ? styles.activeTab : ''}`}
-                    onClick={() => onTabChange('MATCHMAKING')}
-                >
-                    Partida Pública
-                </button>
-                <button
-                    className={`${styles.tabBtn} ${activeTab === 'PRIVATE' ? styles.activeTab : ''}`}
-                    onClick={() => onTabChange('PRIVATE')}
-                >
-                    Partida Privada
-                </button>
-                <button
-                    className={`${styles.tabBtn} ${activeTab === 'AI' ? styles.activeTab : ''}`}
-                    onClick={() => onTabChange('AI')}
-                >
-                    Partida contra IA
-                </button>
-            </div>
-
             <div className={styles.tabContainer}>
                 {activeTab === 'MATCHMAKING' ? (
                     <div className={styles.matchmakingSection}>
