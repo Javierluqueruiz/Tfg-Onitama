@@ -4,7 +4,12 @@
     border-bottom: 2px solid var(--game-ink-faint);
     border-radius: 0;
     padding: 10px 2px 12px;
-    font-size: 15px;
+    /* Los <input> no heredan la fuente: sin esto salía la del navegador (tipo Arial).
+       Se usa la serif japonesa de los títulos, en peso normal: distinta del cuerpo
+       de texto (Nunito) sin llamar la atención. */
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
     color: var(--game-ink);
     width: 100%;
     box-sizing: border-box;
@@ -12,6 +17,10 @@
        con el desvanecimiento del trazo de tinta (.brush), así que se percibe
        como un cruce tinta -> línea y no como una línea que "salta". */
     transition: border-color 0.4s ease;
+}
+.field::placeholder {
+    color: var(--game-ink-faint);
+    opacity: 0.75;
 }
 .field:focus {
     outline: none;

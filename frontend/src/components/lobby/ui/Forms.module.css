@@ -17,6 +17,7 @@
 }
 
 .input {
+    font-family: inherit;
     padding: 12px;
     border-radius: 6px;
     border: 1px solid var(--game-line-soft);

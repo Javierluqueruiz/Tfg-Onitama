@@ -1,63 +1,42 @@
 import React from 'react';
 import styles from './Modals.module.css';
-import btnStyles from '../../../shared/ui/Button.module.css';
+import { GameDialog, type DialogTone } from './GameDialog';
 
 interface GameOverModalProps {
     result: 'win' | 'lose' | 'draw';
     onCloseModal: () => void;
     onExit: () => void;
-    
+
 }
 
+// Kanji del sello: 勝 (shō, "victoria"), 敗 (hai, "derrota") y 和 (wa, "armonía", para el empate).
+const CONTENT: Record<GameOverModalProps['result'], { tone: DialogTone; seal: string; title: string; message: string }> = {
+    win: {
+        tone: 'win', seal: '勝', title: '¡Victoria!',
+        message: 'Has demostrado ser un verdadero Maestro. Tu honor prevalece.',
+    },
+    lose: {
+        tone: 'lose', seal: '敗', title: 'Derrota',
+        message: 'Tu templo ha caído. Levántate, aprende de tus errores y vuelve a intentarlo.',
+    },
+    draw: {
+        tone: 'draw', seal: '和', title: 'Empate',
+        message: 'La partida ha terminado en empate. Ambos jugadores han demostrado su habilidad.',
+    },
+};
+
 export const GameOverModal: React.FC<GameOverModalProps> = ({ result, onCloseModal, onExit }) => {
-
-    const getHeaderClass = () => {
-        if (result === 'win') return styles.modalHeaderWin;
-        if (result === 'lose') return styles.modalHeaderLose;
-        return styles.modalHeaderDraw;
-    };
-
-    const getTitle = () => {
-        if (result === 'win') return '¡Victoria!';
-        if (result === 'lose') return 'Derrota';
-        return 'Empate';
-    };
-
-    const getMessage = () => {
-        if (result === 'win') return 'Has demostrado ser un verdadero Maestro. Tu honor prevalece.';
-        if (result === 'lose') return 'Tu templo ha caído. Levántate, aprende de tus errores y vuelve a intentarlo.';
-        return 'La partida ha terminado en empate. Ambos jugadores han demostrado su habilidad.';
-    };
+    const { tone, seal, title, message } = CONTENT[result];
 
     return (
-        <div className={styles.overlay}>
-            <div className={styles.victoryModal}>
-                <div className={`${styles.modalHeader} ${getHeaderClass()}`}>
-                    <h2 className={styles.victoryTitle}>
-                        {getTitle()}
-                    </h2>        
-                </div>
-                <div className={styles.modalBody}>
-                    <p className={styles.modalMessage}>
-                        {getMessage()}
-                    </p>       
-                    <div className={styles.modalActions}>
-                        <button 
-                            className={`${styles.btnExit} ${btnStyles.btnCarved}`}
-                            onClick={onCloseModal}
-                        >
-                            Ver Tablero final
-                        </button>
-                        <button 
-                        className={`${styles.btnExit} ${btnStyles.btnCarved}`} 
-                        onClick={onExit} 
-                        >
-                            Volver al Menú
-                        </button>
-                    </div> 
-                    
-                </div>
-            </div>
-        </div>
+        // Escape o clic fuera equivalen a "Ver tablero final": cierran el modal sin salir de la sala.
+        <GameDialog tone={tone} seal={seal} title={title} message={message} onDismiss={onCloseModal}>
+            <button type="button" className={styles.btnGhost} onClick={onCloseModal}>
+                Ver tablero final
+            </button>
+            <button type="button" className={styles.btnPrimary} onClick={onExit} autoFocus>
+                Volver al menú
+            </button>
+        </GameDialog>
     )
 };
