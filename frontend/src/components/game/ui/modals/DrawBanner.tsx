@@ -1,41 +1,34 @@
 import React from 'react';
 import styles from './Modals.module.css';
-import btnStyles from '../../../shared/ui/Button.module.css';
 
 interface DrawBannerProps {
     drawOfferReceived: boolean;
-    drawRejectedMessage: boolean;
     onAcceptDraw: () => void;
     onRejectDraw: () => void;
 }
 
-export const DrawBanner: React.FC<DrawBannerProps> = ({ 
-drawOfferReceived, drawRejectedMessage, onAcceptDraw, onRejectDraw
-}) => {
-
-    if (!drawOfferReceived && !drawRejectedMessage) return null;
+// Oferta de empate del rival: se muestra en el panel lateral, sin tapar el tablero.
+export const DrawBanner: React.FC<DrawBannerProps> = ({ drawOfferReceived, onAcceptDraw, onRejectDraw }) => {
+    if (!drawOfferReceived) return null;
 
     return (
-        <>
-        {drawRejectedMessage && (
-                <div className={styles.toastError}>
-                    El oponente ha rechazado tu oferta de empate. La partida continúa.
-                </div>
-            )}
+        <div className={styles.drawBanner} role="alert">
+            <p>Tu rival te propone tablas. ¿Aceptas?</p>
+            <div className={styles.drawActions}>
+                <button type="button" className={styles.btnAccept} onClick={onAcceptDraw}>
+                    Aceptar
+                </button>
+                <button type="button" className={styles.btnReject} onClick={onRejectDraw}>
+                    Rechazar
+                </button>
+            </div>
+        </div>
+    );
+};
 
-            {drawOfferReceived && ( 
-                <div className={styles.drawBanner}>
-                    <p>Tu oponente ha ofrecido un empate. ¿Aceptas?</p>
-                    <div className={styles.drawActions}>
-                        <button className={`${styles.btnAccept} ${btnStyles.btnCarved}`} onClick={onAcceptDraw}>
-                            Aceptar
-                        </button>
-                        <button className={`${styles.btnReject} ${btnStyles.btnCarved}`} onClick={onRejectDraw}>
-                            Rechazar
-                        </button>
-                    </div>
-                </div>
-            )}
-        </>
-    )
-}
+// Aviso pasajero (arriba, centrado) de que el rival ha rechazado tu oferta.
+export const DrawRejectedToast: React.FC = () => (
+    <div className={styles.toastError} role="status">
+        El oponente ha rechazado tu oferta de empate. La partida continúa.
+    </div>
+);

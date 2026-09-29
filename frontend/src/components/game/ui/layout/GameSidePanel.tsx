@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
+import type { ChatMessage, PlayerColor } from '../../../../../../shared';
 import styles from './GameSidePanel.module.css';
 import { ChatBox } from '../chat/ChatBox';
 import { GameControls } from './GameControls';
 
-type SideTab = 'chat' | 'historial';
-
 interface GameSidePanelProps {
     status: string;
+    localColor: PlayerColor | null;
+    initialChat?: ChatMessage[];
+    // Avisos que necesitan respuesta (descarte, empate, revancha). Se muestran entre el chat
+    // y las acciones, para que no desplacen ni tapen el tablero y las cartas.
+    notices?: React.ReactNode;
     isGameOver: boolean;
     isVsAi: boolean;
     drawOfferSent: boolean;
@@ -16,37 +20,15 @@ interface GameSidePanelProps {
     onExit: () => void;
 }
 
+// Panel lateral de la partida: chat arriba, avisos en medio y acciones (tablas, rendirse, salir) abajo.
 export const GameSidePanel: React.FC<GameSidePanelProps> = ({
-    status, isGameOver, isVsAi, drawOfferSent, drawOfferReceived, onOfferDraw, onSurrender, onExit
+    status, localColor, initialChat, notices, isGameOver, isVsAi, drawOfferSent, drawOfferReceived, onOfferDraw, onSurrender, onExit
 }) => {
-    const [activeTab, setActiveTab] = useState<SideTab>('chat');
-
     return (
-        <div className={styles.sidebar}>
-            <div className={styles.tabs}>
-                <button
-                    className={`${styles.tab} ${activeTab === 'chat' ? styles.tabActive : ''}`}
-                    onClick={() => setActiveTab('chat')}
-                >
-                    Chat
-                </button>
-                <button
-                    className={`${styles.tab} ${activeTab === 'historial' ? styles.tabActive : ''}`}
-                    onClick={() => setActiveTab('historial')}
-                >
-                    Historial
-                </button>
-            </div>
+        <aside className={styles.sidebar} aria-label="Chat y acciones de la partida">
+            <ChatBox localColor={localColor} initialMessages={initialChat} />
 
-            <div className={styles.tabBody}>
-                {activeTab === 'chat' ? (
-                    <ChatBox />
-                ) : (
-                    <div className={styles.historialStub}>
-                        Historial de jugadas — próximamente.
-                    </div>
-                )}
-            </div>
+            <div className={styles.notices}>{notices}</div>
 
             <div className={styles.controlsFooter}>
                 <GameControls
@@ -60,6 +42,6 @@ export const GameSidePanel: React.FC<GameSidePanelProps> = ({
                     onExit={onExit}
                 />
             </div>
-        </div>
+        </aside>
     );
 };

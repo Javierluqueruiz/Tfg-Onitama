@@ -5,7 +5,7 @@ import styles from './GameScreen.module.css';
 import { useGameScreen } from './hooks/useGameScreen';
 import { GameOverModal } from './ui/modals/GameOverModal';
 import { GameSidePanel } from './ui/layout/GameSidePanel';
-import { DrawBanner } from './ui/modals/DrawBanner';
+import { DrawBanner, DrawRejectedToast } from './ui/modals/DrawBanner';
 import { PlayerInfo } from './ui/player/PlayerInfo';
 import { NetworkStatus } from './ui/player/NetworkStatus';
 import { PingIndicator } from './ui/player/PingIndicator';
@@ -13,15 +13,18 @@ import { RematchBanner } from './ui/modals/RematchBanner';
 import './theme.css';
 import { SurrenderConfirmModal } from './ui/modals/SurrenderConfirmModal';
 import { DiscardBanner } from './ui/modals/DiscardBanner';
+import type { RestoredSession } from './restoredSession';
 
 interface GameScreenProps {
     gameState: GameState;
     localColor: PlayerColor | null;
     playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null;
+    // Datos restaurados al reconectar tras recargar la página (chat y ofertas pendientes).
+    restored?: RestoredSession | null;
     isReconnecting: boolean;
 }
 
-export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile, isReconnecting })  => {
+export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, playersProfile, restored = null, isReconnecting })  => {
 
     const { 
         board, currentTurn, isLocalRed, isMyTurn, isGameOver, 
@@ -29,7 +32,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         boardRotation, lastMove, selectedCard, mustDiscard, handleSelectCard,  selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
         drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isSurrenderModalOpen, confirmSurrender, cancelSurrender
-    } = useGameScreen(gameState, localColor, playersProfile, isReconnecting);
+    } = useGameScreen(gameState, localColor, playersProfile, isReconnecting, restored);
 
 
     return (
@@ -110,6 +113,28 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
 
                 <GameSidePanel
                     status={gameState.status}
+                    localColor={localColor}
+                    initialChat={restored?.chatHistory}
+                    notices={
+                        <>
+                            <DiscardBanner mustDiscard={mustDiscard} />
+
+                            <DrawBanner
+                                drawOfferReceived={drawOfferReceived}
+                                onAcceptDraw={handleAcceptDraw}
+                                onRejectDraw={handleRejectDraw}
+                            />
+
+                            {gameState.status === 'finished' && isGameOver && !isModalOpen && (
+                                <RematchBanner
+                                    rematchState={rematch.rematchState}
+                                    onOfferRematch={rematch.offerRematch}
+                                    onAcceptRematch={rematch.acceptRematch}
+                                    onRejectRematch={rematch.rejectRematch}
+                                />
+                            )}
+                        </>
+                    }
                     isGameOver={isGameOver}
                     isVsAi={isVsAi}
                     drawOfferSent={drawOfferSent}
@@ -120,25 +145,9 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 />
             </div>
 
-            <DrawBanner
-                drawOfferReceived={drawOfferReceived}
-                drawRejectedMessage={drawRejectedMessage}
-                onAcceptDraw={handleAcceptDraw}
-                onRejectDraw={handleRejectDraw}
-            />
+            {drawRejectedMessage && <DrawRejectedToast />}
 
-            <DiscardBanner mustDiscard={mustDiscard} />
-
-            {lastError && <div className={styles.toastError}>{lastError}</div>}
-
-            {gameState.status === 'finished' && isGameOver && !isModalOpen && (
-                <RematchBanner
-                    rematchState={rematch.rematchState}
-                    onOfferRematch={rematch.offerRematch}
-                    onAcceptRematch={rematch.acceptRematch}
-                    onRejectRematch={rematch.rejectRematch}
-                />
-            )}
+            {lastError && <div className={styles.errorToast}>{lastError}</div>}
 
             {gameState.status === 'finished' && isGameOver && isModalOpen && (
                 <GameOverModal result={gameResult} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
