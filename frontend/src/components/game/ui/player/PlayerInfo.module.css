@@ -103,7 +103,15 @@
         min-width: 0;
         width: 100%;
         max-width: 320px;
+        /* Con width: 100% el relleno y el borde se sumaban y la tarjeta se salía del contenedor. */
+        box-sizing: border-box;
         padding: 10px 16px;
+    }
+
+    /* Sin el latido de escala: crecía un 3% y sobresalía del marco de madera. */
+    .activeRed,
+    .activeBlue {
+        animation: none;
     }
 }
 

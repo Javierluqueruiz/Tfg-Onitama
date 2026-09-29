@@ -61,44 +61,50 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                             />
                         </div>
 
+                        {/* Cada jugador va con su estado de red en un grupo propio: en móvil los grupos
+                            se reordenan (rival, tablero, jugador, mesa) sin depender de su posición en el DOM. */}
                         <div className={styles.neutralZone}>
-                            <PlayerInfo
-                                playerName={`Rival: ${opponentName}`}
-                                elo={opponentElo}
-                                color={isLocalRed ? 'blue' : 'red'}
-                                isActive={!isMyTurn}
-                                timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
-                            />
-                            <NetworkStatus
-                                isOpponent={true}
-                                isConnected={isConnected}
-                                disconnectTimer={disconnectTimer}
-                                reconnectMessage={reconnectMessage}
-                            />
+                            <div className={`${styles.infoGroup} ${styles.rivalInfo}`}>
+                                <PlayerInfo
+                                    playerName={`Rival: ${opponentName}`}
+                                    elo={opponentElo}
+                                    color={isLocalRed ? 'blue' : 'red'}
+                                    isActive={!isMyTurn}
+                                    timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
+                                />
+                                <NetworkStatus
+                                    isOpponent={true}
+                                    isConnected={isConnected}
+                                    disconnectTimer={disconnectTimer}
+                                    reconnectMessage={reconnectMessage}
+                                />
+                            </div>
 
                             <div className={styles.neutralCard}>
                                 <span className={styles.neutralLabel}>Mesa (Siguiente)</span>
                                 {neutralCard && <CardView card={neutralCard} faction="neutral" />}
                             </div>
 
-                            <PlayerInfo
-                                playerName={`Jugador: ${localName}`}
-                                elo={localElo}
-                                color={isLocalRed ? 'red' : 'blue'}
-                                isActive={isMyTurn}
-                                timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
-                            >
-                                <PingIndicator isConnected={isConnected} />
-                            </PlayerInfo>
-                            <NetworkStatus
-                                isConnected={isConnected}
-                                disconnectTimer={disconnectTimer}
-                                isReconnecting={isReconnecting}
-                            />
+                            <div className={`${styles.infoGroup} ${styles.selfInfo}`}>
+                                <PlayerInfo
+                                    playerName={`Jugador: ${localName}`}
+                                    elo={localElo}
+                                    color={isLocalRed ? 'red' : 'blue'}
+                                    isActive={isMyTurn}
+                                    timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
+                                >
+                                    <PingIndicator isConnected={isConnected} />
+                                </PlayerInfo>
+                                <NetworkStatus
+                                    isConnected={isConnected}
+                                    disconnectTimer={disconnectTimer}
+                                    isReconnecting={isReconnecting}
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div className={styles.cardsRow}>
+                    <div className={`${styles.cardsRow} ${styles.myCardsRow}`}>
                         {myCards.map((card, index) => (
                             <CardView
                                 key={`my-card-${index}`}

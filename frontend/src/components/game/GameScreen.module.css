@@ -108,6 +108,15 @@
     gap: 12px;
 }
 
+/* PlayerInfo + su aviso de conexión. En escritorio es un simple contenedor. */
+.infoGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
 .neutralLabel {
     font-weight: bold;
     color: var(--game-paper);
@@ -154,7 +163,28 @@
         height: auto;
         min-height: 100dvh;
         overflow: visible;
+        /* Recorte solo en horizontal: las animaciones de entrada no ensanchan la página. */
+        overflow-x: clip;
     }
+
+    /* Tus cartas se quedan pegadas al borde inferior mientras miras el tablero (así se
+       pueden elegir sin perderlo de vista) y, al bajar hasta el chat, vuelven a su sitio:
+       "sticky" solo funciona dentro de su contenedor, la columna del tablero. */
+    .myCardsRow {
+        position: sticky;
+        bottom: 0;
+        z-index: 20;
+        align-self: stretch;
+        gap: 12px;
+        padding: 14px 8px calc(10px + env(safe-area-inset-bottom));
+        background: rgba(246, 239, 220, 0.94);
+        border-top: 1px solid var(--game-line);
+        box-shadow: 0 -10px 18px -14px rgba(43, 30, 10, 0.55);
+        backdrop-filter: blur(6px);
+    }
+
+    /* El panel entra desde abajo (no desde la derecha, que en móvil se sale de la pantalla). */
+    .playRow > :last-child { --from: translateY(28px); }
 
     .playRow {
         flex-direction: column;
@@ -169,14 +199,20 @@
         box-sizing: border-box;
     }
 
+    /* Móvil: la columna lateral "se disuelve" y sus grupos se ordenan junto al tablero:
+       rival, tablero, jugador y, al final, la carta de la mesa. */
     .neutralZone {
-        width: 100%;
+        display: contents;
     }
 
+    .rivalInfo { order: 1; }
     .boardWrapper {
+        order: 2;
         width: fit-content;
         height: fit-content;
     }
+    .selfInfo { order: 3; }
+    .neutralCard { order: 4; }
 
     .title {
         font-size: 24px;
