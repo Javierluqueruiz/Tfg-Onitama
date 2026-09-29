@@ -36,7 +36,7 @@
 }
 
 .header {
-    padding: 48px 20px 20px 60px;
+    padding: 36px 20px 8px 60px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -48,25 +48,29 @@
     margin: 0;
     color: var(--game-ink);
     font-size: 5rem;
+    line-height: 1;
     letter-spacing: 4px;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
-    margin-bottom: 100px;
+    margin-bottom: 0;
     text-decoration: none;
 }
 
+/* Pegado al título y en bermellón (el mismo rojo del torii) para que destaque
+   sobre el papel; el halo claro lo separa de las manchas de tinta del fondo. */
 .subTitle {
-    margin: 6px 0 0;
-    font-size: 2rem;
-    color: var(--game-ink-soft);
-    opacity: 0.9;
+    margin: 0;
+    font-size: 1.9rem;
+    color: var(--game-red);
     font-weight: bold;
-    margin-left: 20px;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 6px rgba(246, 239, 220, 0.9);
+    margin-left: 84px;
 }
 
 .content {
     flex: 1;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
     padding: 20px 20px 20px 60px;
 }
@@ -209,31 +213,35 @@
 
 .mainTabs {
     display: flex;
-    gap: 4px;
+    gap: 6px;
 }
 
 .mainTab {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 8px 8px 0 0;
-    background: var(--game-wood-shadow);
-    color: var(--game-paper-soft);
-    font-weight: bold;
-    font-size: 0.8rem;
-    letter-spacing: 0.3px;
+    flex: 1;
+    padding: 14px 8px;
+    white-space: nowrap;
+    border: 1px solid var(--game-wood-shadow);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    background: var(--game-wood-deep);
+    color: var(--game-paper);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.98rem;
+    letter-spacing: 0.4px;
     cursor: pointer;
-    opacity: 0.72;
-    transition: opacity 0.2s ease, background-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .mainTab:hover {
-    opacity: 0.9;
+    background: var(--game-wood-shadow);
 }
 
-.mainTabActive {
+.mainTabActive,
+.mainTabActive:hover {
     background: var(--game-paper);
+    border-color: var(--game-line);
     color: var(--game-ink);
-    opacity: 1;
 }
 
 .statusContainerTabbed {

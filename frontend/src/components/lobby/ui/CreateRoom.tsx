@@ -44,21 +44,18 @@ export const CreateRoom: React.FC<CreateRoomProps> = ({ playerName, setPlayerNam
                         className={`${styles.modeBtn} ${selectedMode === 'fast' ? styles.activeFast : ''} ${btnStyles.btnCarved}`}
                         onClick={() => setSelectedMode('fast')}
                     >
-                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                         5 min
                     </button>
                     <button
                         className={`${styles.modeBtn} ${selectedMode === 'normal' ? styles.activeNormal : ''} ${btnStyles.btnCarved}`}
                         onClick={() => setSelectedMode('normal')}
                     >
-                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                         10 min
                     </button>
                     <button
                         className={`${styles.modeBtn} ${selectedMode === 'casual' ? styles.activeCasual : ''} ${btnStyles.btnCarved}`}
                         onClick={() => setSelectedMode('casual')}
                     >
-                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                         Casual
                     </button>
                 </div>
@@ -66,7 +63,6 @@ export const CreateRoom: React.FC<CreateRoomProps> = ({ playerName, setPlayerNam
 
             <div className={styles.buttonGroup}>
                 <button className={`${styles.btnBack} ${btnStyles.btnCarved}`} onClick={onBack }>
-                    <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                     Volver
                 </button>
                 <button className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`} onClick={() => onCreateRoom(selectedMode)}>

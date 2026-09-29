@@ -1,5 +1,5 @@
 .cardContainer {
-    width: 140px;
+    width: 174px;
     background: var(--game-paper);
     border-radius: 8px;
     box-shadow: var(--game-shadow-soft);
@@ -18,7 +18,7 @@
 }
 
 .cardTitle {
-    font-size: 18px;
+    font-size: 21px;
     font-weight: bold;
     color: var(--game-ink);
     margin: 0 0 12px 0;
@@ -28,8 +28,8 @@
 
 .miniGrid {
     display: grid;
-    grid-template-columns: repeat(5, 20px);
-    grid-template-rows: repeat(5, 20px);
+    grid-template-columns: repeat(5, 26px);
+    grid-template-rows: repeat(5, 26px);
     gap: 2px;
     background:var(--game-wood);
     padding: 4px;
@@ -38,8 +38,8 @@
 }
 
 .gridCell {
-    width: 20px;
-    height: 20px;
+    width: 26px;
+    height: 26px;
     background: rgba(255, 255, 255, 0.4);
     border-radius: 2px;
 }

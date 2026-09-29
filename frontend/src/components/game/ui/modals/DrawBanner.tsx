@@ -28,11 +28,9 @@ drawOfferReceived, drawRejectedMessage, onAcceptDraw, onRejectDraw
                     <p>Tu oponente ha ofrecido un empate. ¿Aceptas?</p>
                     <div className={styles.drawActions}>
                         <button className={`${styles.btnAccept} ${btnStyles.btnCarved}`} onClick={onAcceptDraw}>
-                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Aceptar
                         </button>
                         <button className={`${styles.btnReject} ${btnStyles.btnCarved}`} onClick={onRejectDraw}>
-                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Rechazar
                         </button>
                     </div>

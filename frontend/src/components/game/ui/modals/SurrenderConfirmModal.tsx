@@ -18,11 +18,9 @@ export const SurrenderConfirmModal: React.FC<SurrenderConfirmModalProps> = ({ on
                     <p className={styles.modalMessage}>Tu oponente ganará automáticamente. Esta acción no se puede deshacer.</p>
                     <div className={styles.modalActions}>
                         <button className={`${styles.btnExit} ${btnStyles.btnCarved}`} onClick={onCancel}>
-                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Seguir jugando
                         </button>
                         <button className={`${styles.btnExit} ${btnStyles.btnCarved}`} onClick={onConfirm}>
-                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Rendirse
                         </button>
                     </div>

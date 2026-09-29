@@ -8,11 +8,15 @@
     color: var(--game-ink);
     width: 100%;
     box-sizing: border-box;
-    transition: border-color 0.2s ease;
+    /* Al soltar el foco la línea base vuelve con un fundido lento que coincide
+       con el desvanecimiento del trazo de tinta (.brush), así que se percibe
+       como un cruce tinta -> línea y no como una línea que "salta". */
+    transition: border-color 0.4s ease;
 }
 .field:focus {
     outline: none;
     border-bottom-color: var(--game-jade);
+    transition-duration: 0.12s;
 }
 .field.error {
     border-bottom-color: var(--game-red);
@@ -44,16 +48,22 @@
     height: 9px;
     pointer-events: none;
 }
+/* Reposo: el trazo está oculto. Al perder el foco se desvanece (opacity) y
+   solo DESPUÉS se recoloca el recorte (clip-path con retardo), para que no se
+   vea cómo se "recoge" hacia la izquierda. */
 .brush path {
     fill: var(--game-jade);
-    opacity: 0.95;
+    opacity: 0;
     clip-path: inset(0 100% 0 0);
-    transition: clip-path 0.45s cubic-bezier(0.22, 0.8, 0.2, 1);
+    transition: opacity 0.4s ease, clip-path 0s linear 0.4s;
 }
 .fieldBrush:focus ~ .brush path {
+    opacity: 0.95;
     clip-path: inset(0 0% 0 0);
+    transition: opacity 0.1s ease, clip-path 0.45s cubic-bezier(0.22, 0.8, 0.2, 1);
 }
 .fieldWrap.error .brush path {
     fill: var(--game-red);
+    opacity: 0.95;
     clip-path: inset(0 0% 0 0);
 }

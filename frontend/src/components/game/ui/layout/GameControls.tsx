@@ -31,7 +31,6 @@ export const GameControls: React.FC<GameControlsProps> = ({
                     onClick={onOfferDraw}
                     disabled={drawOfferSent || drawOfferReceived || isGameOver}
                 >
-                    <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                     {drawOfferSent ? 'Oferta de Empate Enviada' : 'Ofrecer Empate'}
                 </button>
             )}
@@ -40,7 +39,6 @@ export const GameControls: React.FC<GameControlsProps> = ({
                 <button 
                     className={`${styles.btnExit} ${btnStyles.btnCarved}`}
                     onClick={onExit}>
-                    <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                     Salir de la Partida
                 </button>
             ) : (
@@ -50,7 +48,6 @@ export const GameControls: React.FC<GameControlsProps> = ({
                     onClick={onSurrender}
                     disabled={isGameOver}
                 >
-                    <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                     Rendirse
                 </button>
             )}

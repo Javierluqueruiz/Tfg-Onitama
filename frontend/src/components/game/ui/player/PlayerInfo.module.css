@@ -33,6 +33,9 @@
     width: 45px;
     height: 45px;
     border-radius: 50%;
+    /* Sin esto, un nombre largo (p. ej. "Rival: IA Heurística (Fácil)") encoge
+       el avatar en horizontal y lo deja ovalado. */
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;

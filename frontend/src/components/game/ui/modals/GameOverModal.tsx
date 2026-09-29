@@ -46,14 +46,12 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({ result, onCloseMod
                             className={`${styles.btnExit} ${btnStyles.btnCarved}`}
                             onClick={onCloseModal}
                         >
-                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Ver Tablero final
                         </button>
                         <button 
                         className={`${styles.btnExit} ${btnStyles.btnCarved}`} 
                         onClick={onExit} 
                         >
-                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                             Volver al Menú
                         </button>
                     </div> 
