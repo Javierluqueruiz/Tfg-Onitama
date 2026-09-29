@@ -157,6 +157,7 @@
 /* --- Modales de la partida (fin de partida y rendición) --- */
 .dialog {
     position: relative;
+    box-sizing: border-box;
     width: min(420px, 90vw);
     padding: 44px 32px 28px;
     margin-top: 28px;

@@ -14,7 +14,10 @@
     inset: 0;
     background-image: url('../../../assets/menu-paisaje5.jpeg');
     background-repeat: no-repeat;
-    background-size: 220% auto;
+    /* Ancho: 220% de la pantalla (encuadre de escritorio) o, si no llega a cubrir la
+       altura (móvil en vertical), el ancho que la cubra: la imagen mide 1,75 veces su
+       alto de ancho. Sin esto, en móvil quedaban franjas de papel liso. */
+    background-size: max(220%, 175vh) auto;
     filter: blur(0);
     transition: background-position 1400ms cubic-bezier(.65,.05,.36,1), filter 850ms ease-out;
 }
