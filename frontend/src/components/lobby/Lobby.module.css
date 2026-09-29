@@ -67,6 +67,28 @@
     margin-left: 84px;
 }
 
+/* Acceso a la página de reglas, arriba a la derecha de la cabecera. */
+.rulesLink {
+    position: absolute;
+    top: 36px;
+    right: 48px;
+    padding: 10px 20px;
+    background: var(--game-paper);
+    border: 1px solid var(--game-line);
+    border-radius: 999px;
+    box-shadow: var(--game-shadow-soft);
+    color: var(--game-ink);
+    font-weight: 800;
+    font-size: 1.05rem;
+    text-decoration: none;
+    transition: transform 0.15s ease, background-color 0.2s ease;
+}
+
+.rulesLink:hover {
+    background: var(--game-paper-soft);
+    transform: translateY(-2px);
+}
+
 .content {
     flex: 1;
     display: flex;
@@ -192,6 +214,13 @@
     .subTitle {
         font-size: 1.2rem;
         margin-left: 0;
+    }
+
+    .rulesLink {
+        top: 16px;
+        right: 16px;
+        padding: 8px 14px;
+        font-size: 0.9rem;
     }
 
     .content {

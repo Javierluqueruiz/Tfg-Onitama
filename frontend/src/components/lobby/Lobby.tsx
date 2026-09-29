@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { MainMenu, type Tab } from './ui/MainMenu';
 import { CreateRoom } from './ui/CreateRoom';
 import { JoinRoom } from './ui/JoinRoom';
@@ -64,6 +65,7 @@ export const Lobby: React.FC =  () => {
             >
                 <a className={styles.mainTitle} href="/">⛩️ ONITAMA</a>
                 <p className={styles.subTitle}>El Camino del Maestro</p>
+                <Link to="/rules" className={styles.rulesLink}>📜 Reglas</Link>
             </div>
 
             <div className={styles.content}>

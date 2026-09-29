@@ -7,6 +7,7 @@ import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { RulesPage } from "./pages/RulesPage";
 
 export const router = createBrowserRouter([
     { path: "/", element: <App /> },
@@ -16,5 +17,6 @@ export const router = createBrowserRouter([
     { path: "/forgot-password", element: <ForgotPasswordPage /> },
     { path: "/reset-password", element: <ResetPasswordPage /> },
     { path: "/profile", element: <ProfilePage /> },
+    { path: "/rules", element: <RulesPage /> },
     { path: "*", element: <NotFoundPage /> }
 ])

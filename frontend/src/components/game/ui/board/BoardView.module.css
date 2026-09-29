@@ -133,6 +133,12 @@
     box-shadow: inset 0 0 0 2px var(--game-line) !important;
 }
 
+/*Casillas marcadas (página de reglas)*/
+.marked {
+    background-color: var(--game-paper-soft);
+    box-shadow: inset 0 0 0 3px var(--game-line);
+}
+
 .clickablePiece:hover {
     transform: scale(1.15);
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));    

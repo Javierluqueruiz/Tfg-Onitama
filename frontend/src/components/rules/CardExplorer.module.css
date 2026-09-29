@@ -1,0 +1,90 @@
+.explorer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 28px;
+    align-items: start;
+}
+
+.gallery {
+    display: grid;
+    /* Cada botón mide ~154px tras el zoom (174 de carta + padding y borde, x0.8). */
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    justify-items: center;
+    gap: 14px 10px;
+}
+
+/* El botón envuelve a la carta para poder usarla con teclado; se reduce con zoom
+   porque la carta de partida (174px) es demasiado grande para una galería de 16. */
+.cardButton {
+    zoom: 0.8;
+    padding: 6px;
+    border: 3px solid transparent;
+    border-radius: 12px;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.cardButton:hover {
+    background-color: rgba(246, 239, 220, 0.5);
+}
+
+.cardButton:focus-visible {
+    outline: 3px solid var(--game-blue);
+    outline-offset: 2px;
+}
+
+.cardButtonActive,
+.cardButtonActive:hover {
+    border-color: var(--game-line);
+    background-color: var(--game-paper);
+}
+
+.panel {
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 16px;
+    background: var(--game-paper);
+    border: 1px solid var(--game-line);
+    border-radius: 14px;
+    box-shadow: var(--game-shadow-soft);
+    text-align: center;
+}
+
+.panelTitle {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--game-ink);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.panelText {
+    margin: 0;
+    color: var(--game-ink-soft);
+    font-size: 0.95rem;
+}
+
+.panelHint {
+    margin: 0;
+    color: var(--game-ink-soft);
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+    .explorer {
+        grid-template-columns: 1fr;
+    }
+
+    /* En pantallas estrechas el panel pasa encima de la galería (sin quedarse fijo: ocuparía media pantalla). */
+    .panel {
+        order: -1;
+        position: static;
+    }
+}
