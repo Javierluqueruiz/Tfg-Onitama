@@ -1,5 +1,6 @@
 .boardContainer {
-    --cell-size: clamp(52px, 17vw, 80px);
+    /* Tope de la casilla configurable: GameScreen lo sube; la página de reglas usa el de 80px. */
+    --cell-size: clamp(52px, 17vw, var(--board-cell-max, 80px));
     display: grid;
     grid-template-columns: repeat(5, var(--cell-size));
     grid-template-rows: repeat(5, var(--cell-size));
