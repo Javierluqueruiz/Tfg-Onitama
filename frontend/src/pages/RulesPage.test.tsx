@@ -20,10 +20,10 @@ function targetIndexes(board: HTMLElement): number[] {
 }
 
 describe('RulesPage', () => {
-    it('muestra las seis secciones de las reglas', () => {
+    it('muestra las siete secciones de las reglas', () => {
         renderPage();
 
-        ['Tablero y piezas', 'Cómo ganar', 'Las cartas', 'Un turno', 'Casos especiales', 'Modos de juego']
+        ['Tablero y piezas', 'Cómo ganar', 'Las cartas', 'Un turno', 'Casos especiales', 'Modos de juego', 'Puntuación ELO y rangos']
             .forEach(title => {
                 expect(screen.getByRole('heading', { level: 2, name: title })).toBeInTheDocument();
             });
@@ -34,6 +34,17 @@ describe('RulesPage', () => {
 
         const titles = screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent);
         expect(titles.indexOf('Tablero y piezas')).toBeLessThan(titles.indexOf('Cómo ganar'));
+    });
+
+    it('explica la puntuación ELO y muestra los siete rangos, de Bronce a Gran Maestro', () => {
+        renderPage();
+
+        ['Bronce', 'Plata', 'Oro', 'Platino', 'Diamante', 'Maestro', 'Gran Maestro'].forEach(name => {
+            expect(screen.getByText(name)).toBeInTheDocument();
+        });
+        expect(screen.getByText('Menos de 900')).toBeInTheDocument();
+        expect(screen.getByText('1700 o más')).toBeInTheDocument();
+        expect(screen.getByText('1100 – 1249')).toBeInTheDocument();
     });
 
     it('explica los dos motores de IA en los modos de juego', () => {
@@ -47,7 +58,7 @@ describe('RulesPage', () => {
         renderPage();
 
         const toc = screen.getByRole('navigation', { name: /secciones/i });
-        expect(within(toc).getAllByRole('link')).toHaveLength(6);
+        expect(within(toc).getAllByRole('link')).toHaveLength(7);
         expect(within(toc).getByRole('link', { name: 'Las cartas' })).toHaveAttribute('href', '#cartas');
     });
 

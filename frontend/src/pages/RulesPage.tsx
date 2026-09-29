@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CardView } from '../components/game/ui/cards/CardView';
 import { getValidTargets } from '../components/game/logic/getValidTargets';
 import { CardExplorer } from '../components/rules/CardExplorer';
+import { EloSection } from '../components/rules/EloSection';
 import { MiniBoard } from '../components/rules/MiniBoard';
 import { useActiveSection } from '../components/rules/useActiveSection';
 import {
@@ -20,6 +21,7 @@ const SECTIONS = [
     { id: 'turno', label: 'Un turno' },
     { id: 'especiales', label: 'Casos especiales' },
     { id: 'modos', label: 'Modos de juego' },
+    { id: 'elo', label: 'ELO y rangos' },
 ];
 const SECTION_IDS = SECTIONS.map(section => section.id);
 
@@ -329,6 +331,12 @@ export const RulesPage = () => {
                                 </ul>
                             </article>
                         </div>
+                    </section>
+
+                    {/* --- 7. ELO Y RANGOS --- */}
+                    <section id="elo" className={styles.section}>
+                        <h2 className={styles.sectionTitle}>Puntuación ELO y rangos</h2>
+                        <EloSection />
                     </section>
 
                     <div className={styles.cta}>
