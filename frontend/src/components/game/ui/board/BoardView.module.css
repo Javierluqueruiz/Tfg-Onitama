@@ -1,5 +1,5 @@
 .boardContainer {
-    --cell-size: clamp(46px, 15vw, 80px);
+    --cell-size: clamp(52px, 17vw, 80px);
     display: grid;
     grid-template-columns: repeat(5, var(--cell-size));
     grid-template-rows: repeat(5, var(--cell-size));

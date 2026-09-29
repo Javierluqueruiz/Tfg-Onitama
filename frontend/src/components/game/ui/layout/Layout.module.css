@@ -2,20 +2,16 @@
 /* --- Contenedor de los controles de partida --- */
 .gameControls {
   display: flex;
-  justify-content: flex-start; /* Alineamos el botón a la derecha */
+  justify-content: flex-start;
   align-items: center;
   width: 100%;
-  max-width: 600px; /* Ajústalo al ancho máximo de tu tablero */
-  margin: 0 auto 1rem auto;
-  padding: 0 1rem;
-  gap: 18px;
+  gap: 12px;
 }
 
-/* Sub-05.1 */
-/* --- Botón de Rendición (Surrender) --- */
 .btnSurrender,
 .btnExit,
 .btnOfferDraw {
+  flex: 1;
   padding: 10px 20px;
   border: 1px solid var(--game-line-soft);
   border-radius: 8px;

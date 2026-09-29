@@ -20,13 +20,13 @@
 .activeRed {
     border-color: var(--game-red);
     animation: gentlePulse 2s infinite ease-in-out;
-    background-color: var(--game-red-soft);
+    box-shadow: 0 0 0 2px var(--game-red), var(--game-shadow-soft);
 }
 
 .activeBlue {
     border-color: var(--game-blue);
     animation: gentlePulse 2s infinite ease-in-out;
-    background-color: var(--game-blue-soft);
+    box-shadow: 0 0 0 2px var(--game-blue), var(--game-shadow-soft);
 }
 
 .avatar {
@@ -115,4 +115,35 @@
     font-size: 11px;
     font-weight: normal;
     vertical-align: middle;
+}
+
+.pingRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.pingDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.pingText {
+    font-size: 11px;
+    color: var(--game-ink-soft);
+    font-family: monospace;
+}
+
+.playerContainer {
+    min-width: 0;
+}
+
+.cardsSlot {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    padding-left: 16px;
 }

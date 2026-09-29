@@ -4,11 +4,12 @@ import { CardView } from './ui/cards/CardView';
 import styles from './GameScreen.module.css';
 import { useGameScreen } from './hooks/useGameScreen';
 import { GameOverModal } from './ui/modals/GameOverModal';
-import { GameControls } from './ui/layout/GameControls';
+import { GameSidePanel } from './ui/layout/GameSidePanel';
 import { DrawBanner } from './ui/modals/DrawBanner';
-import { PlayerZone } from './ui/player/PlayerZone';
+import { PlayerInfo } from './ui/player/PlayerInfo';
+import { NetworkStatus } from './ui/player/NetworkStatus';
+import { PingIndicator } from './ui/player/PingIndicator';
 import { RematchBanner } from './ui/modals/RematchBanner';
-import { ChatBox } from './ui/chat/ChatBox';
 import './theme.css';
 import { SurrenderConfirmModal } from './ui/modals/SurrenderConfirmModal';
 import { DiscardBanner } from './ui/modals/DiscardBanner';
@@ -31,59 +32,92 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
     } = useGameScreen(gameState, localColor, playersProfile, isReconnecting);
 
 
-    return (    
+    return (
         <div className={`${styles.screenContainer} gameTheme`}>
-            {/*<div className={styles.header}>
-                <h2 className={styles.title}>Sala de Juego</h2>
-                <div className={`${styles.turnIndicator} ${isMyTurn ? styles.turnRed : styles.turnBlue}`}>
-                    {isMyTurn ? 'Tu Turno' : 'Turno del Rival'}
-                </div>
-            </div>*/}
-        
-           
-            {/* Zona del Jugador Rival */}
-            <PlayerZone 
-                isOpponent={true}
-                playerName={`Rival: ${opponentName}`}
-                elo={opponentElo}
-                color={isLocalRed ? 'blue' : 'red'}
-                isActive={!isMyTurn}
-                timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
-                cards={opponentCards}
-                disconnectTimer={disconnectTimer}
-                reconnectMessage={reconnectMessage}
-            />
+            <div className={styles.playRow}>
+                <div className={styles.boardColumn}>
+                    <div className={styles.cardsRow}>
+                        {opponentCards.map((card, index) => (
+                            <CardView key={`opponent-card-${index}`} card={card} faction={isLocalRed ? 'blue' : 'red'} isFlipped />
+                        ))}
+                    </div>
 
-            {/* Zona Central: Tablero + Carta Neutral */}
-            <div className={styles.centerZone}>
-                <div
-                    className={styles.boardWrapper} 
-                    style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>   
-                    <BoardView 
-                        board={board} 
-                        isReversed={isLocalRed}
-                        localColor={localColor}
-                        currentTurn={currentTurn}
-                        selectedPiece={selectedPiece}
-                        validTargets={validTargets}
-                        onCellClick={handleCellClick}
-                        lastMove={lastMove}
-                     />
-                </div>
-                
-                {/* Contenedor para la carta neutral en la mesa */}
-                <div className={styles.neutralZone}>
-                    <span className={styles.neutralLabel}>
-                        Mesa (Siguiente)
-                    </span>
-                    {neutralCard && (
-                        <CardView card={neutralCard} faction="neutral" />
-                    )}
-                </div>
-            </div>
+                    <div className={styles.centerZone}>
+                        <div
+                            className={styles.boardWrapper}
+                            style={{ transform: boardRotation, transition: 'transform 0.5s ease' }}>
+                            <BoardView
+                                board={board}
+                                isReversed={isLocalRed}
+                                localColor={localColor}
+                                currentTurn={currentTurn}
+                                selectedPiece={selectedPiece}
+                                validTargets={validTargets}
+                                onCellClick={handleCellClick}
+                                lastMove={lastMove}
+                            />
+                        </div>
 
-            <div className={styles.chatArea}>
-                <ChatBox />
+                        <div className={styles.neutralZone}>
+                            <PlayerInfo
+                                playerName={`Rival: ${opponentName}`}
+                                elo={opponentElo}
+                                color={isLocalRed ? 'blue' : 'red'}
+                                isActive={!isMyTurn}
+                                timeLeft={isLocalRed ? timeRemaining.blue : timeRemaining.red}
+                            />
+                            <NetworkStatus
+                                isOpponent={true}
+                                isConnected={isConnected}
+                                disconnectTimer={disconnectTimer}
+                                reconnectMessage={reconnectMessage}
+                            />
+
+                            <div className={styles.neutralCard}>
+                                <span className={styles.neutralLabel}>Mesa (Siguiente)</span>
+                                {neutralCard && <CardView card={neutralCard} faction="neutral" />}
+                            </div>
+
+                            <PlayerInfo
+                                playerName={`Jugador: ${localName}`}
+                                elo={localElo}
+                                color={isLocalRed ? 'red' : 'blue'}
+                                isActive={isMyTurn}
+                                timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
+                            >
+                                <PingIndicator isConnected={isConnected} />
+                            </PlayerInfo>
+                            <NetworkStatus
+                                isConnected={isConnected}
+                                disconnectTimer={disconnectTimer}
+                                isReconnecting={isReconnecting}
+                            />
+                        </div>
+                    </div>
+
+                    <div className={styles.cardsRow}>
+                        {myCards.map((card, index) => (
+                            <CardView
+                                key={`my-card-${index}`}
+                                card={card}
+                                faction={isLocalRed ? 'red' : 'blue'}
+                                isSelected={!isGameOver && selectedCard?.name === card.name}
+                                onClick={() => handleSelectCard(card)}
+                            />
+                        ))}
+                    </div>
+                </div>
+
+                <GameSidePanel
+                    status={gameState.status}
+                    isGameOver={isGameOver}
+                    isVsAi={isVsAi}
+                    drawOfferSent={drawOfferSent}
+                    drawOfferReceived={drawOfferReceived}
+                    onOfferDraw={handleOfferDraw}
+                    onSurrender={handleSurrender}
+                    onExit={handleExit}
+                />
             </div>
 
             <DrawBanner
@@ -97,37 +131,8 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
 
             {lastError && <div className={styles.toastError}>{lastError}</div>}
 
-            {/* Zona del Jugador Local */}
-            <PlayerZone 
-                isOpponent={false}
-                playerName={`Jugador: ${localName}`}
-                elo={localElo}
-                color={isLocalRed ? 'red' : 'blue'}
-                isActive={isMyTurn}
-                timeLeft={isLocalRed ? timeRemaining.red : timeRemaining.blue}
-                cards={myCards}
-                selectedCard={selectedCard}
-                onSelectCard={handleSelectCard}
-                isGameOver={isGameOver}
-                isConnected={isConnected}
-                disconnectTimer={disconnectTimer}
-                isReconnecting={isReconnecting}
-            />
-
-            <GameControls
-                status={gameState.status}
-                isGameOver={isGameOver}
-                isVsAi={isVsAi}
-                drawOfferSent={drawOfferSent}
-                drawOfferReceived={drawOfferReceived}
-                onOfferDraw={handleOfferDraw}
-                onSurrender={handleSurrender}
-                onExit={handleExit}
-            />
-
-            {/* NUEVO: Banner de Revancha que flota sobre el tablero finalizado */}
             {gameState.status === 'finished' && isGameOver && !isModalOpen && (
-                <RematchBanner 
+                <RematchBanner
                     rematchState={rematch.rematchState}
                     onOfferRematch={rematch.offerRematch}
                     onAcceptRematch={rematch.acceptRematch}
@@ -135,7 +140,6 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
                 />
             )}
 
-        
             {gameState.status === 'finished' && isGameOver && isModalOpen && (
                 <GameOverModal result={gameResult} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
             )}
