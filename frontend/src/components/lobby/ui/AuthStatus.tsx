@@ -42,9 +42,8 @@ export const AuthStatus = () => {
 
     return (
         <div className={styles.authStatus}>
-            <span className={styles.authGuest}>Jugando como invitado</span>
             <Link to="/login" className={styles.authLink}>Iniciar sesión</Link>
-            <Link to="/register" className={styles.authLink}>Registrarse</Link>
+            <Link to="/register" className={styles.authCta}>Registrarse</Link>
         </div>
     );
 };

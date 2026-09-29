@@ -27,10 +27,12 @@ describe("AuthStatus", () => {
         expect(container).toBeEmptyDOMElement();
     });
 
-    it('muestra el modo invitado si no hay usuario autenticado', () => {
+    it('ofrece iniciar sesión y registrarse si no hay usuario autenticado', () => {
         mockUseAuth();
         render(<MemoryRouter><AuthStatus /></MemoryRouter>);
-        expect(screen.getByText('Jugando como invitado')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/login');
+        expect(screen.getByRole('link', { name: 'Registrarse' })).toHaveAttribute('href', '/register');
+        expect(screen.queryByText('Jugando como invitado')).not.toBeInTheDocument();
     });
     
     it('muestra el aviso de correo no verificado', () => {

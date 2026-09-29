@@ -5,131 +5,169 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background-color: var(--game-paper);
+    /* Sin fondo propio: el de escena lo pinta SceneLayout por detrás. */
 }
 
-/* FEAT-08/16: tres fondos superpuestos, cada uno con su propio encuadre de
-   reposo (escala + desplazamiento + rotación), que convergen al activarse.
-   El desenfoque que se aclara al asentarse vende la sensación de movimiento
-   de cámara, no un simple fundido. */
-.sceneWorld {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    overflow: hidden;
-    background-color: var(--game-paper);
-}
-
-.sceneCanvas {
-    position: absolute;
-    inset: 0;
-    background-image: url('../../assets/menu-paisaje5.jpeg');
-    background-repeat: no-repeat;
-    background-size: 220% auto;
-    filter: blur(0);
-    transition: background-position 1400ms cubic-bezier(.65,.05,.36,1), filter 850ms ease-out;
-}
-
-.sceneCanvasPanning {
-    filter: blur(6px);
-    transition: background-position 1400ms cubic-bezier(.65,.05,.36,1), filter 420ms ease-in;
-}
-
+/* --- Cabecera: marca a la izquierda, cuenta y ayuda a la derecha --- */
 .header {
-    padding: 36px 20px 8px 60px;
     display: flex;
-    flex-direction: column;
     align-items: flex-start;
-    justify-content: center;
-    text-align: left;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 28px 48px 8px 56px;
 }
 
-.mainTitle {
-    margin: 0;
-    color: var(--game-ink);
-    font-size: 5rem;
-    line-height: 1;
-    letter-spacing: 4px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
-    margin-bottom: 0;
-    text-decoration: none;
+.topNav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 6px;
 }
 
-/* Pegado al título y en bermellón (el mismo rojo del torii) para que destaque
-   sobre el papel; el halo claro lo separa de las manchas de tinta del fondo. */
-.subTitle {
-    margin: 0;
-    font-size: 1.9rem;
-    color: var(--game-red);
-    font-weight: bold;
-    letter-spacing: 1px;
-    text-shadow: 0 1px 6px rgba(246, 239, 220, 0.9);
-    margin-left: 84px;
-}
-
-/* Acceso a la página de reglas, arriba a la derecha de la cabecera. */
-.rulesLink {
-    position: absolute;
-    top: 36px;
-    right: 48px;
-    padding: 10px 20px;
-    background: var(--game-paper);
+/* Píldora de papel: destaca sobre el fondo sin competir con el pergamino. */
+.navPill,
+.rulesLink,
+.serverPill,
+.authGuest,
+.authUser,
+.authLink,
+.authCta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 16px;
+    background: rgba(246, 239, 220, 0.94);
     border: 1px solid var(--game-line);
     border-radius: 999px;
-    box-shadow: var(--game-shadow-soft);
+    box-shadow: 0 4px 10px -6px rgba(60, 44, 15, 0.55);
     color: var(--game-ink);
+    font: inherit;
+    font-size: 0.95rem;
     font-weight: 800;
-    font-size: 1.05rem;
     text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
     transition: transform 0.15s ease, background-color 0.2s ease;
 }
 
-.rulesLink:hover {
+.rulesLink:hover,
+.authUser:hover,
+.authLink:hover {
     background: var(--game-paper-soft);
     transform: translateY(-2px);
 }
 
+.serverPill,
+.authGuest {
+    cursor: default;
+    font-weight: 700;
+    color: var(--game-ink-soft);
+}
+
+/* Indicador de servidor: punto de color + texto corto. */
+.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.dotConnected { background-color: var(--game-jade); box-shadow: 0 0 0 3px rgba(63, 109, 87, 0.22); }
+.dotDisconnected { background-color: var(--game-red); box-shadow: 0 0 0 3px rgba(168, 80, 58, 0.22); }
+
+/*FEAT-08*/
+.authStatus {
+    display: contents;
+}
+
+.authUser::before {
+    content: '👤';
+}
+
+.authLink {
+    color: var(--game-jade);
+}
+
+.authCta {
+    background: var(--game-jade);
+    border-color: var(--game-jade);
+    color: var(--game-paper);
+}
+
+.authCta:hover {
+    transform: translateY(-2px);
+    background: #35604c;
+}
+
+/* --- Contenido --- */
 .content {
     flex: 1;
     display: flex;
     align-items: flex-start;
     justify-content: flex-start;
-    padding: 20px 20px 20px 60px;
+    padding: 24px 48px 48px 56px;
 }
 
-.statusContainer {
-    width: 100%;
-    max-width: 480px;
-    background: var(--game-paper);
-    padding: 48px;
-    border-radius: 16px;
-    border: 1px solid var(--game-line);
-    box-shadow: var(--game-shadow-soft);
-}
-
-.statusHeader {
+.panelWrap {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 20px;
+    flex-direction: column;
+    width: 100%;
+    max-width: 660px;
 }
 
-.dot {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    flex-shrink: 0;
+/* --- Pestañas dentro del papel: la activa lleva una pincelada de tinta debajo --- */
+.mainTabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--game-line-soft);
 }
 
-.dotConnected { background-color: var(--game-jade); }
-.dotDisconnected { background-color: var(--game-red); }
+.mainTab {
+    position: relative;
+    flex: 1;
+    padding: 12px 8px 14px;
+    white-space: nowrap;
+    border: none;
+    background: transparent;
+    color: var(--game-ink-faint);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
 
-.statusText {
-    font-size: 1.5rem;
+.mainTab::after {
+    content: '';
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: -2px;
+    height: 4px;
+    border-radius: 4px 12px 4px 10px;
+    background: var(--game-jade);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.3s cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+
+.mainTab:hover {
     color: var(--game-ink);
-    font-weight: bold;
+}
+
+.mainTabActive,
+.mainTabActive:hover {
+    color: var(--game-ink);
+}
+
+.mainTabActive::after {
+    transform: scaleX(1);
 }
 
 .errorBox {
@@ -144,135 +182,33 @@
     font-weight: bold;
 }
 
-/*FEAT-08*/
-.authStatus {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    margin-bottom: 20px;
-    font-size: 14px;
-}
-
- .authUser {
-     color: var(--game-ink);
-     font-weight: bold;
-     font-size: 20px;
-    text-decoration: none;
-}
-
-.authUser:hover {
-    text-decoration: underline;
-}
-
-.authGuest {
-    color: var(--game-ink-faint);
-    font-size: 20px;
-}
-
-.authLink {
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--game-jade);
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 20px;
-    text-decoration: none;
-}
-
-.authLink:hover {
-    text-decoration: underline;
-}
-
 /* Responsive: pantallas estrechas (móvil) */
 @media (max-width: 700px) {
-    .sceneMain,
-    .scenePrivate,
-    .sceneAi {
-        background-image:
-            linear-gradient(to right, var(--game-paper) 0%, color-mix(in srgb, var(--game-paper) 55%, transparent) 45%, transparent 75%),
-            var(--scene-image);
-        background-position: center, 65% center;
-        background-size: cover, cover;
-    }
-
-    .sceneMain { --scene-image: url('../../assets/lobby-background.png'); }
-    .scenePrivate { --scene-image: url('../../assets/private-background.jpeg'); }
-    .sceneAi { --scene-image: url('../../assets/fight-background2.jpeg'); }
-
     .header {
-        padding: 32px 20px 12px;
+        padding: 20px 16px 8px;
     }
 
-    .mainTitle {
-        font-size: 2.4rem;
-        letter-spacing: 2px;
-        margin-bottom: 24px;
+    .topNav {
+        justify-content: flex-start;
     }
 
-    .subTitle {
-        font-size: 1.2rem;
-        margin-left: 0;
-    }
-
-    .rulesLink {
-        top: 16px;
-        right: 16px;
-        padding: 8px 14px;
-        font-size: 0.9rem;
+    .navPill,
+    .rulesLink,
+    .serverPill,
+    .authGuest,
+    .authUser,
+    .authLink,
+    .authCta {
+        padding: 7px 12px;
+        font-size: 0.85rem;
     }
 
     .content {
-        padding: 12px 20px 20px;
+        padding: 12px 16px 32px;
     }
-    
-    .statusContainer {
-        padding: 28px 20px;
+
+    .mainTab {
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
     }
-}
-
-
-.panelWrap {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 480px;
-}
-
-.mainTabs {
-    display: flex;
-    gap: 6px;
-}
-
-.mainTab {
-    flex: 1;
-    padding: 14px 8px;
-    white-space: nowrap;
-    border: 1px solid var(--game-wood-shadow);
-    border-bottom: none;
-    border-radius: 10px 10px 0 0;
-    background: var(--game-wood-deep);
-    color: var(--game-paper);
-    font-family: inherit;
-    font-weight: 800;
-    font-size: 0.98rem;
-    letter-spacing: 0.4px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.mainTab:hover {
-    background: var(--game-wood-shadow);
-}
-
-.mainTabActive,
-.mainTabActive:hover {
-    background: var(--game-paper);
-    border-color: var(--game-line);
-    color: var(--game-ink);
-}
-
-.statusContainerTabbed {
-    border-top-left-radius: 0;
 }

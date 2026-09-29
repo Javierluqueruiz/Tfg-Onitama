@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MainMenu, type Tab } from './ui/MainMenu';
 import { CreateRoom } from './ui/CreateRoom';
@@ -9,8 +9,16 @@ import { useLobby } from './hooks/useLobby';
 import type { GameMode } from '../../../../shared';
 import { MatchmakingRoom } from './ui/MatchmakingRoom';
 import { AuthStatus } from './ui/AuthStatus';
+import { Brand } from './ui/Brand';
+import { ScrollPanel } from '../shared/ui/ScrollPanel';
+import { useLobbyScene } from '../shared/ui/sceneContext';
 import '../game/theme.css';
 
+const MAIN_TABS: { tab: Tab; label: string }[] = [
+    { tab: 'MATCHMAKING', label: 'Partida pública' },
+    { tab: 'PRIVATE', label: 'Partida privada' },
+    { tab: 'AI', label: 'Contra IA' },
+];
 
 export const Lobby: React.FC =  () => {
     const {
@@ -29,81 +37,53 @@ export const Lobby: React.FC =  () => {
         isPrivateFlow || (currentScreen === 'MAIN' && mainMenuTab === 'PRIVATE') ? 'private' :
         currentScreen === 'MAIN' && mainMenuTab === 'AI' ? 'ai' :
         'main';
-    
-    // Coordenadas de cada escena dentro del lienzo grande (en vw/vh, no en
-    // píxeles, para que escale igual en cualquier tamaño de pantalla). No tienen
-    // por qué estar en fila -- es un boceto de un lienzo en dos dimensiones.
-    const SCENE_FOCUS: Record<'main' | 'private' | 'ai', string> = {
-        main: '25% 5%',
-        private: '100% 85%',
-        ai: '20% 60%',
-    };
-    const focus = SCENE_FOCUS[backgroundScene];
 
-    const [isPanning, setIsPanning] = useState(false);
-    const isFirstRender = useRef(true);
+    // El fondo lo pinta SceneLayout (persiste entre rutas); aquí solo se le dice
+    // qué escena toca. Al desmontar se restablece, para que al volver al lobby
+    // (p. ej. desde login) empiece en la escena principal.
+    const setScene = useLobbyScene();
     useEffect(() => {
-        if (isFirstRender.current) {
-            isFirstRender.current = false;
-            return;
-        }
-        setIsPanning(true);
-        const timer = setTimeout(() => setIsPanning(false), 550);
-        return () => clearTimeout(timer);
-    }, [backgroundScene]);
+        setScene(backgroundScene);
+    }, [backgroundScene, setScene]);
+    useEffect(() => () => setScene('main'), [setScene]);
+
+    // Las pestañas viven dentro del papel del pergamino, solo en la pantalla principal.
+    const tabs = currentScreen === 'MAIN' ? (
+        <div className={styles.mainTabs} role="tablist" aria-label="Tipo de partida">
+            {MAIN_TABS.map(({ tab, label }) => (
+                <button
+                    key={tab}
+                    role="tab"
+                    aria-selected={mainMenuTab === tab}
+                    className={`${styles.mainTab} ${mainMenuTab === tab ? styles.mainTabActive : ''}`}
+                    onClick={() => setMainMenuTab(tab)}
+                >
+                    {label}
+                </button>
+            ))}
+        </div>
+    ) : undefined;
 
     return (
         <div className={`${styles.wrapper} gameTheme`}>
-            <div className={styles.sceneWorld}>
-                <div
-                    className={`${styles.sceneCanvas} ${isPanning ? styles.sceneCanvasPanning : ''}`}
-                    style={{ backgroundPosition: focus }}
-                />
-            </div>
-
-            <div className={styles.header}
-            >
-                <a className={styles.mainTitle} href="/">⛩️ ONITAMA</a>
-                <p className={styles.subTitle}>El Camino del Maestro</p>
-                <Link to="/rules" className={styles.rulesLink}>📜 Reglas</Link>
-            </div>
+            <header className={styles.header}>
+                <Brand reload />
+                <nav className={styles.topNav} aria-label="Cuenta y ayuda">
+                    <span className={styles.serverPill} role="status">
+                        <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`} />
+                        {isConnected ? 'Servidor online' : 'Conectando...'}
+                    </span>
+                    <Link to="/rules" className={styles.rulesLink}>📜 Reglas</Link>
+                    <AuthStatus />
+                </nav>
+            </header>
 
             <div className={styles.content}>
                 <div className={styles.panelWrap}>
-                    {currentScreen === 'MAIN' && (
-                        <div className={styles.mainTabs}>
-                            <button
-                                className={`${styles.mainTab} ${mainMenuTab === 'MATCHMAKING' ? styles.mainTabActive : ''}`}
-                                onClick={() => setMainMenuTab('MATCHMAKING')}
-                            >
-                                Partida Pública
-                            </button>
-                            <button
-                                className={`${styles.mainTab} ${mainMenuTab === 'PRIVATE' ? styles.mainTabActive : ''}`}
-                                onClick={() => setMainMenuTab('PRIVATE')}
-                            >
-                                Partida Privada
-                            </button>
-                            <button
-                                className={`${styles.mainTab} ${mainMenuTab === 'AI' ? styles.mainTabActive : ''}`}
-                                onClick={() => setMainMenuTab('AI')}
-                            >
-                                Contra IA
-                            </button>
-                        </div>
-                    )}
-                    <div className={`${styles.statusContainer} ${currentScreen === 'MAIN' ? styles.statusContainerTabbed : ''}`}>
-                        <AuthStatus />
-                        <div className={styles.statusHeader}>
-                            <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`}/>
-                            <span className={styles.statusText}>
-                                {isConnected ? 'Servidor Online' : 'Conectando...'}
-                            </span>
-                        </div>
-
+                    <ScrollPanel header={tabs}>
                         {/* ---PANTALLA PRINCIPAL --- */}
                         {currentScreen === 'MAIN' && (
-                            <MainMenu 
+                            <MainMenu
                                 onSelectCreate={() => {
                                     setErrorMsg(null);
                                     setCurrentScreen('CREATE');
@@ -122,69 +102,69 @@ export const Lobby: React.FC =  () => {
                             />
                         )}
 
-                    {/* ---PANTALLA: MATCHMAKING --- */}
-                    {currentScreen === 'MATCHMAKING' && selectMode && (
-                        <MatchmakingRoom
-                            mode = {selectMode}
-                            onCancel={() => {
-                                setErrorMsg(null);
-                                setSelectMode(null);
-                                setCurrentScreen('MAIN');
-                            }}
-                            onMatchFound={(roomId: string, roomCode: string) => {
-                                console.log(`Partida encontrada! Room ID: ${roomId}, Room Code: ${roomCode}`);
-                                setErrorMsg(null);
-                            }}
-                        />
-                    )}
+                        {/* ---PANTALLA: MATCHMAKING --- */}
+                        {currentScreen === 'MATCHMAKING' && selectMode && (
+                            <MatchmakingRoom
+                                mode = {selectMode}
+                                onCancel={() => {
+                                    setErrorMsg(null);
+                                    setSelectMode(null);
+                                    setCurrentScreen('MAIN');
+                                }}
+                                onMatchFound={(roomId: string, roomCode: string) => {
+                                    console.log(`Partida encontrada! Room ID: ${roomId}, Room Code: ${roomCode}`);
+                                    setErrorMsg(null);
+                                }}
+                            />
+                        )}
 
-                    {/* ---PANTALLA: CREAR SALA --- */}
-                    {currentScreen === "CREATE" && (
-                        <CreateRoom
-                            playerName={playerName}
-                            setPlayerName={setPlayerName}
-                            accountName={accountUsername}
-                            onCreateRoom={handleCreateRoom}
-                            onBack={() => {
-                                setErrorMsg(null);
-                                setCurrentScreen('MAIN');
-                            }}
-                        />
-                    )}
+                        {/* ---PANTALLA: CREAR SALA --- */}
+                        {currentScreen === "CREATE" && (
+                            <CreateRoom
+                                playerName={playerName}
+                                setPlayerName={setPlayerName}
+                                accountName={accountUsername}
+                                onCreateRoom={handleCreateRoom}
+                                onBack={() => {
+                                    setErrorMsg(null);
+                                    setCurrentScreen('MAIN');
+                                }}
+                            />
+                        )}
 
-                    {currentScreen === "WAITING" && (
-                        <WaitingRoom 
-                            roomCode={createdRoomCode}
-                            onCancel={() => {
-                                setErrorMsg(null);
-                                setCurrentScreen('MAIN');
-                            }}
-                        />
-                    )}
+                        {currentScreen === "WAITING" && (
+                            <WaitingRoom
+                                roomCode={createdRoomCode}
+                                onCancel={() => {
+                                    setErrorMsg(null);
+                                    setCurrentScreen('MAIN');
+                                }}
+                            />
+                        )}
 
-                    {currentScreen === "JOIN" && (
-                        <JoinRoom
-                            playerName={playerName}
-                            setPlayerName={setPlayerName}
-                            accountName={accountUsername}
-                            joinCode={joinCode}
-                            setJoinCode={setJoinCode}
-                            onJoinRoom={handleJoinRoom}
-                            onBack={() => {
-                                setErrorMsg(null);
-                                setCurrentScreen('MAIN');
-                            }}
-                        />
-                    )}
+                        {currentScreen === "JOIN" && (
+                            <JoinRoom
+                                playerName={playerName}
+                                setPlayerName={setPlayerName}
+                                accountName={accountUsername}
+                                joinCode={joinCode}
+                                setJoinCode={setJoinCode}
+                                onJoinRoom={handleJoinRoom}
+                                onBack={() => {
+                                    setErrorMsg(null);
+                                    setCurrentScreen('MAIN');
+                                }}
+                            />
+                        )}
 
-                    {errorMsg && (
-                        <div className={styles.errorBox}>
-                            {errorMsg}
-                        </div>
-                    )}
+                        {errorMsg && (
+                            <div className={styles.errorBox}>
+                                {errorMsg}
+                            </div>
+                        )}
+                    </ScrollPanel>
                 </div>
             </div>
-            </div>
         </div>
-    ); 
+    );
 }
