@@ -14,9 +14,10 @@ import { ScrollPanel } from '../shared/ui/ScrollPanel';
 import { useLobbyScene } from '../shared/ui/sceneContext';
 import '../game/theme.css';
 
-const MAIN_TABS: { tab: Tab; label: string }[] = [
-    { tab: 'MATCHMAKING', label: 'Partida pública' },
-    { tab: 'PRIVATE', label: 'Partida privada' },
+// `prefix` se oculta en pantallas estrechas para que las tres pestañas quepan en una fila.
+const MAIN_TABS: { tab: Tab; prefix?: string; label: string }[] = [
+    { tab: 'MATCHMAKING', prefix: 'Partida', label: 'pública' },
+    { tab: 'PRIVATE', prefix: 'Partida', label: 'privada' },
     { tab: 'AI', label: 'Contra IA' },
 ];
 
@@ -50,7 +51,7 @@ export const Lobby: React.FC =  () => {
     // Las pestañas viven dentro del papel del pergamino, solo en la pantalla principal.
     const tabs = currentScreen === 'MAIN' ? (
         <div className={styles.mainTabs} role="tablist" aria-label="Tipo de partida">
-            {MAIN_TABS.map(({ tab, label }) => (
+            {MAIN_TABS.map(({ tab, prefix, label }) => (
                 <button
                     key={tab}
                     role="tab"
@@ -58,6 +59,7 @@ export const Lobby: React.FC =  () => {
                     className={`${styles.mainTab} ${mainMenuTab === tab ? styles.mainTabActive : ''}`}
                     onClick={() => setMainMenuTab(tab)}
                 >
+                    {prefix && <span className={styles.tabPrefix}>{prefix} </span>}
                     {label}
                 </button>
             ))}

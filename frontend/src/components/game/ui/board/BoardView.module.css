@@ -145,3 +145,11 @@
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));    
     z-index: 10;
 }
+
+/* Móvil estrecho: casillas algo más pequeñas para que el tablero y su marco quepan en pantalla. */
+@media (max-width: 480px) {
+    .boardContainer {
+        --cell-size: clamp(44px, 15vw, 64px);
+        padding: 8px;
+    }
+}

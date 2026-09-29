@@ -208,7 +208,12 @@
     }
 
     .mainTab {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         letter-spacing: 0.04em;
+    }
+
+    /* "Partida" sobra en móvil: "Pública / Privada / Contra IA" caben en una fila. */
+    .tabPrefix {
+        display: none;
     }
 }

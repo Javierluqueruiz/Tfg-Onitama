@@ -163,6 +163,10 @@
 
     .centerZone {
         flex-direction: column;
+        gap: 16px;
+        padding: 12px;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .neutralZone {
