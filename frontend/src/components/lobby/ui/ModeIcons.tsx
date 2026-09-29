@@ -69,3 +69,11 @@ export const KeyIcon = () => (
         <path d="M36 20 V25" />
     </Icon>
 );
+
+// Sobre: verificación de correo y avisos por email.
+export const MailIcon = () => (
+    <Icon>
+        <rect x="5" y="9" width="30" height="22" rx="3" />
+        <path d="M6 12 L20 23 L34 12" />
+    </Icon>
+);

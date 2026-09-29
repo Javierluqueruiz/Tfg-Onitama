@@ -1,5 +1,6 @@
 import React from 'react';
-import styles from './RoomForms.module.css';
+import styles from '../../shared/ui/FormKit.module.css';
+import { FormHeader } from '../../shared/ui/FormHeader';
 import { BrushInput } from '../../shared/ui/BrushInput';
 import { ToriiIcon, TeaBowlIcon, HourglassIcon, BoltIcon } from './ModeIcons';
 import type { GameMode } from '../../../../../shared';
@@ -30,11 +31,7 @@ export const CreateRoom: React.FC<CreateRoomProps> = ({ playerName, setPlayerNam
                 onCreateRoom(selectedMode);
             }}
         >
-            <div className={styles.header}>
-                <span className={styles.badge} aria-hidden="true"><ToriiIcon /></span>
-                <h3 className={styles.title}>Crear sala</h3>
-                <p className={styles.hint}>Elige el ritmo de la partida y comparte el código con tu rival.</p>
-            </div>
+            <FormHeader icon={<ToriiIcon />} title="Crear sala" hint="Elige el ritmo de la partida y comparte el código con tu rival." />
 
             {!accountName && (
                 <label className={styles.label}>

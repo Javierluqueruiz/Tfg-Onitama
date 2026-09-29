@@ -1,6 +1,5 @@
 import React from "react";
 import styles from "./Layout.module.css";
-import btnStyles from "../../../shared/ui/Button.module.css";
 
 interface GameControlsProps {
     status: string;
@@ -27,7 +26,8 @@ export const GameControls: React.FC<GameControlsProps> = ({
         <div className={styles.gameControls}>
             {status !== 'finished' && !isVsAi && (
                 <button
-                    className={`${styles.btnOfferDraw} ${btnStyles.btnCarved}`}
+                    type="button"
+                    className={styles.btnOfferDraw}
                     onClick={onOfferDraw}
                     disabled={drawOfferSent || drawOfferReceived || isGameOver}
                 >
@@ -37,14 +37,16 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
             {status === 'finished' ? (
                 <button 
-                    className={`${styles.btnExit} ${btnStyles.btnCarved}`}
+                    type="button"
+                    className={styles.btnExit}
                     onClick={onExit}>
                     Salir de la Partida
                 </button>
             ) : (
 
                 <button
-                    className={`${styles.btnSurrender} ${btnStyles.btnCarved}`}
+                    type="button"
+                    className={styles.btnSurrender}
                     onClick={onSurrender}
                     disabled={isGameOver}
                 >

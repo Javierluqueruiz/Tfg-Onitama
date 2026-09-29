@@ -9,8 +9,7 @@ import { useActiveSection } from '../components/rules/useActiveSection';
 import {
     BLUE_TEMPLE, RED_TEMPLE, INITIAL_BOARD, STONE_EXAMPLE, STREAM_EXAMPLE, STUDENT_CELLS, TURN_EXAMPLE, deckCard
 } from '../components/rules/rulesBoards';
-import btnStyles from '../components/shared/ui/Button.module.css';
-import formStyles from '../components/lobby/ui/Forms.module.css';
+import formKit from '../components/shared/ui/FormKit.module.css';
 import '../components/game/theme.css';
 import styles from './RulesPage.module.css';
 
@@ -340,13 +339,7 @@ export const RulesPage = () => {
                     </section>
 
                     <div className={styles.cta}>
-                        <Link
-                            to="/"
-                            className={`${btnStyles.btnCarved} ${formStyles.btnSubmit} ${formStyles.btnCreate} ${styles.ctaButton}`}
-                        >
-                            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
-                            ¡A jugar!
-                        </Link>
+                        <Link to="/" className={`${formKit.primary} ${styles.ctaButton}`}>¡A jugar!</Link>
                     </div>
                 </main>
             </div>

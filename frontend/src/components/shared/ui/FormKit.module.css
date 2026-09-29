@@ -1,5 +1,5 @@
-/* Pantallas de crear sala, unirse y esperando rival. Botones planos (sin madera):
-   uno principal en verde y el resto como texto. */
+/* Piezas comunes de los formularios del panel (salas, login, registro, contraseña...):
+   cabecera con icono, campos y botones planos: uno principal en verde y el resto como texto. */
 
 .form {
     display: flex;
@@ -152,6 +152,10 @@
 }
 
 .primary {
+    display: block;
+    box-sizing: border-box;
+    text-align: center;
+    text-decoration: none;
     width: 100%;
     padding: 14px 20px;
     border: none;
@@ -167,9 +171,14 @@
     transition: transform 0.15s ease, filter 0.2s ease;
 }
 
-.primary:hover {
+.primary:hover:not(:disabled) {
     transform: translateY(-2px);
     filter: brightness(1.08);
+}
+
+.primary:disabled {
+    opacity: 0.6;
+    cursor: wait;
 }
 
 .primary:active {
@@ -304,4 +313,48 @@
         height: 58px;
         font-size: 1.8rem;
     }
+}
+
+/* --- Páginas de cuenta: mensajes, enlaces y errores --- */
+.message {
+    margin: 0;
+    color: var(--game-ink-soft);
+    line-height: 1.6;
+    text-align: center;
+}
+
+.error {
+    margin: 0;
+    padding: 10px 14px;
+    background: var(--game-red-soft);
+    border: 1px solid var(--game-red);
+    border-radius: 10px;
+    color: var(--game-red);
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.link {
+    color: var(--game-jade);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+/* Enlace pequeño alineado a la derecha, bajo un campo (¿Olvidaste tu contraseña?). */
+.linkRow {
+    margin: -10px 0 0;
+    text-align: right;
+    font-size: 0.88rem;
+}
+
+.switchText {
+    margin: 0;
+    text-align: center;
+    color: var(--game-ink-soft);
+    font-size: 0.95rem;
 }

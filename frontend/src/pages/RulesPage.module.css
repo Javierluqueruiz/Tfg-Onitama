@@ -354,10 +354,11 @@
     justify-content: center;
 }
 
-.ctaButton {
+.cta .ctaButton {
+    width: auto;
     min-width: 260px;
-    text-align: center;
-    margin-top: 0;
+    padding-left: 40px;
+    padding-right: 40px;
 }
 
 /* --- Responsive --- */
@@ -393,6 +394,13 @@
 
     .twoCols {
         grid-template-columns: 1fr;
+    }
+
+    /* Con las dos fotos apiladas, la flecha señala hacia abajo. */
+    .swapArrow {
+        transform: rotate(90deg);
+        align-self: flex-start;
+        margin-left: 6px;
     }
 
     .pageTitle {

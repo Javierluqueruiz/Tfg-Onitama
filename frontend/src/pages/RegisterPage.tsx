@@ -2,9 +2,10 @@ import { useState, type SubmitEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthLayout } from './AuthLayout';
-import styles from '../components/lobby/ui/Forms.module.css';
-import btnStyles from '../components/shared/ui/Button.module.css';
-import fieldStyles from "../components/shared/ui/Input.module.css";
+import styles from '../components/shared/ui/FormKit.module.css';
+import { BrushInput } from '../components/shared/ui/BrushInput';
+import { FormHeader } from '../components/shared/ui/FormHeader';
+import { MailIcon, ToriiIcon } from '../components/lobby/ui/ModeIcons';
 import { TurnstileWidget } from '../components/TurnstileWidget';
 
 export const RegisterPage = () => {
@@ -44,16 +45,15 @@ export const RegisterPage = () => {
     if (registeredEmail) {
         return (
             <AuthLayout>
-                <h3 className={styles.title}>¡Cuenta creada!</h3>
-                <div className={styles.container}>
-                    <p>
+                <div className={styles.form}>
+                    <FormHeader icon={<MailIcon />} title="¡Cuenta creada!" />
+                    <p className={styles.message}>
                         Te hemos enviado un correo de verificación a <strong>{registeredEmail}</strong>.
                         Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar tu cuenta.
                     </p>
-                    <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`}>
-                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
-                        Continuar
-                    </Link>
+                    <div className={styles.actions}>
+                        <Link to="/" className={styles.primary}>Continuar</Link>
+                    </div>
                 </div>
             </AuthLayout>
         );
@@ -61,53 +61,37 @@ export const RegisterPage = () => {
 
     return (
         <AuthLayout>
-            <h3 className={styles.title}>Crear cuenta</h3>
-            <form onSubmit={handleSubmit} className={styles.container}>
+            <form onSubmit={handleSubmit} className={styles.form}>
+                <FormHeader icon={<ToriiIcon />} title="Crear cuenta" hint="Guarda tu progreso y compite con tu ELO." />
+
                 <label className={styles.label}>
-                    Usuario:
-                    <div className={fieldStyles.fieldWrap}>
-                        <input type="text" className={`${fieldStyles.field} ${fieldStyles.fieldBrush}`} value={username} onChange={(e) => setUsername(e.target.value)} required minLength={3} />
-                        <svg className={fieldStyles.brush} viewBox="0 0 320 10" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M2 6 C8 2,22 1,36 3 C58 6,80 7,102 4 C130 1,158 2,186 5 C214 8,242 7,266 4 C284 1,304 1,316 4 C304 8,282 9,258 8 C230 6,202 9,174 7 C146 5,116 8,88 8 C58 7,28 9,10 8 C4 7,2 7,2 6 Z"/>
-                        </svg>
-                    </div>
+                    Usuario
+                    <BrushInput type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required minLength={3} />
                 </label>
                 <label className={styles.label}>
-                    Correo:
-                    <div className={fieldStyles.fieldWrap}>
-                        <input type="email" className={`${fieldStyles.field} ${fieldStyles.fieldBrush}`} value={email} onChange={(e) => setEmail(e.target.value)} required />
-                        <svg className={fieldStyles.brush} viewBox="0 0 320 10" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M2 6 C8 2,22 1,36 3 C58 6,80 7,102 4 C130 1,158 2,186 5 C214 8,242 7,266 4 C284 1,304 1,316 4 C304 8,282 9,258 8 C230 6,202 9,174 7 C146 5,116 8,88 8 C58 7,28 9,10 8 C4 7,2 7,2 6 Z"/>
-                        </svg>
-                    </div>
+                    Correo
+                    <BrushInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
                 </label>
                 <label className={styles.label}>
-                    Contraseña:
-                    <div className={fieldStyles.fieldWrap}>
-                        <input type="password" className={`${fieldStyles.field} ${fieldStyles.fieldBrush}`} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
-                        <svg className={fieldStyles.brush} viewBox="0 0 320 10" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M2 6 C8 2,22 1,36 3 C58 6,80 7,102 4 C130 1,158 2,186 5 C214 8,242 7,266 4 C284 1,304 1,316 4 C304 8,282 9,258 8 C230 6,202 9,174 7 C146 5,116 8,88 8 C58 7,28 9,10 8 C4 7,2 7,2 6 Z"/>
-                        </svg>
-                    </div>
+                    Contraseña
+                    <BrushInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
                 </label>
 
                 <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} />
 
-                {error && <p className={styles.error}>{error}</p>}
+                {error && <p className={styles.error} role="alert">{error}</p>}
 
-                <div className={styles.buttonGroup}>
-                    <Link to="/" className={`${styles.btnBack} ${btnStyles.btnCarved}`}>
-                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
-                        Volver
-                    </Link>
-                    <button type="submit" className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`} disabled={isSubmitting}>
-                        <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
+                <div className={styles.actions}>
+                    <button type="submit" className={styles.primary} disabled={isSubmitting}>
                         {isSubmitting ? 'Creando cuenta...' : 'Registrarse'}
                     </button>
+                    <Link to="/" className={styles.ghost}>← Volver</Link>
                 </div>
-            </form>
 
-            <p className={styles.switchLink}>¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link></p>
+                <p className={styles.switchText}>
+                    ¿Ya tienes cuenta? <Link to="/login" className={styles.link}>Inicia sesión</Link>
+                </p>
+            </form>
         </AuthLayout>
     );
 };

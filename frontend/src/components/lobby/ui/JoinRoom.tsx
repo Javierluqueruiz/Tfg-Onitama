@@ -1,5 +1,6 @@
 import React from 'react';
-import styles from './RoomForms.module.css';
+import styles from '../../shared/ui/FormKit.module.css';
+import { FormHeader } from '../../shared/ui/FormHeader';
 import { BrushInput } from '../../shared/ui/BrushInput';
 import { KeyIcon } from './ModeIcons';
 
@@ -22,11 +23,7 @@ export const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, setPlayerName, a
                 onJoinRoom();
             }}
         >
-            <div className={styles.header}>
-                <span className={styles.badge} aria-hidden="true"><KeyIcon /></span>
-                <h3 className={styles.title}>Unirse a una sala</h3>
-                <p className={styles.hint}>Escribe el código de 5 caracteres que te ha pasado tu rival.</p>
-            </div>
+            <FormHeader icon={<KeyIcon />} title="Unirse a una sala" hint="Escribe el código de 5 caracteres que te ha pasado tu rival." />
 
             {!accountName && (
                 <label className={styles.label}>

@@ -16,7 +16,7 @@ describe('ForgotPasswordPage', () => {
 
         render(<MemoryRouter><ForgotPasswordPage /></MemoryRouter>);
 
-        fireEvent.change(screen.getByLabelText(/correo electrónico:/i), { target: { value: 'user@example.com' } });
+        fireEvent.change(screen.getByLabelText(/correo electrónico/i), { target: { value: 'user@example.com' } });
         fireEvent.click(screen.getByRole('button', { name: /enviar instrucciones/i }));
 
         await waitFor(() => expect(AuthApi.forgotPassword).toHaveBeenCalledWith({ email: 'user@example.com' }));
@@ -26,7 +26,7 @@ describe('ForgotPasswordPage', () => {
         vi.mocked(AuthApi.forgotPassword).mockResolvedValueOnce({message: 'ok'});
 
         render(<MemoryRouter><ForgotPasswordPage /></MemoryRouter>);
-        fireEvent.change(screen.getByLabelText(/correo electrónico:/i), { target: { value: 'user@example.com' } });
+        fireEvent.change(screen.getByLabelText(/correo electrónico/i), { target: { value: 'user@example.com' } });
         fireEvent.click(screen.getByRole('button', { name: /enviar instrucciones/i }));
 
         expect(await screen.findByText(/instrucciones enviadas/i)).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe('ForgotPasswordPage', () => {
         vi.mocked(AuthApi.forgotPassword).mockRejectedValueOnce(new Error('Error de prueba'));
 
         render(<MemoryRouter><ForgotPasswordPage /></MemoryRouter>);
-        fireEvent.change(screen.getByLabelText(/correo electrónico:/i), { target: { value: 'user@example.com' } });
+        fireEvent.change(screen.getByLabelText(/correo electrónico/i), { target: { value: 'user@example.com' } });
         fireEvent.click(screen.getByRole('button', { name: /enviar instrucciones/i }));
 
         expect(await screen.findByText(/Error de prueba/i)).toBeInTheDocument();

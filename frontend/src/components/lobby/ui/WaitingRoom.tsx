@@ -1,5 +1,6 @@
 import React from 'react';
-import styles from './RoomForms.module.css';
+import styles from '../../shared/ui/FormKit.module.css';
+import { FormHeader } from '../../shared/ui/FormHeader';
 import { ToriiIcon } from './ModeIcons';
 
 interface WaitingRoomProps {
@@ -22,11 +23,7 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({ roomCode, onCancel }) 
 
     return (
         <div className={styles.form}>
-            <div className={styles.header}>
-                <span className={styles.badge} aria-hidden="true"><ToriiIcon /></span>
-                <h3 className={styles.title}>Sala creada</h3>
-                <p className={styles.hint}>Comparte este código con tu rival para empezar:</p>
-            </div>
+            <FormHeader icon={<ToriiIcon />} title="Sala creada" hint="Comparte este código con tu rival para empezar:" />
 
             <ul className={styles.code} aria-label={`Código de la sala: ${roomCode.split('').join(' ')}`}>
                 {roomCode.split('').map((char, index) => (
