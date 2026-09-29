@@ -1,7 +1,7 @@
 import React from 'react';
-import styles from './Forms.module.css';
-import btnStyles from '../../shared/ui/Button.module.css';
-import fieldStyles from "../../shared/ui/Input.module.css";
+import styles from './RoomForms.module.css';
+import { BrushInput } from '../../shared/ui/BrushInput';
+import { ToriiIcon, TeaBowlIcon, HourglassIcon, BoltIcon } from './ModeIcons';
 import type { GameMode } from '../../../../../shared';
 
 interface CreateRoomProps {
@@ -12,64 +12,66 @@ interface CreateRoomProps {
     onBack: () => void;
 }
 
+// Ritmo de la sala: mismo orden y colores que el menú principal.
+const ROOM_MODES: { mode: GameMode; label: string; detail: string; icon: React.ReactNode; className: string }[] = [
+    { mode: 'casual', label: 'Casual', detail: 'Sin reloj', icon: <TeaBowlIcon />, className: styles.optionCasual },
+    { mode: 'normal', label: 'Normal', detail: '10 min', icon: <HourglassIcon />, className: styles.optionNormal },
+    { mode: 'fast', label: 'Rápido', detail: '5 min', icon: <BoltIcon />, className: styles.optionFast },
+];
+
 export const CreateRoom: React.FC<CreateRoomProps> = ({ playerName, setPlayerName, accountName, onCreateRoom, onBack }) => {
     const [selectedMode, setSelectedMode] = React.useState<GameMode>('normal');
+
     return (
-        <div className={styles.container}>
-            <h3 className={styles.title}>Crear una nueva Partida</h3>
-            {accountName ? (
-                <></>
-            ) : (
+        <form
+            className={styles.form}
+            onSubmit={(event) => {
+                event.preventDefault();
+                onCreateRoom(selectedMode);
+            }}
+        >
+            <div className={styles.header}>
+                <span className={styles.badge} aria-hidden="true"><ToriiIcon /></span>
+                <h3 className={styles.title}>Crear sala</h3>
+                <p className={styles.hint}>Elige el ritmo de la partida y comparte el código con tu rival.</p>
+            </div>
+
+            {!accountName && (
                 <label className={styles.label}>
-                    Tu Nombre:
-                    <div className={fieldStyles.fieldWrap}>
-                        <input
-                            type="text"
-                            className={`${fieldStyles.field} ${fieldStyles.fieldBrush}`}
-                            value={playerName}
-                            onChange={(e) => setPlayerName(e.target.value)}
-                            placeholder="Ej. Maestro Nuby"
-                        />
-                        <svg className={fieldStyles.brush} viewBox="0 0 320 10" preserveAspectRatio="none" aria-hidden="true">
-                            <path d="M2 6 C8 2,22 1,36 3 C58 6,80 7,102 4 C130 1,158 2,186 5 C214 8,242 7,266 4 C284 1,304 1,316 4 C304 8,282 9,258 8 C230 6,202 9,174 7 C146 5,116 8,88 8 C58 7,28 9,10 8 C4 7,2 7,2 6 Z"/>
-                        </svg>
-                    </div>
+                    Tu nombre
+                    <BrushInput
+                        type="text"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Ej. Maestro Nuby"
+                    />
                 </label>
             )}
 
-            <div className={styles.modeSelection}>
-                <p className={styles.label}>Modo de Juego:</p>
-                <div className={styles.modeButtonsRow}>
-                    <button
-                        className={`${styles.modeBtn} ${selectedMode === 'fast' ? styles.activeFast : ''} ${btnStyles.btnCarved}`}
-                        onClick={() => setSelectedMode('fast')}
-                    >
-                        5 min
-                    </button>
-                    <button
-                        className={`${styles.modeBtn} ${selectedMode === 'normal' ? styles.activeNormal : ''} ${btnStyles.btnCarved}`}
-                        onClick={() => setSelectedMode('normal')}
-                    >
-                        10 min
-                    </button>
-                    <button
-                        className={`${styles.modeBtn} ${selectedMode === 'casual' ? styles.activeCasual : ''} ${btnStyles.btnCarved}`}
-                        onClick={() => setSelectedMode('casual')}
-                    >
-                        Casual
-                    </button>
+            <fieldset className={styles.group}>
+                <legend className={styles.groupLabel}>Modo de juego</legend>
+                <div className={styles.options} role="radiogroup" aria-label="Modo de juego">
+                    {ROOM_MODES.map(({ mode, label, detail, icon, className }) => (
+                        <button
+                            key={mode}
+                            type="button"
+                            role="radio"
+                            aria-checked={selectedMode === mode}
+                            className={`${styles.option} ${className} ${selectedMode === mode ? styles.optionSelected : ''}`}
+                            onClick={() => setSelectedMode(mode)}
+                        >
+                            <span className={styles.optionIcon} aria-hidden="true">{icon}</span>
+                            <span className={styles.optionName}>{label}</span>
+                            <span className={styles.optionDetail}>{detail}</span>
+                        </button>
+                    ))}
                 </div>
-            </div>
+            </fieldset>
 
-            <div className={styles.buttonGroup}>
-                <button className={`${styles.btnBack} ${btnStyles.btnCarved}`} onClick={onBack }>
-                    Volver
-                </button>
-                <button className={`${styles.btnSubmit} ${styles.btnCreate} ${btnStyles.btnCarved}`} onClick={() => onCreateRoom(selectedMode)}>
-                    <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
-                    Crear Sala
-                </button>
+            <div className={styles.actions}>
+                <button type="submit" className={styles.primary}>Crear sala</button>
+                <button type="button" className={styles.ghost} onClick={onBack}>← Volver</button>
             </div>
-        </div>
+        </form>
     );
 };

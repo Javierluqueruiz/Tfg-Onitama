@@ -1,7 +1,7 @@
 import React from 'react';
-import styles from './Forms.module.css';
-import btnStyles from '../../shared/ui/Button.module.css';
-import fieldStyles from "../../shared/ui/Input.module.css";
+import styles from './RoomForms.module.css';
+import { BrushInput } from '../../shared/ui/BrushInput';
+import { KeyIcon } from './ModeIcons';
 
 interface JoinRoomProps {
     playerName: string;
@@ -15,52 +15,49 @@ interface JoinRoomProps {
 
 export const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, setPlayerName, accountName, joinCode, setJoinCode, onJoinRoom, onBack }) => {
     return (
-    <div className={styles.container}>
-        <h3 className={styles.title}>Unirse a una Partida</h3>
+        <form
+            className={styles.form}
+            onSubmit={(event) => {
+                event.preventDefault();
+                onJoinRoom();
+            }}
+        >
+            <div className={styles.header}>
+                <span className={styles.badge} aria-hidden="true"><KeyIcon /></span>
+                <h3 className={styles.title}>Unirse a una sala</h3>
+                <p className={styles.hint}>Escribe el código de 5 caracteres que te ha pasado tu rival.</p>
+            </div>
 
-        {accountName ? (
-            <></>
-        ) : (
-            <label className={styles.label}>
-                Tu Nombre:
-                <div className={fieldStyles.fieldWrap}>
-                    <input 
+            {!accountName && (
+                <label className={styles.label}>
+                    Tu nombre
+                    <BrushInput
                         type="text"
-                        className={`${fieldStyles.field} ${fieldStyles.fieldBrush}`}
                         value={playerName}
                         onChange={(e) => setPlayerName(e.target.value)}
                         placeholder="Ej. Maestro Nuby"
                     />
-                    <svg className={fieldStyles.brush} viewBox="0 0 320 10" preserveAspectRatio="none" aria-hidden="true">
-                        <path d="M2 6 C8 2,22 1,36 3 C58 6,80 7,102 4 C130 1,158 2,186 5 C214 8,242 7,266 4 C284 1,304 1,316 4 C304 8,282 9,258 8 C230 6,202 9,174 7 C146 5,116 8,88 8 C58 7,28 9,10 8 C4 7,2 7,2 6 Z"/>
-                    </svg>
-                </div>
-            </label> 
-        )}
-        
-        <label className={styles.label}>
-            Código de la Sala:
-            <input
-                type="text"
-                className={`${styles.input} ${styles.inputCode}`}
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Ej. ABC12"
-                maxLength={5}
-            />
-        </label>
+                </label>
+            )}
 
-        <button className={`${styles.btnSubmit} ${styles.btnJoin} ${btnStyles.btnCarved}`} 
-            onClick={onJoinRoom}>
-            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
-            Unirse a la Sala
-        </button>
+            <label className={`${styles.label} ${styles.labelCenter}`}>
+                Código de la sala
+                <BrushInput
+                    variant="code"
+                    type="text"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    placeholder="ABC12"
+                    maxLength={5}
+                    autoComplete="off"
+                    spellCheck={false}
+                />
+            </label>
 
-        <button className={`${styles.btnBack} ${btnStyles.btnCarved}`} onClick={onBack}>
-            <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
-            ←Volver
-        </button>
-    </div>
-);
-
+            <div className={styles.actions}>
+                <button type="submit" className={styles.primary}>Unirse a la sala</button>
+                <button type="button" className={styles.ghost} onClick={onBack}>← Volver</button>
+            </div>
+        </form>
+    );
 };

@@ -67,3 +67,24 @@
     opacity: 0.95;
     clip-path: inset(0 0% 0 0);
 }
+
+/* Variante para códigos de sala: grande, centrada y muy espaciada. */
+.fieldCode {
+    text-align: center;
+    /* Monoespaciada con cero tachado: en una serif el 0 se confunde con la O. */
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'SF Mono', 'Courier New', monospace;
+    font-variant-numeric: slashed-zero;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.5em;
+    /* Compensa el espacio que el letter-spacing añade tras la última letra. */
+    padding-left: 0.5em;
+    text-transform: uppercase;
+}
+
+.fieldCode::placeholder {
+    font-weight: 400;
+    letter-spacing: 0.35em;
+    opacity: 0.45;
+    text-transform: uppercase;
+}
