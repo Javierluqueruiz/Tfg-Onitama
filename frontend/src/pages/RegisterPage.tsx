@@ -77,7 +77,7 @@ export const RegisterPage = () => {
                     <BrushInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
                 </label>
 
-                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} />
+                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
 
                 {error && <p className={styles.error} role="alert">{error}</p>}
 

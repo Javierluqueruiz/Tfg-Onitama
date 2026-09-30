@@ -71,7 +71,7 @@ export const LoginPage = () => {
                     <Link to="/forgot-password" className={styles.link}>¿Olvidaste tu contraseña?</Link>
                 </p>
 
-                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} />
+                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
 
                 {error && <p className={styles.error} role="alert">{error}</p>}
 
