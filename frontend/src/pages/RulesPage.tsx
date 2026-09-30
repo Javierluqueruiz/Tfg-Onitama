@@ -178,7 +178,7 @@ export const RulesPage = () => {
                     <section id="cartas" className={styles.section}>
                         <h2 className={styles.sectionTitle}>Las cartas</h2>
                         <p className={styles.lead}>
-                            Aquí no hay piezas que se muevan «como un alfil»: <strong>los movimientos los dan las cartas</strong>.
+                            Aquí las piezas no tienen movimientos propios: <strong>los movimientos los dan las cartas</strong>.
                             El mazo tiene 16, y en cada partida se reparten <strong>2 para ti, 2 para el rival y 1 neutral</strong> en la mesa.
                         </p>
                         <p>
