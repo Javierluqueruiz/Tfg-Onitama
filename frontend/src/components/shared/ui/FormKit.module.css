@@ -335,6 +335,18 @@
     text-align: center;
 }
 
+.success {
+    margin: 0;
+    padding: 10px 14px;
+    background: var(--game-jade-soft);
+    border: 1px solid var(--game-jade);
+    border-radius: 10px;
+    color: var(--game-jade);
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-align: center;
+}
+
 .link {
     color: var(--game-jade);
     font-weight: 800;

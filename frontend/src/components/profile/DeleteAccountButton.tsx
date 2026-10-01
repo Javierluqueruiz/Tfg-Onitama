@@ -1,6 +1,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { ProfileApi } from '../../services/profileApi';
-import formStyles from '../lobby/ui/Forms.module.css';
+import formStyles from '../shared/ui/FormKit.module.css';
+import { BrushInput } from '../shared/ui/BrushInput';
 import styles from './DeleteAccountButton.module.css';
 
 export const DeleteAccountButton = () => {
@@ -37,25 +38,25 @@ export const DeleteAccountButton = () => {
             <p className={styles.dangerText}>Eliminar tu cuenta es una acción permanente. El resultado de tus partidas se conservará en el historial de tus rivales, pero perderás el acceso a tu propio historial y estadísticas.</p>
 
             {!isConfirming ? (
-                <button className={styles.deleteBtn} onClick={() => setIsConfirming(true)}>
+                <button type="button" className={styles.deleteBtn} onClick={() => setIsConfirming(true)}>
                     Eliminar cuenta
                 </button>
             ) : (
                 <form onSubmit={handleSubmit} className={styles.confirmForm}>
                     <p className={styles.dangerText}>Para confirmar, escribe tu nombre de usuario y tu contraseña:</p>
                     <label className={formStyles.label}>
-                        Usuario:
-                        <input type="text" className={formStyles.input} value={username} onChange={(e) => setUsername(e.target.value)} required autoComplete="username" />
+                        Usuario
+                        <BrushInput type="text" value={username} onChange={(e) => setUsername(e.target.value)} required autoComplete="username" />
                     </label>
                     <label className={formStyles.label}>
-                        Contraseña:
-                        <input type="password" className={formStyles.input} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+                        Contraseña
+                        <BrushInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
                     </label>
 
-                    {error && <p className={formStyles.error}>{error}</p>}
+                    {error && <p className={formStyles.error} role="alert">{error}</p>}
 
                     <div className={styles.confirmButtons}>
-                        <button type="button" className={formStyles.btnBack} onClick={handleCancel} disabled={isDeleting}>
+                        <button type="button" className={formStyles.ghost} onClick={handleCancel} disabled={isDeleting}>
                             Cancelar
                         </button>
                         <button type="submit" className={styles.deleteBtn} disabled={isDeleting}>
