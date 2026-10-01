@@ -94,4 +94,6 @@ userSchema.pre('validate', function () {
     }
 });
 
+userSchema.index({ elo: -1, gamesPlayed: -1, usernameLower: 1 });
+
 export const User = model<IUser>('User', userSchema);
