@@ -14,15 +14,20 @@ async function request<TResponse>(path: string, init: RequestInit): Promise<TRes
        throw new Error('Error de red. No se pudo conectar con el servidor.');
     }
 
-    const data = await response.json();
+    const raw = await response.text();
+    const isJson = response.headers.get('content-type')?.includes('application/json');
+    const data = raw && isJson ? JSON.parse(raw) : null;
 
     if (!response.ok) {
-        throw new Error(data.message || 'Error en la solicitud');
+        throw new Error(data?.message || 'Error en la solicitud. Inténtalo de nuevo más tarde.');
     }
-    
+
+    if (data === null) {
+        throw new Error('Respuesta inesperada del servidor. Inténtalo de nuevo más tarde.');
+    }
+
     return data as TResponse;
 }
-
 function withBody(method: string, body?: unknown): RequestInit {
     return {
         method, 

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { AuthApi } from "./authApi";
+import { jsonResponse } from "../test-utils/mockResponse";
 
 describe("AuthApi", () => {
     beforeEach(() => {
@@ -11,10 +12,7 @@ describe("AuthApi", () => {
     });
 
     it('login manda una solicitud POST con credenciales y devuelve el usuario', async () => {
-        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({ user: { id: '123', username: 'testuser' } }),
-        });
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse({ user: { id: '123', username: 'testuser' } }));
 
         const result = await AuthApi.login({ username: 'testuser', password: 'password', captchaToken: 'fake-captcha-token' });
 
@@ -26,10 +24,7 @@ describe("AuthApi", () => {
     });
 
     it('lanza el mensaje de error del servidor si la respuesta no es ok', async () => {
-        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            ok: false,
-            json: async () => ({ message: 'Nombre de usuario o contraseña incorrectos' }),
-        });
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse({ message: 'Nombre de usuario o contraseña incorrectos' }, 400));
         
         await expect(AuthApi.login({ username: 'wronguser', password: 'wrongpassword', captchaToken: 'fake-captcha-token' }))
             .rejects.toThrow('Nombre de usuario o contraseña incorrectos');
@@ -43,10 +38,7 @@ describe("AuthApi", () => {
     });
 
     it('me incluye las credenciales para que el navegador mande la cookie de sesión', async () => {
-        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({ id: '123', username: 'testuser' }),
-        });
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse({ id: '123', username: 'testuser' }));
 
         await AuthApi.me();
 
@@ -58,10 +50,7 @@ describe("AuthApi", () => {
 
     //Sub-08.4
     it('verifyEmail manda el token en la solicitud POST y devuelve el usuario', async () => {
-        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({ id: '123', username: 'testuser', emailVerified: true }),
-        });
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse({ id: '123', username: 'testuser', emailVerified: true }));
 
         const result = await AuthApi.verifyEmail('fake-token');
 
@@ -73,20 +62,14 @@ describe("AuthApi", () => {
     });
 
     it('lanza el mensaje de error del servidor si la respuesta de verifyEmail no es ok', async () => {
-        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            ok: false,
-            json: async () => ({ message: 'El enlace de verificación es inválido o ha expirado' }),
-        });
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse({ message: 'El enlace de verificación es inválido o ha expirado' }, 400));
 
         await expect(AuthApi.verifyEmail('invalid-token'))
             .rejects.toThrow('El enlace de verificación es inválido o ha expirado');
     });
 
     it('resendVerificationEmail incluye las credenciales para mandar la cookie de sesión', async () => {
-        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({ message: 'Correo reenviado' }),
-        });
+        (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse({ message: 'Correo reenviado' }));
 
         await AuthApi.resendVerificationEmail();
 

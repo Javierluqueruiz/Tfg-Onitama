@@ -15,6 +15,14 @@ describe('useDrawNegotiation', () => {
         expect(result.current.drawOfferSent).toBe(false);
     });
 
+    it('Arranca con la oferta del rival ya recibida si se restaura al reconectar tras recargar', () => {
+        const socket = createMockSocket();
+        const { result } = renderHook(() => useDrawNegotiation(socket as unknown as Socket, true));
+
+        expect(result.current.drawOfferReceived).toBe(true);
+        expect(result.current.drawOfferSent).toBe(false);
+    });
+
     it('Cuando el servidor manda un OFFER_DRAW, drawOfferReceived se pone a true', () => {
         const socket = createMockSocket();
         const { result } = renderHook(() => useDrawNegotiation(socket as unknown as Socket));

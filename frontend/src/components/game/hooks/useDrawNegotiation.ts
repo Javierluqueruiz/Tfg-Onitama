@@ -4,9 +4,10 @@ import type { Socket } from 'socket.io-client';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
 
 //Sub-05.4: Gestión de la negociación de empate
-export const useDrawNegotiation = (socket: Socket | null) => {
+// `initialOfferReceived`: oferta pendiente del rival restaurada al reconectar tras recargar.
+export const useDrawNegotiation = (socket: Socket | null, initialOfferReceived = false) => {
     
-    const [drawOfferReceived, setDrawOfferReceived] = useState<boolean>(false);
+    const [drawOfferReceived, setDrawOfferReceived] = useState<boolean>(initialOfferReceived);
     const [drawOfferSent, setDrawOfferSent] = useState<boolean>(false);
     const [drawRejectedMessage, setDrawRejectedMessage] = useState<boolean>(false);
     

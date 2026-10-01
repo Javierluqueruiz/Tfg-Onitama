@@ -2,7 +2,10 @@ import { useState, type SubmitEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthLayout } from './AuthLayout';
-import styles from '../components/lobby/ui/Forms.module.css';
+import styles from '../components/shared/ui/FormKit.module.css';
+import { BrushInput } from '../components/shared/ui/BrushInput';
+import { FormHeader } from '../components/shared/ui/FormHeader';
+import { MailIcon, ToriiIcon } from '../components/lobby/ui/ModeIcons';
 import { TurnstileWidget } from '../components/TurnstileWidget';
 
 export const RegisterPage = () => {
@@ -42,13 +45,15 @@ export const RegisterPage = () => {
     if (registeredEmail) {
         return (
             <AuthLayout>
-                <h3 className={styles.title}>¡Cuenta creada!</h3>
-                <div className={styles.container}>
-                    <p>
+                <div className={styles.form}>
+                    <FormHeader icon={<MailIcon />} title="¡Cuenta creada!" />
+                    <p className={styles.message}>
                         Te hemos enviado un correo de verificación a <strong>{registeredEmail}</strong>.
                         Revisa tu bandeja de entrada (y la carpeta de spam) para confirmar tu cuenta.
                     </p>
-                    <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate}`}>Continuar</Link>
+                    <div className={styles.actions}>
+                        <Link to="/" className={styles.primary}>Continuar</Link>
+                    </div>
                 </div>
             </AuthLayout>
         );
@@ -56,34 +61,37 @@ export const RegisterPage = () => {
 
     return (
         <AuthLayout>
-            <h3 className={styles.title}>Crear cuenta</h3>
-            <form onSubmit={handleSubmit} className={styles.container}>
+            <form onSubmit={handleSubmit} className={styles.form}>
+                <FormHeader icon={<ToriiIcon />} title="Crear cuenta" hint="Guarda tu progreso y compite con tu ELO." />
+
                 <label className={styles.label}>
-                    Usuario:
-                    <input type="text" className={styles.input} value={username} onChange={(e) => setUsername(e.target.value)} required minLength={3} />
+                    Usuario
+                    <BrushInput type="text" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required minLength={3} />
                 </label>
                 <label className={styles.label}>
-                    Correo:
-                    <input type="email" className={styles.input} value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    Correo
+                    <BrushInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
                 </label>
                 <label className={styles.label}>
-                    Contraseña:
-                    <input type="password" className={styles.input} value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+                    Contraseña
+                    <BrushInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
                 </label>
 
-                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} />
+                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
 
-                {error && <p className={styles.error}>{error}</p>}
+                {error && <p className={styles.error} role="alert">{error}</p>}
 
-                <div className={styles.buttonGroup}>
-                    <Link to="/" className={styles.btnBack}>Volver</Link>
-                    <button type="submit" className={`${styles.btnSubmit} ${styles.btnCreate}`} disabled={isSubmitting}>
+                <div className={styles.actions}>
+                    <button type="submit" className={styles.primary} disabled={isSubmitting}>
                         {isSubmitting ? 'Creando cuenta...' : 'Registrarse'}
                     </button>
+                    <Link to="/" className={styles.ghost}>← Volver</Link>
                 </div>
-            </form>
 
-            <p className={styles.switchLink}>¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link></p>
+                <p className={styles.switchText}>
+                    ¿Ya tienes cuenta? <Link to="/login" className={styles.link}>Inicia sesión</Link>
+                </p>
+            </form>
         </AuthLayout>
     );
 };

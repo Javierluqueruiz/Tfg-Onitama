@@ -3,8 +3,9 @@ import { SocketEvents } from "../../../../../shared/index";
 import type { Socket } from "socket.io-client";
 import { useSocketEvent } from "../../../hooks/useSocketEvent";
 
-export const useRematchNegotiation = (socket: Socket | null) => {
-    const [rematchState, setRematchState] = useState<'none' | 'offered' | 'received' | 'rejected'>('none');
+// `initialOfferReceived`: oferta pendiente del rival restaurada al reconectar tras recargar.
+export const useRematchNegotiation = (socket: Socket | null, initialOfferReceived = false) => {
+    const [rematchState, setRematchState] = useState<'none' | 'offered' | 'received' | 'rejected'>(initialOfferReceived ? 'received' : 'none');
     const [timesOffered, setTimesOffered] = useState(0);
 
     useSocketEvent(socket, SocketEvents.REMATCH_OFFERED, () => {

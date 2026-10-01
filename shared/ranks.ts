@@ -6,7 +6,8 @@ export interface EloRank {
     minElo: number;
 }
 
-const ELO_RANKS: EloRank[] = [
+// De mayor a menor: getRankByElo devuelve el primero cuyo mínimo se alcanza.
+export const ELO_RANKS: EloRank[] = [
     { tier: 'grandmaster', name: 'Gran Maestro', minElo: 1700 },
     { tier: 'master', name: 'Maestro', minElo: 1550 },
     { tier: 'diamond', name: 'Diamante', minElo: 1400 },

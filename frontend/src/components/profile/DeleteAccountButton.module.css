@@ -1,54 +1,58 @@
 .dangerZone {
     margin-top: 12px;
-    padding: 16px;
+    padding: 18px;
     border: 1px solid var(--game-red);
-    border-radius: 8px;
+    border-radius: 14px;
     background: var(--game-red-soft);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .dangerTitle {
     margin: 0;
     color: var(--game-red);
-    font-size: 15px;
+    font-size: 1.05rem;
 }
 
 .dangerText {
     margin: 0;
     color: var(--game-ink-soft);
-    font-size: 13px;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .confirmForm {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 18px;
 }
 
 .confirmButtons {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 10px;
 }
 
-.confirmButtons > * {
-    flex: 1;
-}
-
+/* Botón plano en rojo, con la misma forma que el principal verde de los formularios. */
 .deleteBtn {
     align-self: flex-start;
-    padding: 10px 18px;
+    padding: 11px 20px;
     background: var(--game-red);
     color: var(--game-paper);
     border: none;
-    border-radius: 6px;
-    font-weight: bold;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 800;
     cursor: pointer;
+    box-shadow: 0 8px 14px -10px rgba(110, 40, 25, 0.85), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s ease, filter 0.2s ease;
 }
 
-.deleteBtn:hover {
-    opacity: 0.9;
+.deleteBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
 }
 
 .deleteBtn:disabled {

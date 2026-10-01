@@ -174,6 +174,15 @@ export class RoomManager {
             room.rematchOfferedBy = newSocketId;
         }
 
+        // Lo mismo con el historial de chat: cada mensaje lleva el socket.id de quien lo escribió y el
+        // cliente lo compara con el suyo para saber qué mensajes son propios. Sin esto, tras reconectar
+        // los mensajes anteriores del jugador aparecerían como del rival.
+        room.chatHistory.forEach(message => {
+            if (message.socketId === oldSocketId) {
+                message.socketId = newSocketId;
+            }
+        });
+
         this.clearDisconnectTimer(roomId);
 
         return room;

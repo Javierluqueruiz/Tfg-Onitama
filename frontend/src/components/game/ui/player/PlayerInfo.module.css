@@ -20,19 +20,22 @@
 .activeRed {
     border-color: var(--game-red);
     animation: gentlePulse 2s infinite ease-in-out;
-    background-color: var(--game-red-soft);
+    box-shadow: 0 0 0 2px var(--game-red), var(--game-shadow-soft);
 }
 
 .activeBlue {
     border-color: var(--game-blue);
     animation: gentlePulse 2s infinite ease-in-out;
-    background-color: var(--game-blue-soft);
+    box-shadow: 0 0 0 2px var(--game-blue), var(--game-shadow-soft);
 }
 
 .avatar {
     width: 45px;
     height: 45px;
     border-radius: 50%;
+    /* Sin esto, un nombre largo (p. ej. "Rival: IA Heurística (Fácil)") encoge
+       el avatar en horizontal y lo deja ovalado. */
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -100,7 +103,15 @@
         min-width: 0;
         width: 100%;
         max-width: 320px;
+        /* Con width: 100% el relleno y el borde se sumaban y la tarjeta se salía del contenedor. */
+        box-sizing: border-box;
         padding: 10px 16px;
+    }
+
+    /* Sin el latido de escala: crecía un 3% y sobresalía del marco de madera. */
+    .activeRed,
+    .activeBlue {
+        animation: none;
     }
 }
 
@@ -115,4 +126,35 @@
     font-size: 11px;
     font-weight: normal;
     vertical-align: middle;
+}
+
+.pingRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.pingDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.pingText {
+    font-size: 11px;
+    color: var(--game-ink-soft);
+    font-family: monospace;
+}
+
+.playerContainer {
+    min-width: 0;
+}
+
+.cardsSlot {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    padding-left: 16px;
 }

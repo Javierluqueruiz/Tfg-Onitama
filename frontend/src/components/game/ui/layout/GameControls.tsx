@@ -26,6 +26,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
         <div className={styles.gameControls}>
             {status !== 'finished' && !isVsAi && (
                 <button
+                    type="button"
                     className={styles.btnOfferDraw}
                     onClick={onOfferDraw}
                     disabled={drawOfferSent || drawOfferReceived || isGameOver}
@@ -36,6 +37,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
 
             {status === 'finished' ? (
                 <button 
+                    type="button"
                     className={styles.btnExit}
                     onClick={onExit}>
                     Salir de la Partida
@@ -43,6 +45,7 @@ export const GameControls: React.FC<GameControlsProps> = ({
             ) : (
 
                 <button
+                    type="button"
                     className={styles.btnSurrender}
                     onClick={onSurrender}
                     disabled={isGameOver}

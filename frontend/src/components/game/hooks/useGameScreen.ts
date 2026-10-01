@@ -7,18 +7,20 @@ import { useRematchNegotiation } from './useRematchNegotiation';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
 import { getValidTargets } from '../logic/getValidTargets';
 import { useDiscardPrompt } from './useDiscardPrompt';
+import type { RestoredSession } from '../restoredSession';
 
 export const useGameScreen = (
         gameState: GameState, 
         localColor: PlayerColor | null, 
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null,
-        isReconnecting: boolean
+        isReconnecting: boolean,
+        restored: RestoredSession | null = null
 ) => {
     const { socket, isConnected, lastError } = useSocket();
-    const rematch = useRematchNegotiation(socket);
+    const rematch = useRematchNegotiation(socket, restored?.rematchOffered);
 
     const networkState = useNetwork(socket);
-    const drawNegotiationState = useDrawNegotiation(socket);
+    const drawNegotiationState = useDrawNegotiation(socket, restored?.drawOffered);
     const { mustDiscard, handleDiscard } = useDiscardPrompt(socket, gameState, localColor);
 
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);

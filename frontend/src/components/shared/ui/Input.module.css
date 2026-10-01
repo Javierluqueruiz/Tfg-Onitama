@@ -1,0 +1,99 @@
+.field {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--game-ink-faint);
+    border-radius: 0;
+    padding: 10px 2px 12px;
+    /* Los <input> no heredan la fuente: sin esto salía la del navegador (tipo Arial).
+       Se usa la serif japonesa de los títulos, en peso normal: distinta del cuerpo
+       de texto (Nunito) sin llamar la atención. */
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    color: var(--game-ink);
+    width: 100%;
+    box-sizing: border-box;
+    /* Al soltar el foco la línea base vuelve con un fundido lento que coincide
+       con el desvanecimiento del trazo de tinta (.brush), así que se percibe
+       como un cruce tinta -> línea y no como una línea que "salta". */
+    transition: border-color 0.4s ease;
+}
+.field::placeholder {
+    color: var(--game-ink-faint);
+    opacity: 0.75;
+}
+.field:focus {
+    outline: none;
+    border-bottom-color: var(--game-jade);
+    transition-duration: 0.12s;
+}
+.field.error {
+    border-bottom-color: var(--game-red);
+}
+.field:disabled {
+    border-bottom-color: var(--game-line-soft);
+    color: var(--game-ink-faint);
+    cursor: not-allowed;
+}
+
+/* A partir de aquí, solo hace falta si quieres el trazo de pincel (I7) encima
+   de .field. Para quedarte solo con I2: usa únicamente la clase .field en el
+   input, sin fieldWrap/fieldBrush ni el <svg>, y ya tienes el campo cerrado. */
+
+.fieldWrap {
+    position: relative;
+}
+.fieldBrush:focus {
+    border-bottom-color: transparent;
+}
+.fieldWrap.error .fieldBrush {
+    border-bottom-color: transparent;
+}
+.brush {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 9px;
+    pointer-events: none;
+}
+/* Reposo: el trazo está oculto. Al perder el foco se desvanece (opacity) y
+   solo DESPUÉS se recoloca el recorte (clip-path con retardo), para que no se
+   vea cómo se "recoge" hacia la izquierda. */
+.brush path {
+    fill: var(--game-jade);
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transition: opacity 0.4s ease, clip-path 0s linear 0.4s;
+}
+.fieldBrush:focus ~ .brush path {
+    opacity: 0.95;
+    clip-path: inset(0 0% 0 0);
+    transition: opacity 0.1s ease, clip-path 0.45s cubic-bezier(0.22, 0.8, 0.2, 1);
+}
+.fieldWrap.error .brush path {
+    fill: var(--game-red);
+    opacity: 0.95;
+    clip-path: inset(0 0% 0 0);
+}
+
+/* Variante para códigos de sala: grande, centrada y muy espaciada. */
+.fieldCode {
+    text-align: center;
+    /* Monoespaciada con cero tachado: en una serif el 0 se confunde con la O. */
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, 'SF Mono', 'Courier New', monospace;
+    font-variant-numeric: slashed-zero;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.5em;
+    /* Compensa el espacio que el letter-spacing añade tras la última letra. */
+    padding-left: 0.5em;
+    text-transform: uppercase;
+}
+
+.fieldCode::placeholder {
+    font-weight: 400;
+    letter-spacing: 0.35em;
+    opacity: 0.45;
+    text-transform: uppercase;
+}

@@ -3,15 +3,83 @@
     flex-direction: column;
     align-items: center;
     gap: 30px;
-    padding: 20px;
+    padding: 0 0 0px 0px;
+    box-sizing: border-box;
     position: relative;
     isolation: isolate;
-    min-height: 100vh;
-    /* Transparente a propósito: deja ver el fondo del body (index.css),
-       que usa el mismo tono cálido que el resto del tema -- así no hay
-       una franja de color distinta detrás del tablero. */
+    /* Pantalla fija: sin scroll de página. El chat (ChatBox) hace su propio
+       scroll interno dentro del panel lateral. */
+    height: 100dvh;
+    overflow: hidden;
+    /* "clip" (a diferencia de "hidden") no crea contenedor de scroll: sin él, el
+       panel lateral al deslizarse desde la derecha sobresalía y el navegador
+       desplazaba el contenedor ~16px, y luego lo devolvía ("salto" final). */
+    overflow: clip;
     background: transparent;
 }
+
+/* Textura de papel de arroz (game-paper.jpeg: el papel de game-background sin
+   el bambú), a plena vista pero sin competir con el tablero. */
+.screenContainer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: url('../../assets/game-paper.jpeg') center / cover no-repeat;
+}
+
+/* Entrada escalonada: cartas del rival, tablero, cartas propias y panel
+   lateral aparecen uno tras otro. */
+.boardColumn > :nth-child(1) { animation: riseIn 600ms ease-out 0ms both; --from: translateY(-28px); }
+.boardColumn > :nth-child(2) { animation: riseIn 700ms ease-out 150ms both; --from: scale(0.94); }
+.boardColumn > :nth-child(3) { animation: riseIn 600ms ease-out 300ms both; --from: translateY(28px); }
+.playRow > :last-child { animation: riseIn 700ms ease-out 350ms both; --from: translateX(32px); }
+
+@keyframes riseIn {
+    from { opacity: 0; transform: var(--from); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .boardColumn > *,
+    .playRow > :last-child {
+        animation: none;
+    }
+}
+
+.playRow {
+    display: flex;
+    align-items: stretch;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    gap: 30px;
+}
+
+.boardColumn {
+    /* Tablero más grande y cartas más pequeñas que sus tamaños por defecto. */
+    --board-cell-max: 92px;
+    --card-width: 150px;
+    --card-cell: 22px;
+    --card-title-size: 18px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* Sin scroll, el contenido central (cartas + tablero + cartas, ~950px) tiene
+   que caber en la ventana: se escala por tramos según la altura disponible. */
+@media (min-width: 769px) and (max-height: 965px) { .boardColumn { zoom: 0.92; } }
+@media (min-width: 769px) and (max-height: 893px) { .boardColumn { zoom: 0.86; } }
+@media (min-width: 769px) and (max-height: 840px) { .boardColumn { zoom: 0.8; } }
+@media (min-width: 769px) and (max-height: 785px) { .boardColumn { zoom: 0.74; } }
+@media (min-width: 769px) and (max-height: 725px) { .boardColumn { zoom: 0.68; } }
+@media (min-width: 769px) and (max-height: 670px) { .boardColumn { zoom: 0.62; } }
+@media (min-width: 769px) and (max-height: 610px) { .boardColumn { zoom: 0.56; } }
 
 .centerZone {
     display: flex;
@@ -25,19 +93,44 @@
 }
 
 .neutralZone {
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.neutralCard {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
 }
 
+/* PlayerInfo + su aviso de conexión. En escritorio es un simple contenedor. */
+.infoGroup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
 .neutralLabel {
     font-weight: bold;
-    color:var(--game-paper);
+    color: var(--game-paper);
     opacity: 0.8;
     font-size: 14px;
     letter-spacing: 1.4px;
     text-transform: uppercase;
+}
+
+.cardsRow {
+    display: flex;
+    gap: 28px;
+    flex-wrap: nowrap;
+    justify-content: center;
 }
 
 .victoryWin {
@@ -46,14 +139,6 @@
 
 .victoryLose {
     color: var(--game-red);
-}
-
-/* Sub-07.1: Chat*/
-.chatArea {
-  position: fixed; /* FEAT-08: fijo al viewport, no al contenido -- se queda visible al hacer scroll */
-  bottom: 20px;
-  right: 20px;
-  z-index: 100; /* Asegura que esté por encima de elementos secundarios, pero por debajo de los modales */
 }
 
 .errorToast {
@@ -72,56 +157,65 @@
     font-size: 0.9rem;
 }
 
-/* Opcional: Ocultar o colapsar en pantallas muy pequeñas (móviles) para que no tape el tablero */
 @media (max-width: 768px) {
-  .chatArea {
-    position: relative;
-    bottom: auto;
-    right: auto;
-    margin-top: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
-}
-
-/* --- DISEÑO RESPONSIVO PARA MÓVILES --- */
-@media (max-width: 768px) {
-    .centerZone {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
+    /* En móvil el contenido se apila y no cabe en una pantalla: aquí sí hay scroll. */
+    .screenContainer {
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+        /* Recorte solo en horizontal: las animaciones de entrada no ensanchan la página. */
+        overflow-x: clip;
     }
 
+    /* Tus cartas se quedan pegadas al borde inferior mientras miras el tablero (así se
+       pueden elegir sin perderlo de vista) y, al bajar hasta el chat, vuelven a su sitio:
+       "sticky" solo funciona dentro de su contenedor, la columna del tablero. */
+    .myCardsRow {
+        position: sticky;
+        bottom: 0;
+        z-index: 20;
+        align-self: stretch;
+        gap: 12px;
+        padding: 14px 8px calc(10px + env(safe-area-inset-bottom));
+        background: rgba(246, 239, 220, 0.94);
+        border-top: 1px solid var(--game-line);
+        box-shadow: 0 -10px 18px -14px rgba(43, 30, 10, 0.55);
+        backdrop-filter: blur(6px);
+    }
+
+    /* El panel entra desde abajo (no desde la derecha, que en móvil se sale de la pantalla). */
+    .playRow > :last-child { --from: translateY(28px); }
+
+    .playRow {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .centerZone {
+        flex-direction: column;
+        gap: 16px;
+        padding: 12px;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Móvil: la columna lateral "se disuelve" y sus grupos se ordenan junto al tablero:
+       rival, tablero, jugador y, al final, la carta de la mesa. */
+    .neutralZone {
+        display: contents;
+    }
+
+    .rivalInfo { order: 1; }
     .boardWrapper {
+        order: 2;
         width: fit-content;
         height: fit-content;
     }
+    .selfInfo { order: 3; }
+    .neutralCard { order: 4; }
 
     .title {
         font-size: 24px;
         margin-bottom: 5px;
     }
-
-    @media (max-width: 768px) {
-  .chatArea {
-    position: relative;
-    bottom: auto;
-    right: auto;
-    margin-top: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    order: 10; /* lo empuja al final, después de tus cartas/perfil/controles */
-  }
 }
-}
-
-
-
-
-
-
-

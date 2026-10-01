@@ -1,5 +1,6 @@
 .cardContainer {
-    width: 140px;
+    /* Tamaño configurable: por defecto el de la página de reglas; GameScreen lo reduce. */
+    width: var(--card-width, 174px);
     background: var(--game-paper);
     border-radius: 8px;
     box-shadow: var(--game-shadow-soft);
@@ -18,7 +19,7 @@
 }
 
 .cardTitle {
-    font-size: 18px;
+    font-size: var(--card-title-size, 21px);
     font-weight: bold;
     color: var(--game-ink);
     margin: 0 0 12px 0;
@@ -28,8 +29,8 @@
 
 .miniGrid {
     display: grid;
-    grid-template-columns: repeat(5, 20px);
-    grid-template-rows: repeat(5, 20px);
+    grid-template-columns: repeat(5, var(--card-cell, 26px));
+    grid-template-rows: repeat(5, var(--card-cell, 26px));
     gap: 2px;
     background:var(--game-wood);
     padding: 4px;
@@ -38,8 +39,8 @@
 }
 
 .gridCell {
-    width: 20px;
-    height: 20px;
+    width: var(--card-cell, 26px);
+    height: var(--card-cell, 26px);
     background: rgba(255, 255, 255, 0.4);
     border-radius: 2px;
 }
