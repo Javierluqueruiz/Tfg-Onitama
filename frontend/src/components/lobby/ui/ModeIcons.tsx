@@ -77,3 +77,14 @@ export const MailIcon = () => (
         <path d="M6 12 L20 23 L34 12" />
     </Icon>
 );
+
+// Copa: clasificación.
+export const TrophyIcon = () => (
+    <Icon>
+        <path d="M12 7 H28 V16 C28 21 24.5 24.5 20 24.5 C15.5 24.5 12 21 12 16 Z" />
+        <path d="M12 10 H7 C7 15 9 17.5 12.5 18" />
+        <path d="M28 10 H33 C33 15 31 17.5 27.5 18" />
+        <path d="M20 24.5 V30" />
+        <path d="M15 33 H25" />
+    </Icon>
+);

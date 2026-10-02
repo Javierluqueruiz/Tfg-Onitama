@@ -1,0 +1,105 @@
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    color: var(--game-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Anchos de las columnas fijas: el nombre se queda con el resto del espacio. */
+.colPosition { width: 44px; }
+.colRank { width: 44px; }
+.colElo { width: 64px; }
+.colGames { width: 78px; }
+.colWinRate { width: 76px; }
+
+.table th {
+    padding: 6px 6px;
+    border-bottom: 2px solid var(--game-line);
+    color: var(--game-ink-soft);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: right;
+}
+
+.table th.player {
+    text-align: left;
+}
+
+.table td {
+    padding: 6px;
+    border-bottom: 1px solid var(--game-line-soft);
+}
+
+.position {
+    text-align: center;
+    font-weight: 800;
+    color: var(--game-ink-soft);
+}
+
+.rank {
+    text-align: center;
+    line-height: 0;
+}
+
+.player {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.number {
+    text-align: right;
+}
+
+/* Fila de quien consulta */
+.me {
+    background: color-mix(in srgb, var(--game-jade) 14%, transparent);
+    font-weight: 800;
+}
+
+.me td:first-child {
+    box-shadow: inset 4px 0 0 var(--game-jade);
+}
+
+.gap td {
+    padding: 0;
+    border-bottom: none;
+    text-align: center;
+    color: var(--game-ink-faint);
+    letter-spacing: 0.3em;
+}
+
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Móvil: se conservan todas las columnas, más estrechas */
+@media (max-width: 700px) {
+    .table { font-size: 0.85rem; }
+
+    .colPosition { width: 30px; }
+    .colRank { width: 34px; }
+    .colElo { width: 48px; }
+    .colGames { width: 56px; }
+    .colWinRate { width: 54px; }
+
+        .table th {
+        padding: 6px 2px;
+        font-size: 0.62rem;
+        letter-spacing: 0;
+    }
+
+    .table td { padding: 6px 3px; }
+}
