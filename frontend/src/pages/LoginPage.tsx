@@ -1,7 +1,10 @@
 import { useAuth } from "../contexts/AuthContext";
 import { useState, type SubmitEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import styles from "../components/lobby/ui/Forms.module.css";
+import styles from "../components/shared/ui/FormKit.module.css";
+import { BrushInput } from "../components/shared/ui/BrushInput";
+import { FormHeader } from "../components/shared/ui/FormHeader";
+import { KeyIcon } from "../components/lobby/ui/ModeIcons";
 import { AuthLayout } from "./AuthLayout";
 import { TurnstileWidget } from "../components/TurnstileWidget";
 
@@ -40,45 +43,49 @@ export const LoginPage = () => {
 
     return (
         <AuthLayout>
-            <h3 className={styles.title}>Iniciar sesión</h3>
-            <form onSubmit ={handleSubmit} className={styles.container}>
+            <form onSubmit={handleSubmit} className={styles.form}>
+                <FormHeader icon={<KeyIcon />} title="Iniciar sesión" hint="Entra con tu cuenta para guardar tu ELO y tu historial de partidas." />
+
                 <label className={styles.label}>
-                    Usuario:
-                    <input 
+                    Usuario
+                    <BrushInput
                         type="text"
-                        className={styles.input}
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
+                        autoComplete="username"
                         required
                     />
                 </label>
                 <label className={styles.label}>
-                    Contraseña:
-                    <input
+                    Contraseña
+                    <BrushInput
                         type="password"
-                        className={styles.input}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="current-password"
                         required
                     />
                 </label>
 
-                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} />
+                <p className={styles.linkRow}>
+                    <Link to="/forgot-password" className={styles.link}>¿Olvidaste tu contraseña?</Link>
+                </p>
 
-                <p className={styles.switchLink}><Link to="/forgot-password">¿Olvidaste tu contraseña?</Link></p>
+                <TurnstileWidget key={captchaKey} onVerify={setCaptchaToken} onExpire={() => setCaptchaToken(null)} />
 
-                {error && <p className={styles.error}>{error}</p>}
+                {error && <p className={styles.error} role="alert">{error}</p>}
 
-                <div className={styles.buttonGroup}>
-                    <Link to="/" className={styles.btnBack}>Volver</Link>
-                    <button type="submit" className={`${styles.btnSubmit} ${styles.btnCreate}`} disabled={isSubmitting}>
+                <div className={styles.actions}>
+                    <button type="submit" className={styles.primary} disabled={isSubmitting}>
                         {isSubmitting ? "Entrando..." : "Iniciar sesión"}
                     </button>
+                    <Link to="/" className={styles.ghost}>← Volver</Link>
                 </div>
-            </form>
 
-            <p>¿No tienes cuenta? <Link to="/register" className={styles.btnRegister}>Regístrate</Link></p>
+                <p className={styles.switchText}>
+                    ¿No tienes cuenta? <Link to="/register" className={styles.link}>Regístrate</Link>
+                </p>
+            </form>
         </AuthLayout>
-        
     )
 }

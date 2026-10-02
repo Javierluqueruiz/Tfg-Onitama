@@ -7,18 +7,22 @@ import { useRematchNegotiation } from './useRematchNegotiation';
 import { useSocketEvent } from '../../../hooks/useSocketEvent';
 import { getValidTargets } from '../logic/getValidTargets';
 import { useDiscardPrompt } from './useDiscardPrompt';
+import type { RestoredSession } from '../restoredSession';
+import { useEloChange } from './useEloChange';
 
 export const useGameScreen = (
         gameState: GameState, 
         localColor: PlayerColor | null, 
         playersProfile: { red: PlayerProfile, blue: PlayerProfile } | null,
-        isReconnecting: boolean
+        isReconnecting: boolean,
+        restored: RestoredSession | null = null
 ) => {
     const { socket, isConnected, lastError } = useSocket();
-    const rematch = useRematchNegotiation(socket);
+    const rematch = useRematchNegotiation(socket, restored?.rematchOffered);
+    const eloUpdate = useEloChange(socket);
 
     const networkState = useNetwork(socket);
-    const drawNegotiationState = useDrawNegotiation(socket);
+    const drawNegotiationState = useDrawNegotiation(socket, restored?.drawOffered);
     const { mustDiscard, handleDiscard } = useDiscardPrompt(socket, gameState, localColor);
 
     const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -132,6 +136,6 @@ export const useGameScreen = (
         ...networkState, ...drawNegotiationState, board, currentTurn, isLocalRed, isMyTurn, isGameOver,
         opponentName, localName, opponentElo, localElo, isVsAi, myCards, opponentCards, neutralCard, boardRotation,
         lastMove, selectedCard, setSelectedCard, mustDiscard, handleSelectCard, selectedPiece, setSelectedPiece,
-        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, isReconnecting, lastError,isSurrenderModalOpen, confirmSurrender, cancelSurrender
+        validTargets, handleCellClick, handleSurrender, handleExit, isModalOpen, setIsModalOpen, isConnected, gameResult, rematch, eloUpdate, isReconnecting, lastError,isSurrenderModalOpen, confirmSurrender, cancelSurrender
     };
 }

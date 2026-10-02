@@ -24,7 +24,6 @@ describe('MainMenu: pestaña de partida contra IA', () => {
                 onStartAiGame={onStartAiGame}
                 isConnected={isConnected}
                 activeTab="AI"
-                onTabChange={vi.fn()}
             />
         );
         return { onStartAiGame };
@@ -35,7 +34,14 @@ describe('MainMenu: pestaña de partida contra IA', () => {
     it('muestra los seis niveles en una sola escalera', () => {
         renderAiTab();
 
-        expect(levelButtons().map(button => button.textContent)).toEqual(AI_LADDER.map(level => level.name));
+        expect(levelButtons().map(button => button.getAttribute('aria-label'))).toEqual(AI_LADDER.map(level => level.name));
+    });
+
+    it('agrupa los niveles por motor, con el título del motor sobre cada columna', () => {
+        renderAiTab();
+
+        expect(screen.getByRole('heading', { name: 'Heurística' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'Minimax' })).toBeInTheDocument();
     });
 
     it.each(AI_LADDER)('al hacer click en "$name" inicia la partida con el motor $engine y dificultad $difficulty', ({ name, engine, difficulty }) => {

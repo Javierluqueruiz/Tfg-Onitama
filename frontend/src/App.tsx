@@ -5,11 +5,11 @@ import { useApp } from './useApp';
 
 export const App = () => {
   const {
-    gameState, localColor, playersProfile, isReconnecting
+    gameState, localColor, playersProfile, restored, isReconnecting
   } = useApp();
 
   if (gameState) {
-    return <GameScreen gameState={gameState} localColor={localColor} playersProfile={playersProfile} isReconnecting={isReconnecting} />;
+    return <GameScreen gameState={gameState} localColor={localColor} playersProfile={playersProfile} restored={restored} isReconnecting={isReconnecting} />;
   }
 
   if (isReconnecting) {

@@ -26,14 +26,14 @@ Con 100 partidas tarda menos de un segundo; con 1000, unos 5s.
 
 ## Resultados (1000 partidas por enfrentamiento)
 
-Ejecución de referencia sobre el código del commit `498cad0`.
+Ejecución de referencia sobre el código del commit `7f61374`.
 
 ### 1. Blunders de la IA difícil contra un rival aleatorio
 
 | Configuración | Jugadas de la IA | Dejan victoria inmediata al rival | % |
 |---|---|---|---|
-| SIN detección de amenaza | 3108 | 632 | 20.3% |
-| CON detección de amenaza | 4814 | 27 | 0.6 % |
+| SIN detección de amenaza | 3126 | 618 | 19.8% |
+| CON detección de amenaza | 4862 | 43 | 0.9 % |
 
 ### 2. Escalera de dificultad de la IA
 
@@ -42,30 +42,29 @@ Ejecución de referencia sobre el código del commit `498cad0`.
 
 | Enfrentamiento (A vs B) | Gana A | Gana B | Sin terminar |
 |---|---|---|---|
-| hard vs medium | 47.7% | 52.3% | 0.0% |
-| medium vs easy | 39.8% | 60.2% | 0.0% |
-| hard vs easy | 38.7% | 61.3% | 0.0% |
-| hard vs random | 36.2% | 63.8% | 0.0% |
-| medium vs random | 40.6% | 59.4% | 0.0% |
-| easy vs random | 47.4% | 52.6% | 0.0% |
+| hard vs medium | 46.9% | 53.1% | 0.0% |
+| medium vs easy | 40.6% | 59.4% | 0.0% |
+| hard vs easy | 37.5% | 62.5% | 0.0% |
+| hard vs random | 39.6% | 60.4% | 0.0% |
+| medium vs random | 39.3% | 60.7% | 0.0% |
+| easy vs random | 48.5% | 51.5% | 0.0% |
 
 **CON detección de amenaza**
 
 | Enfrentamiento (A vs B) | Gana A | Gana B | Sin terminar |
 |---|---|---|---|
-| hard vs medium | 76.7% | 23.3% | 0.0% |
-| medium vs easy | 76.4% | 23.6% | 0.0% |
-| hard vs easy | 96.6% | 3.4% | 0.0% |
-| hard vs random | 96.0% | 4.0% | 0.0% |
-| medium vs random | 79.1% | 20.9% | 0.0% |
-| easy vs random | 55.0% | 45.0% | 0.0% |
+| hard vs medium | 77.5% | 22.5% | 0.0% |
+| medium vs easy | 73.7% | 26.3% | 0.0% |
+| hard vs easy | 96.3% | 3.7% | 0.0% |
+| hard vs random | 95.8% | 4.2% | 0.0% |
+| medium vs random | 80.5% | 19.5% | 0.0% |
+| easy vs random | 54.2% | 45.8% | 0.0% |
 
 ## Interpretación
 
-- **Sin detección, la IA comete un blunder de cada cinco jugadas** (20,3%), y en la práctica totalidad de los casos existía una alternativa segura. Con la detección baja a menos del 1%.
-- **Sin detección, la escalera de dificultad está invertida:** el nivel difícil pierde contra medio y el fácil; incluso un jugador aleatorio le gana en torno al 64% de las partidas. El "ruido" de los niveles no debilita a una IA que ya se autosabotea.
-- **Con detección, hay una escalera bien definida:** difícil supera a medio (76%), el medio al fácil (76%) y el difícil casi siempre gana al azar (96%).
-- 
+- **Sin detección, la IA comete un blunder de cada cinco jugadas** (19.8%), y en la práctica totalidad de los casos existía una alternativa segura. Con la detección baja a menos del 1%.
+- **Sin detección, la escalera de dificultad está invertida:** el nivel difícil pierde contra medio y el fácil; incluso un jugador aleatorio le gana en torno al 60% de las partidas. El "ruido" de los niveles no debilita a una IA que ya se autosabotea.
+- **Con detección, hay una escalera bien definida:** difícil supera a medio (77.5%), el medio al fácil (73.7%) y el difícil casi siempre gana al azar (95.8%).
 - La detección es una **característica estática de la posición**, como la movilidad. No recorre el árbol de jugadas: el Minimax de FEAT-15 sí razonará sobre secuencias de jugadas.
 
 

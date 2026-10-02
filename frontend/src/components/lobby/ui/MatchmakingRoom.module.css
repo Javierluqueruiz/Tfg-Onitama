@@ -1,60 +1,181 @@
-.waitingContainer {
+.room {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    padding: 2.5rem;
-    background-color: var(--game-paper-soft);
-    border-radius: 16px;
+    gap: 22px;
+    padding: 6px 0 4px;
     text-align: center;
-    border: 1px solid var(--game-line-soft);
-    box-shadow: var(--game-shadow-soft);
 }
-.heading {
-    margin: 0;
-    color: var(--game-ink);
-    font-weight: bold;
+
+/* Etiqueta del modo elegido: nombre y en qué consiste. */
+.modeChip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 22px;
+    background: rgba(239, 230, 208, 0.75);
+    border: 1px solid var(--game-line);
+    border-radius: 999px;
 }
-.spinner {
-    width: 60px;
-    height: 60px;
-    border: 5px solid rgba(255, 255, 255, 0.15);
-    border-top: 5px solid var(--game-line);
+
+.modeLabel {
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--game-jade);
+}
+
+.modeDesc {
+    font-size: 0.85rem;
+    color: var(--game-ink-soft);
+}
+
+/* --- Buscador: enso girando + ondas de tinta --- */
+.seeker {
+    position: relative;
+    width: 168px;
+    height: 168px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ripple {
+    position: absolute;
+    inset: 14%;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    border: 2px solid var(--game-jade);
+    opacity: 0;
+    animation: ripple 3s ease-out infinite;
+}
+
+.rippleLate {
+    animation-delay: 1.5s;
+}
+
+@keyframes ripple {
+    0%   { transform: scale(0.85); opacity: 0.5; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+.enso {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    animation: spin 3.2s linear infinite;
+}
+
+.ensoTrack {
+    fill: none;
+    stroke: var(--game-line-soft);
+    stroke-width: 3;
+}
+
+.ensoStroke {
+    fill: none;
+    stroke: var(--game-ink);
+    stroke-width: 6;
+    stroke-linecap: round;
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
-.modeText {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: var(--game-ink-soft);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-}
-.timer {
-    font-size: 20px;
-    font-family: var(--mono, monospace);
-    font-weight: bold;
-    color: var(--game-line);
-}
-.cancelBtn {
-    margin-top: 1rem;
-    padding: 0.8rem 2rem;
-    background-color: transparent;
-    border: 2px solid var(--game-red);
-    color: var(--game-red);
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.2s ease-in-out;
-    text-transform: uppercase;
-}
-.cancelBtn:hover {
-    background-color: var(--game-red);
+
+/* Icono del modo en el centro, sobre un medallón de madera. */
+.seekerIcon {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    padding: 18px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--game-wood-deep);
     color: var(--game-paper);
+    box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.35), 0 0 0 4px var(--game-paper), 0 6px 14px -6px rgba(43, 30, 10, 0.6);
+}
+
+/* --- Texto --- */
+.status {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.heading {
+    margin: 0;
+    font-size: 1.7rem;
+    color: var(--game-ink);
+}
+
+/* Puntos suspensivos que se van rellenando. */
+.dots::after {
+    content: '';
+    display: inline-block;
+    width: 1.2em;
+    text-align: left;
+    animation: dots 1.6s steps(4, end) infinite;
+}
+
+@keyframes dots {
+    0%   { content: ''; }
+    25%  { content: '.'; }
+    50%  { content: '..'; }
+    75%  { content: '...'; }
+}
+
+.hint {
+    margin: 0 auto;
+    max-width: 380px;
+    color: var(--game-ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.timerBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.timerLabel {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--game-ink-faint);
+}
+
+.timer {
+    font-size: 2.2rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--game-ink);
+}
+
+/* --- Cancelar: tablilla de madera --- */
+.cancelBtn {
+    min-width: 240px;
+    padding: 13px 30px;
+    background-color: var(--game-wood-deep);
+    color: var(--game-paper);
+    border-radius: 10px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .enso,
+    .ripple,
+    .dots::after {
+        animation: none;
+    }
 }

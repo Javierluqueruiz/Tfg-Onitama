@@ -17,6 +17,7 @@
 }
 
 .input {
+    font-family: inherit;
     padding: 12px;
     border-radius: 6px;
     border: 1px solid var(--game-line-soft);
@@ -63,7 +64,7 @@
 .btnJoin { background-color: var(--game-wood-deep); border: 1px solid var(--game-wood-shadow); }
 
 .btnBack {
-    padding: 10px;
+    padding:10px;
     background: var(--game-paper-soft);
     color: var(--game-ink);
     border: 1px solid var(--game-line-soft);

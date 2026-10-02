@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { SocketEvents, type GameMode, type MatchFoundPayload } from '../../../../../shared';
 import { useSocket } from '../../../contexts/SocketContext';
+import btnStyles from '../../shared/ui/Button.module.css';
+import { getMatchMode } from './matchModes';
 import styles from './MatchmakingRoom.module.css';
 
 
@@ -45,20 +47,43 @@ export const MatchmakingRoom: React.FC<MatchmakingRoomProps> = ({ onCancel, onMa
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const modeInfo = getMatchMode(mode);
 
     return (
-        <div className={styles.waitingContainer}>
-            <h2 className={styles.heading}>Buscando partida...</h2>
-            <p className={styles.modeText}>Modo: {mode.toUpperCase()}</p>
+        <div className={styles.room}>
+            <div className={styles.modeChip}>
+                <span className={styles.modeLabel}>{modeInfo.label}</span>
+                <span className={styles.modeDesc}>{modeInfo.description}</span>
+            </div>
 
-            <div className={styles.spinner}></div>
+            {/* Círculo de tinta (enso) que gira alrededor del icono del modo, con ondas hacia fuera. */}
+            <div className={styles.seeker} aria-hidden="true">
+                <span className={styles.ripple} />
+                <span className={`${styles.ripple} ${styles.rippleLate}`} />
+                <svg className={styles.enso} viewBox="0 0 100 100">
+                    <circle className={styles.ensoTrack} cx="50" cy="50" r="42" />
+                    <path className={styles.ensoStroke} d="M50 8 A42 42 0 1 1 22 81" />
+                </svg>
+                <span className={styles.seekerIcon}>{modeInfo.icon}</span>
+            </div>
 
-            <p className={styles.timer}>Tiempo transcurrido: {formatTime(elapsedTime)}</p>
+            <div className={styles.status} role="status">
+                <h2 className={styles.heading}>Buscando rival<span className={styles.dots} aria-hidden="true" /></h2>
+                <p className={styles.hint}>
+                    Buscamos a alguien de nivel parecido y ampliamos la búsqueda poco a poco.
+                </p>
+            </div>
 
-            <button 
-                className={styles.cancelBtn}
+            <div className={styles.timerBox}>
+                <span className={styles.timerLabel}>Tiempo de espera</span>
+                <span className={styles.timer}>{formatTime(elapsedTime)}</span>
+            </div>
+
+            <button
+                className={`${styles.cancelBtn} ${btnStyles.btnCarved}`}
                 onClick={handleCancel}
             >
+                <span className={btnStyles.rivets}><span/><span/><span/><span/></span>
                 Cancelar búsqueda
             </button>
         </div>

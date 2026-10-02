@@ -3,7 +3,9 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { AuthApi } from '../services/authApi';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthLayout } from './AuthLayout';
-import styles from '../components/lobby/ui/Forms.module.css';
+import styles from '../components/shared/ui/FormKit.module.css';
+import { FormHeader } from '../components/shared/ui/FormHeader';
+import { MailIcon } from '../components/lobby/ui/ModeIcons';
 
 type VerifyEmailStatus = 'loading' | 'success' | 'error';
 
@@ -37,22 +39,31 @@ export const VerifyEmailPage = () => {
 
     return(
         <AuthLayout>
-            <h3 className={styles.title}>Verificación de correo electrónico</h3>
+            <div className={styles.form}>
+                <FormHeader icon={<MailIcon />} title="Verificación de correo electrónico" />
 
-            <div className={styles.container}>
-                {status === 'loading' && <p>Verificando...</p>}
+                {status === 'loading' && (
+                    <p className={styles.waiting} role="status">
+                        <span className={styles.pulse} aria-hidden="true"><span /><span /><span /></span>
+                        Verificando...
+                    </p>
+                )}
 
                 {status === 'success' && (
                     <>
-                        <p>¡Correo electrónico verificado con éxito!</p>
-                        <Link to="/" className={`${styles.btnSubmit} ${styles.btnCreate}`}>Volver a la página principal</Link>
+                        <p className={styles.message}>¡Correo electrónico verificado con éxito!</p>
+                        <div className={styles.actions}>
+                            <Link to="/" className={styles.primary}>Volver a la página principal</Link>
+                        </div>
                     </>
                 )}
 
                 {status === 'error' && (
                     <>
-                        <p className={styles.error}>{errorMessage}</p>
-                        <Link to="/" className={styles.btnBack}>Volver a la página principal</Link>
+                        <p className={styles.error} role="alert">{errorMessage}</p>
+                        <div className={styles.actions}>
+                            <Link to="/" className={styles.ghost}>← Volver a la página principal</Link>
+                        </div>
                     </>
                 )}
             </div>

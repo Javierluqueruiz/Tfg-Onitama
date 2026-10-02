@@ -8,9 +8,11 @@ interface PlayerInfoProps {
     color: 'red' | 'blue';
     isActive: boolean;
     timeLeft?: number;
+    children?: React.ReactNode;
+    cardsSlot?: React.ReactNode;
 }
 
-export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, elo, color, isActive, timeLeft }) => {
+export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, elo, color, isActive, timeLeft, children, cardsSlot }) => {
     const isRed = color === 'red';
     const isLowTime = timeLeft !== undefined && timeLeft <= 30;
 
@@ -38,8 +40,10 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({ playerName, elo, color, 
                     {formatTime(timeLeft)}
                     </span>
                 )}
-                
+                {children}
             </div>
+
+            {cardsSlot && <div className={styles.cardsSlot}>{cardsSlot}</div>}
         </div>
     )
 }

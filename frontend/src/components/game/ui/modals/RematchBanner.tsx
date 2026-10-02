@@ -15,12 +15,12 @@ export const RematchBanner: React.FC<RematchBannerProps> = ({
     onRejectRematch
 }) => {
     return (
-        <div className={styles.rematchBanner}>
+        <div className={styles.rematchBanner} role="status">
             {rematchState === 'none' && (
                 <>
                     <h3 className={styles.rematchTitle}>Partida Finalizada</h3>
                     <p className={styles.rematchText}>¿Quieres solicitar una revancha?</p>
-                    <button className={styles.btnRematchOffer}  onClick={onOfferRematch}>
+                    <button type="button" className={styles.btnRematchOffer} onClick={onOfferRematch}>
                         Solicitar Revancha
                     </button>
                 </>
@@ -28,8 +28,7 @@ export const RematchBanner: React.FC<RematchBannerProps> = ({
 
             {rematchState === 'offered' && (
                 <div className={styles.rematchWaiting}>
-                    <span className={styles.rematchIcon}>⏳</span>
-                    Esperando respuesta del rival...
+                                        Esperando respuesta del rival...
                 </div>
             )}
 
@@ -38,10 +37,10 @@ export const RematchBanner: React.FC<RematchBannerProps> = ({
                     <h3 className={styles.rematchTitleReceived}>¡Nueva propuesta!</h3>
                     <p className={styles.rematchText}>El rival quiere la revancha</p>
                     <div className={styles.rematchButtons}>
-                        <button className={styles.btnAccept} onClick={onAcceptRematch}>
+                        <button type="button" className={styles.btnAccept} onClick={onAcceptRematch}>
                             Aceptar
                         </button>
-                        <button className={styles.btnReject} onClick={onRejectRematch}>
+                        <button type="button" className={styles.btnReject} onClick={onRejectRematch}>
                             Rechazar
                         </button>
                     </div>
@@ -50,8 +49,7 @@ export const RematchBanner: React.FC<RematchBannerProps> = ({
 
             {rematchState === 'rejected' && (
                 <div className={styles.rematchRejected}>
-                    <span className={styles.rematchIcon}>❌</span>
-                    Revancha rechazada.
+                                        Revancha rechazada.
                 </div>
             )}
         </div>

@@ -14,6 +14,8 @@ interface BoardViewProps {
         from: Position;
         to: Position;
     };
+    // Casillas resaltadas con un marco dorado (p. ej. los templos en la página de reglas).
+    markedCells?: Position[];
 }
 
 const PieceIconDefs: React.FC = () => (
@@ -47,7 +49,8 @@ export const BoardView: React.FC<BoardViewProps> = ({
     selectedPiece,
     validTargets,
     onCellClick,
-    lastMove
+    lastMove,
+    markedCells = []
 }) => {
     return (
         <div className={styles.boardContainer}>
@@ -67,6 +70,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                         let cellClass = styles.cell;
                         if (isValidTarget) cellClass += ` ${cell ? styles.validCapture : styles.validMove}`;
                         if (isLastMove) cellClass += ` ${styles.lastMove}`;
+                        if (markedCells.some(pos => pos.x === x && pos.y === y)) cellClass += ` ${styles.marked}`;
 
                         let pieceClass = styles.piece;
                         if (cell) pieceClass += cell.color === 'red' ? ` ${styles.pieceRed}` : ` ${styles.pieceBlue}`;

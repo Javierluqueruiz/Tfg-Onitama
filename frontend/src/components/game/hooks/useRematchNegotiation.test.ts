@@ -14,6 +14,13 @@ describe('useRematchNegotiation', () => {
         expect(result.current.timesOffered).toBe(0);
     });
 
+    it('Arranca con la oferta del rival ya recibida si se restaura al reconectar tras recargar', () => {
+        const socket = createMockSocket();
+        const { result } = renderHook(() => useRematchNegotiation(socket as unknown as Socket, true));
+
+        expect(result.current.rematchState).toBe('received');
+    });
+
     it('Cuando el servidor manda un REMATCH_OFFERED, rematchState se pone a received', () => {
         const socket = createMockSocket();
         const { result } = renderHook(() => useRematchNegotiation(socket as unknown as Socket));

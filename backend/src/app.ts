@@ -5,6 +5,7 @@ import { profileRoutes } from './auth/profileRoutes';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { getAllowedOrigins } from './config/corsOrigin';
+import { rankingRoutes } from './ranking/rankingRoutes';
 
 export const app = express();
 
@@ -38,3 +39,4 @@ app.get('/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/ranking', rankingRoutes);

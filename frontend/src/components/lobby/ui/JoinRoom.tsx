@@ -1,5 +1,8 @@
 import React from 'react';
-import styles from './Forms.module.css';
+import styles from '../../shared/ui/FormKit.module.css';
+import { FormHeader } from '../../shared/ui/FormHeader';
+import { BrushInput } from '../../shared/ui/BrushInput';
+import { KeyIcon } from './ModeIcons';
 
 interface JoinRoomProps {
     playerName: string;
@@ -13,45 +16,45 @@ interface JoinRoomProps {
 
 export const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, setPlayerName, accountName, joinCode, setJoinCode, onJoinRoom, onBack }) => {
     return (
-    <div className={styles.container}>
-        <h3 className={styles.title}>Unirse a una Partida</h3>
+        <form
+            className={styles.form}
+            onSubmit={(event) => {
+                event.preventDefault();
+                onJoinRoom();
+            }}
+        >
+            <FormHeader icon={<KeyIcon />} title="Unirse a una sala" hint="Escribe el código de 5 caracteres que te ha pasado tu rival." />
 
-        {accountName ? (
-            <></>
-        ) : (
-            <label className={styles.label}>
-                Tu Nombre:
-                <input 
+            {!accountName && (
+                <label className={styles.label}>
+                    Tu nombre
+                    <BrushInput
+                        type="text"
+                        value={playerName}
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Ej. Maestro Nuby"
+                    />
+                </label>
+            )}
+
+            <label className={`${styles.label} ${styles.labelCenter}`}>
+                Código de la sala
+                <BrushInput
+                    variant="code"
                     type="text"
-                    className={styles.input}
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    placeholder="Ej. Maestro Nuby"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                    placeholder="ABC12"
+                    maxLength={5}
+                    autoComplete="off"
+                    spellCheck={false}
                 />
-            </label> 
-        )}
-        
-        <label className={styles.label}>
-            Código de la Sala:
-            <input
-                type="text"
-                className={`${styles.input} ${styles.inputCode}`}
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Ej. ABC12"
-                maxLength={5}
-            />
-        </label>
+            </label>
 
-        <button className={`${styles.btnSubmit} ${styles.btnJoin}`} 
-            onClick={onJoinRoom}>
-            Unirse a la Sala
-        </button>
-
-        <button className={styles.btnBack} onClick={onBack}>
-            ←Volver
-        </button>
-    </div>
-);
-
+            <div className={styles.actions}>
+                <button type="submit" className={styles.primary}>Unirse a la sala</button>
+                <button type="button" className={styles.ghost} onClick={onBack}>← Volver</button>
+            </div>
+        </form>
+    );
 };

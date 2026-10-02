@@ -17,7 +17,7 @@ describe('DeleteAccountButton', () => {
     it('no muestra el formulario de confirmación hasta que se haga clic en el botón', () => {
         render(<DeleteAccountButton />);
 
-        expect(screen.queryByLabelText(/Usuario:/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/Usuario/i)).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Eliminar cuenta/i })).toBeInTheDocument();
     });
 
@@ -26,20 +26,20 @@ describe('DeleteAccountButton', () => {
 
         fireEvent.click(screen.getByRole('button', { name: /Eliminar cuenta/i }));
 
-        expect(screen.getByLabelText(/Usuario:/i)).toBeInTheDocument();
-        expect(screen.getByLabelText(/Contraseña:/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Usuario/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/Contraseña/i)).toBeInTheDocument();
     });
 
     it('cancelar oculta el formulario de confirmación', () => {
         render(<DeleteAccountButton />);
 
         fireEvent.click(screen.getByRole('button', { name: /Eliminar cuenta/i }));
-        fireEvent.click(screen.getByLabelText(/Usuario:/i), { target: { value: 'testuser' } });
-        fireEvent.click(screen.getByLabelText(/Contraseña:/i), { target: { value: 'password123' } });
+        fireEvent.click(screen.getByLabelText(/Usuario/i), { target: { value: 'testuser' } });
+        fireEvent.click(screen.getByLabelText(/Contraseña/i), { target: { value: 'password123' } });
         fireEvent.click(screen.getByRole('button', { name: /Cancelar/i }));
 
-        expect(screen.queryByLabelText(/Usuario:/i)).not.toBeInTheDocument();
-        expect(screen.queryByLabelText(/Contraseña:/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/Usuario/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/Contraseña/i)).not.toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Eliminar cuenta/i })).toBeInTheDocument();
     });
 
@@ -49,8 +49,8 @@ describe('DeleteAccountButton', () => {
         render(<DeleteAccountButton />);
 
         fireEvent.click(screen.getByRole('button', { name: /Eliminar cuenta/i }));
-        fireEvent.change(screen.getByLabelText(/Usuario:/i), { target: { value: 'testuser' } });
-        fireEvent.change(screen.getByLabelText(/Contraseña:/i), { target: { value: 'password123' } });
+        fireEvent.change(screen.getByLabelText(/Usuario/i), { target: { value: 'testuser' } });
+        fireEvent.change(screen.getByLabelText(/Contraseña/i), { target: { value: 'password123' } });
         fireEvent.click(screen.getByRole('button', { name: /Confirmar eliminación/i }));
 
         await waitFor(() => expect(window.location.href).toBe('/'));
@@ -63,8 +63,8 @@ describe('DeleteAccountButton', () => {
         render(<DeleteAccountButton />);
         
         fireEvent.click(screen.getByRole('button', { name: /Eliminar cuenta/i }));
-        fireEvent.change(screen.getByLabelText(/Usuario:/i), { target: { value: 'testuser' } });
-        fireEvent.change(screen.getByLabelText(/Contraseña:/i), { target: { value: 'password123' } });
+        fireEvent.change(screen.getByLabelText(/Usuario/i), { target: { value: 'testuser' } });
+        fireEvent.change(screen.getByLabelText(/Contraseña/i), { target: { value: 'password123' } });
         fireEvent.click(screen.getByRole('button', { name: /Confirmar eliminación/i }));
 
         expect(await screen.findByText(/Error al eliminar la cuenta/i)).toBeInTheDocument();

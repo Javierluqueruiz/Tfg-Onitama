@@ -1,0 +1,49 @@
+/* Rediseño IT5: Tablilla tallada */
+.btnCarved {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--game-line);
+    background-image: repeating-linear-gradient(4deg, rgba(0, 0, 0, .09) 0 1.5px, transparent 1.5px 7px);
+    background-blend-mode: multiply;
+    box-shadow: inset 0 2px 3px rgba(255, 255, 255, .15), inset 0 -3px 4px rgba(0, 0, 0, .35), 0 6px 14px -8px rgba(0, 0, 0, .5);
+}
+
+.btnCarved::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(to right, rgba(255, 255, 255, .32), rgba(255, 255, 255, .04));
+    pointer-events: none;
+}
+
+.btnCarved::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(to right, rgba(0, 0, 0, .4), rgba(0, 0, 0, .12));
+    pointer-events: none;
+}
+
+.btnCarved:hover:not(:disabled) {
+    transform: translateY(-3px);
+}
+
+.btnCarved:active:not(:disabled) {
+    transform: scale(.96) translateY(1px);
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, .55), inset 0 -1px 2px rgba(255, 255, 255, .12);
+}
+
+.btnCarved .rivets span {
+    position: absolute;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--game-wood), var(--game-wood-deep) 55%, var(--game-wood-shadow) 100%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .35), inset 0 1px 1px rgba(255, 255, 255, .1);
+    pointer-events: none;
+}
+.btnCarved .rivets span:nth-child(1) { top: 7px; left: 8px; }
+.btnCarved .rivets span:nth-child(2) { top: 7px; right: 8px; }
+.btnCarved .rivets span:nth-child(3) { bottom: 7px; left: 8px; }
+.btnCarved .rivets span:nth-child(4) { bottom: 7px; right: 8px; }

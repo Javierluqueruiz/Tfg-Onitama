@@ -1,0 +1,326 @@
+/* Prototipo de maquetación -- solo estructura y apariencia, sin lógica. */
+
+.layout {
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    /* Fuerza la única fila a ocupar el 100vh completo del contenedor --
+       si se deja en "auto" (por defecto), la fila mide lo que ocupe su
+       contenido y el stretch de las columnas no llega a cubrir la
+       ventana, cortando lo que quede pegado al fondo (el input del chat). */
+    grid-template-rows: minmax(0, 1fr);
+    background:
+        radial-gradient(ellipse at 20% 0%, rgba(255, 244, 220, 0.06), transparent 55%),
+        linear-gradient(165deg, var(--game-wood-shadow) 0%, #1c130a 100%);
+    color: var(--game-paper);
+}
+
+/* ---------- SIDEBAR IZQUIERDA ---------- */
+
+.leftSidebar {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 0;
+    gap: 20px;
+    padding: 20px 16px;
+    border-right: 1px solid rgba(199, 154, 75, 0.18);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.28) 100%);
+}
+
+.profileCard {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--game-paper-texture);
+    border: 1px solid var(--game-line-soft);
+    border-radius: 10px;
+    box-shadow: var(--game-shadow-lifted);
+}
+
+.avatar {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--game-paper);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.avatarRed {
+    background: radial-gradient(circle at 35% 30%, #c06a4f, var(--game-red) 60%, var(--game-red-deep) 100%);
+}
+
+.avatarBlue {
+    background: radial-gradient(circle at 35% 30%, #517d95, var(--game-blue) 60%, #26404f 100%);
+}
+
+.profileInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.profileName {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--game-ink);
+}
+
+.profileMeta {
+    font-size: 11px;
+    color: var(--game-ink-faint);
+}
+
+/* Carta neutral: mismo tratamiento que las cartas del tablero pero con un
+   borde propio para que destaque como pieza "de mesa", no de ningún bando. */
+.neutralCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--game-paper-texture);
+    border: 2px solid var(--game-line);
+    box-shadow: 0 0 0 3px rgba(199, 154, 75, 0.18), var(--game-shadow-lifted);
+}
+
+.neutralLabel {
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--game-line-deep);
+    font-weight: 800;
+}
+
+.neutralCardFace {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: linear-gradient(150deg, var(--game-wood) 0%, var(--game-wood-deep) 100%);
+    color: var(--game-ink);
+    font-weight: 800;
+    letter-spacing: 1px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.selfBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.actionRow {
+    display: flex;
+    gap: 8px;
+}
+
+.actionBtn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--game-paper);
+    background: linear-gradient(160deg, var(--game-ink-soft) 0%, var(--game-ink) 100%);
+    border: 1px solid var(--game-line-soft);
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 6px -2px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s var(--game-ease-lift), box-shadow 0.2s ease;
+}
+
+.actionBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 6px 10px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- CENTRO: tablero ---------- */
+
+.centerColumn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 24px;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+.cardRow {
+    display: flex;
+    gap: 16px;
+}
+
+.cardPlaceholder {
+    width: 120px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--game-paper-texture);
+    border: 2px solid var(--game-line-soft);
+    color: var(--game-ink);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: var(--game-shadow-lifted);
+    transition: transform 0.25s var(--game-ease-lift), box-shadow 0.25s var(--game-ease-lift);
+}
+
+.cardPlaceholder:hover {
+    transform: translateY(-6px);
+}
+
+.boardPlaceholder {
+    width: 500px;
+    height: 500px;
+    max-width: 100%;
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+    background: linear-gradient(150deg, var(--game-wood) 0%, var(--game-wood-deep) 100%);
+    border: 2px dashed var(--game-line-soft);
+    color: var(--game-paper-soft);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    box-shadow:
+        0 0 0 3px var(--game-ink),
+        0 6px 0 #2c1d0d,
+        0 10px 22px -12px rgba(43, 30, 10, 0.6);
+}
+
+.boardHint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--game-paper-soft);
+    opacity: 0.6;
+    letter-spacing: 0.3px;
+}
+
+/* ---------- SIDEBAR DERECHA: chat (panel cristal) ---------- */
+
+.rightSidebar {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 18px 16px;
+    gap: 14px;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(246, 239, 220, 0.08) 0%, rgba(246, 239, 220, 0.03) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.chatTitle {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    color: var(--game-paper);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.chatMessages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chatBubbleOpponent,
+.chatBubbleOwn {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.chatBubbleOpponent {
+    align-self: flex-start;
+    background: linear-gradient(160deg, var(--game-wood) 0%, var(--game-wood-deep) 100%);
+    color: var(--game-ink);
+    border-bottom-left-radius: 2px;
+}
+
+.chatBubbleOwn {
+    align-self: flex-end;
+    background: linear-gradient(160deg, var(--game-jade-soft) 0%, rgba(118, 179, 150, 0.55) 100%);
+    color: var(--game-ink);
+    border-bottom-right-radius: 2px;
+}
+
+.chatInputRow {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.chatInput {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--game-paper);
+}
+
+.chatInput::placeholder {
+    color: var(--game-paper-soft);
+    opacity: 0.5;
+}
+
+.chatSendBtn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    color: var(--game-paper);
+    background: linear-gradient(160deg, var(--game-ink-soft) 0%, var(--game-ink) 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 3px 6px -2px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+}
+
+/* ---------- RESPONSIVE: por debajo de esto el grid de 3 columnas no cabe;
+   se documenta aquí como placeholder, sin resolverlo en este boceto. ---------- */
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 210px 1fr 260px;
+    }
+
+    .boardPlaceholder {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+    }
+}

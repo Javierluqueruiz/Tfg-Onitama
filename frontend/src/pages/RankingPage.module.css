@@ -1,0 +1,13 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.note {
+    margin: 0;
+    text-align: center;
+    color: var(--game-ink-soft);
+    font-size: 0.92rem;
+    line-height: 1.5;
+}

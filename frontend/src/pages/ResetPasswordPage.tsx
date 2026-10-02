@@ -2,7 +2,10 @@ import { useState, type SubmitEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AuthApi } from '../services/authApi';
 import { AuthLayout } from './AuthLayout';
-import styles from '../components/lobby/ui/Forms.module.css';
+import styles from '../components/shared/ui/FormKit.module.css';
+import { BrushInput } from '../components/shared/ui/BrushInput';
+import { FormHeader } from '../components/shared/ui/FormHeader';
+import { KeyIcon } from '../components/lobby/ui/ModeIcons';
 
 export const ResetPasswordPage = () => {
     const [searchParams] = useSearchParams();
@@ -41,10 +44,12 @@ export const ResetPasswordPage = () => {
     if (submitted) {
         return (
             <AuthLayout>
-                <h3 className={styles.title}>Contraseña actualizada con éxito</h3>
-                <div className={styles.container}>
-                    <p>Ya puedes iniciar sesión con tu nueva contraseña.</p>
-                    <Link to="/login" className={` ${styles.btnSubmit} ${styles.btnCreate}`}>Volver al inicio de sesión</Link>
+                <div className={styles.form}>
+                    <FormHeader icon={<KeyIcon />} title="Contraseña actualizada con éxito" />
+                    <p className={styles.message}>Ya puedes iniciar sesión con tu nueva contraseña.</p>
+                    <div className={styles.actions}>
+                        <Link to="/login" className={styles.primary}>Volver al inicio de sesión</Link>
+                    </div>
                 </div>
             </AuthLayout>
         );
@@ -52,24 +57,25 @@ export const ResetPasswordPage = () => {
 
     return (
         <AuthLayout>
-            <h3 className={styles.title}>Restablecer contraseña</h3>
-            <form onSubmit={handleSubmit} className={styles.container}>
+            <form onSubmit={handleSubmit} className={styles.form}>
+                <FormHeader icon={<KeyIcon />} title="Restablecer contraseña" hint="Elige una contraseña nueva de al menos 8 caracteres." />
+
                 <label className={styles.label}>
-                    Nueva contraseña:
-                    <input type="password" className={styles.input} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={8} />
+                    Nueva contraseña
+                    <BrushInput type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
                 </label>
                 <label className={styles.label}>
-                    Confirmar nueva contraseña:
-                    <input type="password" className={styles.input} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={8} />
+                    Confirmar nueva contraseña
+                    <BrushInput type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
                 </label>
 
-                {error && <p className={styles.error}>{error}</p>}
+                {error && <p className={styles.error} role="alert">{error}</p>}
 
-                <div className={styles.buttonGroup}>
-                    <Link to="/login" className={styles.btnBack}>Volver a inicio de sesión</Link>
-                    <button type="submit" className={` ${styles.btnSubmit} ${styles.btnCreate}`} disabled={isSubmitting}>
+                <div className={styles.actions}>
+                    <button type="submit" className={styles.primary} disabled={isSubmitting}>
                         {isSubmitting ? 'Restableciendo...' : 'Restablecer contraseña'}
                     </button>
+                    <Link to="/login" className={styles.ghost}>← Volver a inicio de sesión</Link>
                 </div>
             </form>
         </AuthLayout>

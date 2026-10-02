@@ -1,0 +1,28 @@
+/* FEAT-08/16: fondo con un encuadre de reposo por escena. El desenfoque que se
+   aclara al asentarse vende la sensación de movimiento de cámara, no un simple
+   fundido. */
+.sceneWorld {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background-color: var(--game-paper);
+}
+
+.sceneCanvas {
+    position: absolute;
+    inset: 0;
+    background-image: url('../../../assets/menu-paisaje5.jpeg');
+    background-repeat: no-repeat;
+    /* Ancho: 220% de la pantalla (encuadre de escritorio) o, si no llega a cubrir la
+       altura (móvil en vertical), el ancho que la cubra: la imagen mide 1,75 veces su
+       alto de ancho. Sin esto, en móvil quedaban franjas de papel liso. */
+    background-size: max(220%, 175vh) auto;
+    filter: blur(0);
+    transition: background-position 1400ms cubic-bezier(.65,.05,.36,1), filter 850ms ease-out;
+}
+
+.sceneCanvasPanning {
+    filter: blur(6px);
+    transition: background-position 1400ms cubic-bezier(.65,.05,.36,1), filter 420ms ease-in;
+}

@@ -1,0 +1,5 @@
+/* Solo ilustra: sin hover ni clics sobre las casillas. */
+.miniBoard {
+    display: inline-block;
+    pointer-events: none;
+}
