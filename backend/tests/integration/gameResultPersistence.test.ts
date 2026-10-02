@@ -8,7 +8,7 @@ import { registerSocketEvents } from '../../src/network/SocketHandler';
 import { registerSocketAuth } from '../../src/network/socketAuth';
 import { User } from '../../src/auth/User.model';
 import { AuthService } from '../../src/auth/authService';
-import { SocketEvents } from '../../../shared';
+import { SocketEvents, type EloUpdate } from '../../../shared';
 import type { AddressInfo } from 'net';
 
 describe('Persistencia del resultado de la partida (Sub-09.1)', () => {
@@ -93,6 +93,58 @@ describe('Persistencia del resultado de la partida (Sub-09.1)', () => {
         expect(finalHost!.elo).toBeLessThan(1000);
         expect(finalGuest?.wins).toBe(1);
         expect(finalGuest!.elo).toBeGreaterThan(1000);
+    });
+
+        // Prepara una partida en curso entre dos jugadores; sin token, el jugador es invitado.
+    const startGame = async (hostToken?: string, guestToken?: string) => {
+        const connect = (token?: string) => ioClient(
+            `http://localhost:${port}`,
+            token ? { extraHeaders: { Cookie: `token=${token}` } } : {}
+        );
+        hostSocket = connect(hostToken);
+        guestSocket = connect(guestToken);
+        await Promise.all([
+            new Promise<void>((resolve) => hostSocket.on('connect', () => resolve())),
+            new Promise<void>((resolve) => guestSocket.on('connect', () => resolve())),
+        ]);
+
+        const { roomCode } = await new Promise<{ roomCode: string }>((resolve) => {
+            hostSocket.on(SocketEvents.ROOM_CREATED, (data) => resolve(data));
+            hostSocket.emit(SocketEvents.CREATE_ROOM, { hostName: 'HostPlayer', mode: 'casual' });
+        });
+
+        await new Promise<void>((resolve) => {
+            guestSocket.on(SocketEvents.GAME_START, () => resolve());
+            guestSocket.emit(SocketEvents.JOIN_ROOM, { roomCode, guestName: 'GuestPlayer' });
+        });
+    };
+
+    const nextEloUpdate = (socket: ClientSocket) =>
+        new Promise<EloUpdate>((resolve) => socket.once(SocketEvents.ELO_UPDATED, resolve));
+
+    it('envía a cada cuenta su variación de ELO cuando termina de guardarse el resultado (Sub-11.3)', async () => {
+        const hostUser = await User.create({ username: 'HostPlayer', email: 'host@example.com', passwordHash: 'hashedpassword'});
+        const guestUser = await User.create({ username: 'GuestPlayer', email: 'guest@example.com', passwordHash: 'hashedpassword'});
+        await startGame(AuthService.signToken(hostUser), AuthService.signToken(guestUser));
+        const hostUpdate = nextEloUpdate(hostSocket);
+        const guestUpdate = nextEloUpdate(guestSocket);
+
+        hostSocket.emit(SocketEvents.SURRENDER);
+
+        expect(await hostUpdate).toEqual({ ranked: true, eloChange: -16, newElo: 984 });
+        expect(await guestUpdate).toEqual({ ranked: true, eloChange: 16, newElo: 1016 });
+    });
+
+    it('a una cuenta y a su rival invitado les comunica que la partida no puntúa (Sub-11.3)', async () => {
+        const hostUser = await User.create({ username: 'HostPlayer', email: 'host@example.com', passwordHash: 'hashedpassword' });
+        await startGame(AuthService.signToken(hostUser), undefined);
+        const hostUpdate = nextEloUpdate(hostSocket);
+        const guestUpdate = nextEloUpdate(guestSocket);
+
+        hostSocket.emit(SocketEvents.SURRENDER);
+
+        expect(await hostUpdate).toEqual({ ranked: false });
+        expect(await guestUpdate).toEqual({ ranked: false });
     });
 
 });

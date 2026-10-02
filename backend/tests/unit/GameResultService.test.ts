@@ -150,4 +150,98 @@ describe('GameResultService.recordMatchResult', () => {
 
         expect(redUser.save).not.toHaveBeenCalled();
     });
+
+    describe('variación de ELO que devuelve (Sub-11.3)', () => {
+        const unranked = { red: { ranked: false }, blue: { ranked: false } };
+
+        it('no hay variación si la partida no cuenta para estadísticas', async () => {
+            const updates = await GameResultService.recordMatchResult(createRoom({ countsForStats: false }));
+            expect(updates).toEqual(unranked);
+        });
+
+        it('entre dos cuentas devuelve a cada lado su variación y su nuevo ELO', async () => {
+            vi.spyOn(User, 'findById')
+                .mockResolvedValueOnce(createFakeUser({ elo: 1000 }))
+                .mockResolvedValueOnce(createFakeUser({ elo: 1000 }));
+
+            const updates = await GameResultService.recordMatchResult(createRoom());
+
+            expect(updates).toEqual({
+                red: { ranked: true, eloChange: 16, newElo: 1016 },
+                blue: { ranked: true, eloChange: -16, newElo: 984 },
+            });
+        });
+
+        it('un empate entre cuentas sigue siendo clasificatorio aunque no haya variación de ELO', async () => {
+            vi.spyOn(User, 'findById')
+                .mockResolvedValueOnce(createFakeUser({ elo: 1000 }))
+                .mockResolvedValueOnce(createFakeUser({ elo: 1000 }));
+
+            const updates = await GameResultService.recordMatchResult(createRoom({
+                // @ts-expect-error -- mock simplificado, no implementa el tipo completo de GameState
+                gameState: { winner: 'draw' }
+            }));
+
+            expect(updates).toEqual({
+                red: { ranked: true, eloChange: 0, newElo: 1000 },
+                blue: { ranked: true, eloChange: 0, newElo: 1000 },
+            });
+        });
+
+        it('cada lado se calcula con el ELO previo del rival, no con el actualizado', async () => {
+            vi.spyOn(User, 'findById')
+                .mockResolvedValueOnce(createFakeUser({ elo: 1000 }))
+                .mockResolvedValueOnce(createFakeUser({ elo: 1200 }));
+
+            const updates = await GameResultService.recordMatchResult(createRoom());
+
+            expect(updates).toEqual({
+                red: { ranked: true, eloChange: 24, newElo: 1024 },
+                blue: { ranked: true, eloChange: -24, newElo: 1176 },
+            });
+        });
+
+        it('contra un invitado, nadie tiene variación de ELO', async () => {
+            vi.spyOn(User, 'findById').mockResolvedValueOnce(createFakeUser({ elo: 1000 }));
+
+            const updates = await GameResultService.recordMatchResult(createRoom({
+                players: {
+                    red: { socketId: 'redSocket', name: 'RedPlayer', userId: 'redId' },
+                    blue: { socketId: 'blueSocket', name: 'BluePlayer' }, // invitado
+                },
+            }));
+
+            expect(updates).toEqual(unranked);
+        });
+
+        it('entre dos invitados, nadie tiene variación de ELO', async () => {
+            const updates = await GameResultService.recordMatchResult(createRoom({
+                players: {
+                    red: { socketId: 'redSocket', name: 'RedPlayer' },
+                    blue: { socketId: 'blueSocket', name: 'BluePlayer' },
+                },
+            }));
+
+            expect(updates).toEqual(unranked);
+        });
+
+        it('si una de las cuentas ya no existe, nadie tiene variación de ELO', async () => {
+            vi.spyOn(User, 'findById')
+                .mockResolvedValueOnce(createFakeUser({ elo: 1000 }))
+                .mockResolvedValueOnce(null); // BluePlayer no existe
+
+            const updates = await GameResultService.recordMatchResult(createRoom());
+
+            expect(updates).toEqual(unranked);
+        });
+
+        it('si la partida no tiene ganador definido, nadie tiene variación de ELO', async () => {
+            const updates = await GameResultService.recordMatchResult(createRoom({
+                // @ts-expect-error -- mock simplificado, no implementa el tipo completo de GameState
+                gameState: { winner: null }
+            }));
+
+            expect(updates).toEqual(unranked);
+        });
+    });
 });

@@ -29,3 +29,8 @@ export interface DeleteAccountRequest {
     username: string;
     password: string;
 }
+
+//Sub-11.3
+export type EloUpdate = 
+    | { ranked: false}
+    | { ranked: true; eloChange: number; newElo: number };

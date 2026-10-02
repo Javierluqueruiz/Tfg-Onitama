@@ -1,17 +1,21 @@
 //Sub-09.1
-import { MatchResult, RoomSession } from '../../../shared';
+import { MatchResult, RoomSession, EloUpdate, PlayerColor } from '../../../shared';
 import { User, IUser } from '../auth/User.model';
 import { EloService } from '../game/EloService';
+
+export type MatchEloUpdates = Record<PlayerColor, EloUpdate>;
+
+const unranked = (): MatchEloUpdates => ({ red: { ranked: false }, blue: { ranked: false } });
 
 export class GameResultService {
     private static readonly MAX_LAST_MATCHES = 20;
 
-    public static async recordMatchResult(room: RoomSession): Promise<void> {
-        if (!room.countsForStats) return; // Sub-14.3
+    public static async recordMatchResult(room: RoomSession): Promise<MatchEloUpdates> {
+        if (!room.countsForStats) return unranked(); // Sub-14.3
 
         const { red, blue } = room.players;
         const winner = room.gameState.winner;
-        if (!winner) return;
+        if (!winner) return unranked();
 
         const redResult: MatchResult = winner === 'red' ? 'win' : winner === 'blue' ? 'loss' : 'draw';
         const blueResult: MatchResult = winner === 'blue' ? 'win' : winner === 'red' ? 'loss' : 'draw';
@@ -23,15 +27,15 @@ export class GameResultService {
                 User.findById(blue.userId)
             ]);
 
-            if (!redUser || !blueUser) return;
+            if (!redUser || !blueUser) return unranked();
 
             const redEloBefore = redUser.elo;
             const blueEloBefore = blueUser.elo;
 
-            this.updateRankedStats(redUser, blueEloBefore, redResult, blueUser.username);
-            this.updateRankedStats(blueUser, redEloBefore, blueResult, redUser.username);
+            const redUpdate = this.updateRankedStats(redUser, blueEloBefore, redResult, blueUser.username);
+            const blueUpdate = this.updateRankedStats(blueUser, redEloBefore, blueResult, redUser.username);
             await Promise.all([redUser.save(), blueUser.save()]);
-            return;
+            return { red: redUpdate, blue: blueUpdate };
         }
 
         // Uno de los dos es invitado -- no hay ELO que mover, pero el lado
@@ -42,6 +46,7 @@ export class GameResultService {
             await this.recordUnrankedMatch(blue.userId, blueResult, red?.name ?? 'Invitado');
         }
         // Dos invitados: ninguno tiene perfil que actualizar.
+        return unranked();
     }
 
     private static async recordUnrankedMatch(userId: string, result: MatchResult, opponentName: string): Promise<void> {
@@ -55,7 +60,7 @@ export class GameResultService {
         await user.save();
     }
 
-    private static updateRankedStats(user: IUser, opponentEloBefore: number, matchResult: MatchResult, opponentName: string): void {
+    private static updateRankedStats(user: IUser, opponentEloBefore: number, matchResult: MatchResult, opponentName: string): EloUpdate {
         const { newElo, delta } = EloService.calculateNewElo(user.elo, opponentEloBefore, matchResult, user.gamesPlayed);
 
         user.elo = newElo;
@@ -68,5 +73,6 @@ export class GameResultService {
         if (user.lastMatches.length > this.MAX_LAST_MATCHES) {
             user.lastMatches.length = this.MAX_LAST_MATCHES;
         }
+        return { ranked: true, eloChange: delta, newElo };
     }
 }
