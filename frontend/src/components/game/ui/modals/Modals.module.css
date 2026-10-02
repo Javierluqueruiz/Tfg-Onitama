@@ -277,3 +277,52 @@
     outline: 3px solid var(--game-blue);
     outline-offset: 2px;
 }
+
+
+/* Sub-11.3: variación de ELO al terminar la partida. El hueco se reserva desde el principio para
+   que el cuadro no dé un salto cuando llega el aviso del servidor. */
+.eloBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-height: 4.4rem;
+    margin: -8px auto 18px;
+}
+
+.eloDelta,
+.eloNote,
+.eloRank {
+    margin: 0;
+    animation: eloIn 0.4s ease both;
+}
+
+.eloDelta {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--game-ink-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+.eloUp { color: var(--game-jade); }
+.eloDown { color: var(--game-red); }
+
+.eloNote {
+    color: var(--game-ink-soft);
+    font-size: 0.95rem;
+}
+
+.eloRank {
+    margin-top: 4px;
+    color: var(--game-ink);
+    font-weight: 800;
+}
+
+@keyframes eloIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .eloDelta, .eloNote, .eloRank { animation: none; }
+}

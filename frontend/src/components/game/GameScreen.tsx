@@ -31,7 +31,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
         opponentName, localName, opponentElo, localElo, isVsAi, myCards, opponentCards, neutralCard, 
         boardRotation, lastMove, selectedCard, mustDiscard, handleSelectCard,  selectedPiece, 
         validTargets, handleCellClick, handleExit, handleSurrender, isModalOpen, setIsModalOpen, disconnectTimer, reconnectMessage, isConnected, timeRemaining,
-        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, lastError, isSurrenderModalOpen, confirmSurrender, cancelSurrender
+        drawOfferReceived, drawOfferSent, handleOfferDraw, handleAcceptDraw, handleRejectDraw, drawRejectedMessage, gameResult, rematch, eloUpdate, lastError, isSurrenderModalOpen, confirmSurrender, cancelSurrender
     } = useGameScreen(gameState, localColor, playersProfile, isReconnecting, restored);
 
 
@@ -156,7 +156,7 @@ export const  GameScreen: React.FC<GameScreenProps> = ({ gameState, localColor, 
             {lastError && <div className={styles.errorToast}>{lastError}</div>}
 
             {gameState.status === 'finished' && isGameOver && isModalOpen && (
-                <GameOverModal result={gameResult} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
+                <GameOverModal result={gameResult} eloUpdate={eloUpdate} onExit={handleExit} onCloseModal={() => setIsModalOpen(false)} />
             )}
 
             {isSurrenderModalOpen && (

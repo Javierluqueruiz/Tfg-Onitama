@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { GameOverModal } from './GameOverModal';
 import { SurrenderConfirmModal } from './SurrenderConfirmModal';
+import type { EloUpdate } from '../../../../../../shared'; 
 
 describe('GameOverModal', () => {
     it.each([
@@ -84,5 +85,65 @@ describe('SurrenderConfirmModal', () => {
         render(<SurrenderConfirmModal onConfirm={vi.fn()} onCancel={vi.fn()} />);
 
         expect(screen.getByRole('button', { name: 'Seguir jugando' })).toHaveFocus();
+    });
+});
+
+describe('GameOverModal: variación de ELO (Sub-11.3)', () => {
+    const renderModal = (eloUpdate?: EloUpdate | null) => render(<GameOverModal result="win" eloUpdate={eloUpdate} onCloseModal={vi.fn()} onExit={vi.fn()} />);
+
+    it('mientras no llega aviso del servidor no se muestra la variación de ELO', () => {
+        renderModal(null);
+
+        expect(screen.queryByText(/ELO/)).not.toBeInTheDocument();
+    });
+
+    it('muestra lo ganado y el nuevo ELO', () => {
+        renderModal({ ranked: true, eloChange: 16, newElo: 1016 });
+        expect(screen.getByText('+16 ELO')).toBeInTheDocument();
+        expect(screen.getByText('Nuevo ELO: 1016')).toBeInTheDocument();
+    });
+
+    it('muestra lo perdido y el nuevo ELO', () => {
+        renderModal({ ranked: true, eloChange: -16, newElo: 984 });
+        expect(screen.getByText('-16 ELO')).toBeInTheDocument();
+        expect(screen.getByText('Nuevo ELO: 984')).toBeInTheDocument();
+    });
+
+    it('un empate sin variación se muestra como ±0', () => {
+        renderModal({ ranked: true, eloChange: 0, newElo: 1000 });
+
+        expect(screen.getByText('±0 ELO')).toBeInTheDocument();
+        expect(screen.queryByText(/amistosa/i)).not.toBeInTheDocument();
+    });
+
+    it('una partida amistosa se indica como tal, sin mostrar ELO', () => {
+        renderModal({ ranked: false });
+
+        expect(screen.getByText(/partida amistosa: no puntúa/i)).toBeInTheDocument();
+        expect(screen.queryByText(/\d ELO/)).not.toBeInTheDocument();
+    });
+
+    it.each([
+        [{ ranked: true, eloChange: 10, newElo: 1100 }, 'Has subido a Oro'],
+        [{ ranked: true, eloChange: -20, newElo: 1090 }, 'Has bajado a Plata'],
+    ] as const)('avisa del cambio de rango: %j', (eloUpdate, expectedText) => {
+        renderModal(eloUpdate);
+
+        expect(screen.getByText(expectedText)).toBeInTheDocument();
+    });
+
+    it('no avisa de cambio de rango si no lo hay', () => {
+        renderModal({ ranked: true, eloChange: 10, newElo: 1010 });
+        expect(screen.queryByText(/subido|bajado/i)).not.toBeInTheDocument();
+    });
+
+    it('la variación aparece dentro de una región aria-live que ya existía', () => {
+        const { rerender } = render(<GameOverModal result="win" eloUpdate={null} onCloseModal={vi.fn()} onExit={vi.fn()} />);
+        const region = document.querySelector('[aria-live="polite"]');
+
+        rerender(<GameOverModal result="win" eloUpdate={{ ranked: true, eloChange: 16, newElo: 1016 }} onCloseModal={vi.fn()} onExit={vi.fn()} />);
+
+        expect(region).not.toBeNull();
+        expect(region).toContainElement(screen.getByText('+16 ELO'));
     });
 });
