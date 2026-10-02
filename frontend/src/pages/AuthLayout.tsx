@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { Brand } from '../components/lobby/ui/Brand';
 import { ScrollPanel } from '../components/shared/ui/ScrollPanel';
 import lobbyStyles from '../components/lobby/Lobby.module.css';
 import '../components/game/theme.css';
+import { NavLinks } from '../components/lobby/ui/NavLinks';
 
 interface AuthLayoutProps {
     children: ReactNode;
@@ -17,7 +17,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
             <header className={lobbyStyles.header}>
                 <Brand />
                 <nav className={lobbyStyles.topNav} aria-label="Ayuda">
-                    <Link to="/rules" className={lobbyStyles.rulesLink}>📜 Reglas</Link>
+                    <NavLinks />
                 </nav>
             </header>
             <div className={lobbyStyles.content}>

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { MainMenu, type Tab } from './ui/MainMenu';
 import { CreateRoom } from './ui/CreateRoom';
 import { JoinRoom } from './ui/JoinRoom';
@@ -13,6 +12,8 @@ import { Brand } from './ui/Brand';
 import { ScrollPanel } from '../shared/ui/ScrollPanel';
 import { useLobbyScene } from '../shared/ui/sceneContext';
 import '../game/theme.css';
+import { NavLinks } from './ui/NavLinks';
+import { VerifyEmailNotice } from './ui/VerifyEmailNotice';
 
 // `prefix` se oculta en pantallas estrechas para que las tres pestañas quepan en una fila.
 const MAIN_TABS: { tab: Tab; prefix?: string; label: string }[] = [
@@ -75,13 +76,14 @@ export const Lobby: React.FC =  () => {
                         <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`} />
                         {isConnected ? 'Servidor online' : 'Conectando...'}
                     </span>
-                    <Link to="/rules" className={styles.rulesLink}>📜 Reglas</Link>
+                    {currentScreen !== 'WAITING' && <NavLinks />}
                     <AuthStatus />
                 </nav>
             </header>
 
             <div className={styles.content}>
                 <div className={styles.panelWrap}>
+                    <VerifyEmailNotice />
                     <ScrollPanel header={tabs}>
                         {/* ---PANTALLA PRINCIPAL --- */}
                         {currentScreen === 'MAIN' && (

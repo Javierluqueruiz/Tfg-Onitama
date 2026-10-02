@@ -2,10 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AuthStatus } from "./AuthStatus";
-import { AuthApi } from "../../../services/authApi";
 import { useAuth } from "../../../contexts/AuthContext";
 
-vi.mock('../../../services/authApi');
 vi.mock('../../../contexts/AuthContext');
 
 function mockUseAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
@@ -35,26 +33,22 @@ describe("AuthStatus", () => {
         expect(screen.queryByText('Jugando como invitado')).not.toBeInTheDocument();
     });
     
-    it('muestra el aviso de correo no verificado', () => {
+        it('con sesión muestra el nombre y cerrar sesión, sin avisos de verificación aunque el correo no esté verificado', () => {
         mockUseAuth({ isAuthenticated: true, user: { id: '123', username: 'testuser', emailVerified: false } });
         render(<MemoryRouter><AuthStatus /></MemoryRouter>);
-        expect(screen.getByRole('button', { name: 'Reenviar correo de verificación' })).toBeInTheDocument();
+
+        expect(screen.getByRole('link', { name: /testuser/ })).toHaveAttribute('href', '/profile');
+        expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /reenviar/i })).not.toBeInTheDocument();
     });
 
-    it('no muestra el aviso de correo no verificado si el correo está verificado', () => {
-        mockUseAuth({ isAuthenticated: true, user: { id: '123', username: 'testuser', emailVerified: true } });
+    it('cerrar sesión llama a logout', () => {
+        const logout = vi.fn();
+        mockUseAuth({ isAuthenticated: true, user: { id: '123', username: 'testuser', emailVerified: true }, logout });
         render(<MemoryRouter><AuthStatus /></MemoryRouter>);
-        expect(screen.queryByRole('button', { name: 'Reenviar correo de verificación' })).not.toBeInTheDocument();
-    });
 
-    it('reenvia el correo y muestra confirmación al pulsar el botón', async () => {
-        vi.mocked(AuthApi.resendVerificationEmail).mockResolvedValue({message: 'ok'});
-        mockUseAuth({ isAuthenticated: true, user: { id: '123', username: 'testuser', emailVerified: false } });
-        
-        render(<MemoryRouter><AuthStatus /></MemoryRouter>);
-        fireEvent.click(screen.getByRole('button', { name: 'Reenviar correo de verificación' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
 
-        expect(await screen.findByText('Correo de verificación reenviado')).toBeInTheDocument();
-        expect(AuthApi.resendVerificationEmail).toHaveBeenCalled();
+        expect(logout).toHaveBeenCalledTimes(1);
     });
 }); 

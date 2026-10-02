@@ -60,6 +60,15 @@
     transform: translateY(-2px);
 }
 
+/* Enlace de la página en la que estás (NavLink lo marca con aria-current). */
+.navActive,
+.navActive:hover {
+    background: var(--game-jade);
+    border-color: var(--game-jade);
+    color: var(--game-paper);
+    transform: none;
+}
+
 .serverPill,
 .authGuest {
     cursor: default;
@@ -214,6 +223,10 @@
 
     /* "Partida" sobra en móvil: "Pública / Privada / Contra IA" caben en una fila. */
     .tabPrefix {
+        display: none;
+    }
+
+    .navEmoji {
         display: none;
     }
 }
