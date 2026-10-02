@@ -1,6 +1,6 @@
 import { ChatMessage, GameMode, GameState, PlayerProfile, Winner, RoomSession, Position, AiDifficulty, AI_DIFFICULTY_LABELS, AiEngine, AI_ENGINE_LABELS } from "../../../shared";
 import { GameEngine } from "../game/GameEngine";
-import { GameResultService } from "./GameResultService";
+import { GameResultService, type MatchEloUpdates } from "./GameResultService";
 
 export class RoomManager {
 
@@ -11,6 +11,11 @@ export class RoomManager {
     //Sub-05.3
     private static gameTimers: Map<string, NodeJS.Timeout> = new Map();
 
+    private static matchRecordedListener: ((room: RoomSession, updates: MatchEloUpdates) => void) | null = null;
+    public static onMatchRecorded(listener: ((room: RoomSession, updates: MatchEloUpdates) => void) | null): void {
+        this.matchRecordedListener = listener;
+    }
+    
     public static DISCONNECT_TIMEOUT_MS = 30000;
 
     // Duración inicial del reloj por modo de juego, en segundos. 'casual' vale 0
@@ -118,8 +123,10 @@ export class RoomManager {
         if (room.resultPersisted) return;
         room.resultPersisted = true;
         this.stopGameTimer(room.roomId);
-        void GameResultService.recordMatchResult(room).catch(err => 
-            console.error(`Error al persistir el resultado de la partida en la sala ${room.roomId}:`, err)
+        void GameResultService.recordMatchResult(room)
+            .then((updates) => this.matchRecordedListener?.(room, updates))
+            .catch(err => 
+                console.error(`Error al persistir el resultado de la partida en la sala ${room.roomId}:`, err)
         );
     }
 

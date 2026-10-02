@@ -3,7 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SocketEvents, type ChatMessage } from '../../shared';
 import { createMockSocket } from './test-utils/mockSocket';
-import { buildReconnectPayload } from './test-utils/gameFixtures';
+import { buildGameState, buildPlayers, buildReconnectPayload } from './test-utils/gameFixtures';
 import { useSocket } from './contexts/SocketContext';
 import { useAuth } from './contexts/AuthContext';
 import { App } from './App';
@@ -72,5 +72,18 @@ describe('App: restauración de la sesión tras recargar la página', () => {
 
         expect(screen.getByText('Aún no hay mensajes')).toBeInTheDocument();
         expect(screen.queryByText(/te propone tablas/i)).not.toBeInTheDocument();
+    });
+    
+    it('el modal de fin de partida muestra la variación de ELO que envió el servidor', () => {
+        renderApp();
+        const finished = { ...buildGameState(), status: 'finished' as const, winner: 'blue' as const };
+        act(() => socket.trigger(SocketEvents.GAME_START, { gameState: finished, players: buildPlayers() }));
+        expect(screen.getByRole('dialog', { name: '¡Victoria!'})).toBeInTheDocument();
+        expect(screen.queryByText(/\d ELO/)).not.toBeInTheDocument();
+
+        act(() => socket.trigger(SocketEvents.ELO_UPDATED, { ranked: true, eloChange: 16, newElo: 1016 }));
+
+        expect(screen.getByText('+16 ELO')).toBeInTheDocument();
+        expect(screen.getByText('Nuevo ELO: 1016')).toBeInTheDocument();
     });
 });

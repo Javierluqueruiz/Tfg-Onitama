@@ -54,6 +54,9 @@ export enum SocketEvents {
 
     //Sub-07.1
     CHAT_UPDATE = 'chat_update',
+
+    //Sub-11.3
+    ELO_UPDATED = 'elo_updated',
 }
 
 export interface RoomSession {

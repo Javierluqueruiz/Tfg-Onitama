@@ -7,8 +7,10 @@ import { resolvePlayerIdentity } from "./playerIdentity";
 import { EloService } from "../game/EloService";
 import { AiTurnRunner } from "./AiTurnRunner";
 import { isCreateRoomPayload, isJoinRoomPayload, isJoinQueuePayload, isCreateAiRoomPayload, isDiscardCardPayload, isChatPayload } from "./payloadValidation";
+import { notifyEloUpdates } from "./eloNotifier";
 
 export function registerSocketEvents(io: Server) {
+    RoomManager.onMatchRecorded((room, updates) => notifyEloUpdates(io, room, updates));
     io.on('connection', (socket: Socket) => {
         console.log(`Usuario conectado: ${socket.id}`);
 

@@ -5,3 +5,4 @@ export * from './auth.types';
 export * from './profile.types';
 export * from './ranks';
 export * from './onitamaDeck';
+export * from './ranking.types';

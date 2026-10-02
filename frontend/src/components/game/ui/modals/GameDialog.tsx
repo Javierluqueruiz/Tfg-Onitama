@@ -9,6 +9,7 @@ interface GameDialogProps {
     seal: string;
     title: string;
     message: string;
+    detail?: React.ReactNode;
     // Se llama al pulsar Escape o al hacer clic fuera del cuadro.
     onDismiss: () => void;
     children: React.ReactNode;
@@ -22,7 +23,7 @@ const SEAL_CLASS: Record<DialogTone, string> = {
 
 // Marco común de los modales de la partida (fin de partida y rendición): sello con
 // kanji, título, mensaje y una fila de acciones. Cierra con Escape.
-export const GameDialog: React.FC<GameDialogProps> = ({ tone, seal, title, message, onDismiss, children }) => {
+export const GameDialog: React.FC<GameDialogProps> = ({ tone, seal, title, message, detail, onDismiss, children }) => {
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Escape') onDismiss();
@@ -43,6 +44,7 @@ export const GameDialog: React.FC<GameDialogProps> = ({ tone, seal, title, messa
                 <span className={`${styles.seal} ${SEAL_CLASS[tone]}`} aria-hidden="true">{seal}</span>
                 <h2 id="game-dialog-title" className={styles.dialogTitle}>{title}</h2>
                 <p className={styles.dialogText}>{message}</p>
+                {detail}
                 <div className={styles.dialogActions}>{children}</div>
             </div>
         </div>
