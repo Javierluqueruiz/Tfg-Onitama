@@ -210,7 +210,7 @@ describe('índice del ranking', () => {
     it('la consulta del top recorre el índice y no ordena en memoria', async () => {
         await User.init();
 
-        const plan = await RankingService.topQuery().explain('queryPlanner');
+        const plan = await RankingService.topQuery().explain('queryPlanner') as unknown as { queryPlanner: { winningPlan: unknown } };
 
         const winningPlan = JSON.stringify(plan.queryPlanner.winningPlan);
         expect(winningPlan).toContain('IXSCAN');
