@@ -134,6 +134,14 @@ function registerRoomEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
 
         if (room) {
+
+            if (room.gameState && room.gameState.status !== 'finished') {
+                const finalState = RoomManager.surrenderGame(room.roomId, socket.id);
+                if (finalState) {
+                    socket.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
+                }
+            }
+
             socket.leave(room.roomId);
 
             socket.to(room.roomId).emit(SocketEvents.ERROR, { message: 'El jugador ha abandonado la sala.' });

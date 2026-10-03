@@ -186,6 +186,17 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
 
         expect(error.message).toBe('No se encontró la sala o el juego ya ha terminado.');
     });
+
+    it("Test-03.8: El anfitrión puede salir de una sala que aún espera rival y la sala se cierra", async () => {
+        const { roomCode } = await new Promise<{ roomCode: string }>((resolve) => {
+            clientSocket1.on(SocketEvents.ROOM_CREATED, resolve);
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
+        });
+
+        clientSocket1.emit(SocketEvents.LEAVE_ROOM);
+
+        await vi.waitFor(() => expect(RoomManager.getRoomByCode(roomCode)).toBeUndefined());
+    });
 });
 
 
@@ -1002,6 +1013,30 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         expect(error.message).toBe('No hay ninguna revancha pendiente que aceptar.');
         await new Promise((resolve) => setTimeout(resolve, 100));
         expect(extraStart).not.toHaveBeenCalled();
+    });
+
+    it('Test-05.7a: Salir de la sala en mitad de una partida cuenta como rendición y el rival gana', async () => {
+        const rivalUpdate = new Promise<GameUpdatePayload>((resolve) => clientSocket2.once(SocketEvents.GAME_UPDATE, resolve));
+
+        clientSocket1.emit(SocketEvents.LEAVE_ROOM);
+
+        const { gameState } = await rivalUpdate;
+        expect(gameState.status).toBe('finished');
+        expect(gameState.winner).toBe(client2Color);
+        await vi.waitFor(() => expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined());
+    });
+
+    it('Test-05.7b: Salir de una partida ya terminada no la cambia ni genera otro resultado', async () => {
+        const finished = new Promise<void>((resolve) => clientSocket2.once(SocketEvents.GAME_UPDATE, () => resolve()));
+        clientSocket1.emit(SocketEvents.SURRENDER);
+        await finished;
+        const extraUpdate = vi.fn();
+        clientSocket1.on(SocketEvents.GAME_UPDATE, extraUpdate);
+
+        clientSocket2.emit(SocketEvents.LEAVE_ROOM);
+        await vi.waitFor(() => expect(RoomManager.getRoomById(activeRoomId)).toBeUndefined());
+
+        expect(extraUpdate).not.toHaveBeenCalled();
     });
 });
 

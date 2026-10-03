@@ -195,5 +195,18 @@ describe('Persistencia del resultado de la partida (Sub-09.1)', () => {
         const { players } = await rematchStart;
         expect([players.red.elo, players.blue.elo].sort((a, b) => a! - b!)).toEqual([984, 1016]);
     });
+
+    it('salir de la sala en mitad de una partida clasificatoria cuenta como derrota (Sub-11.3)', async () => {
+        const hostUser = await User.create({ username: 'HostPlayer', email: 'host@example.com', passwordHash: 'hashedpassword' });
+        const guestUser = await User.create({ username: 'GuestPlayer', email: 'guest@example.com', passwordHash: 'hashedpassword' });
+        await startGame(AuthService.signToken(hostUser), AuthService.signToken(guestUser));
+        const hostUpdate = nextEloUpdate(hostSocket);
+        const guestUpdate = nextEloUpdate(guestSocket);
+
+        hostSocket.emit(SocketEvents.LEAVE_ROOM);
+
+        expect(await hostUpdate).toEqual({ ranked: true, eloChange: -16, newElo: 984 });
+        expect(await guestUpdate).toEqual({ ranked: true, eloChange: 16, newElo: 1016 });
+    });
     
 });
