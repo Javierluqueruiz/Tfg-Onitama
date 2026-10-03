@@ -15,6 +15,14 @@ export class RoomManager {
     public static onMatchRecorded(listener: ((room: RoomSession, updates: MatchEloUpdates) => void) | null): void {
         this.matchRecordedListener = listener;
     }
+
+    private static applyEloUpdates(room: RoomSession, updates: MatchEloUpdates): void {
+        for (const color of ['red', 'blue'] as const) {
+            const player = room.players[color];
+            const update = updates[color];
+            if (player && update.ranked) player.elo = update.newElo;
+        }
+    }
     
     public static DISCONNECT_TIMEOUT_MS = 30000;
 
@@ -124,7 +132,10 @@ export class RoomManager {
         room.resultPersisted = true;
         this.stopGameTimer(room.roomId);
         void GameResultService.recordMatchResult(room)
-            .then((updates) => this.matchRecordedListener?.(room, updates))
+            .then((updates) => {
+                this.applyEloUpdates(room, updates);
+                this.matchRecordedListener?.(room, updates);
+            })
             .catch(err => 
                 console.error(`Error al persistir el resultado de la partida en la sala ${room.roomId}:`, err)
         );

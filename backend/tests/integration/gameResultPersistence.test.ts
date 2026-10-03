@@ -8,7 +8,7 @@ import { registerSocketEvents } from '../../src/network/SocketHandler';
 import { registerSocketAuth } from '../../src/network/socketAuth';
 import { User } from '../../src/auth/User.model';
 import { AuthService } from '../../src/auth/authService';
-import { SocketEvents, type EloUpdate } from '../../../shared';
+import { SocketEvents, type EloUpdate, type PlayerProfile  } from '../../../shared';
 import type { AddressInfo } from 'net';
 import { RoomManager } from '../../src/network/RoomManager';
 
@@ -173,6 +173,27 @@ describe('Persistencia del resultado de la partida (Sub-09.1)', () => {
         expect(error.message).toBe('No puedes unirte a tu propia sala.');
         const room = RoomManager.getRoomByCode(roomCode);
         expect([room?.players.red, room?.players.blue].filter(Boolean).length).toBe(1);
+    });
+
+    it('la revancha empieza con el ELO ya actualizado de los dos jugadores (Sub-11.3)', async () => {
+        const hostUser = await User.create({ username: 'HostPlayer', email: 'host@example.com', passwordHash: 'hashedpassword' });
+        const guestUser = await User.create({ username: 'GuestPlayer', email: 'guest@example.com', passwordHash: 'hashedpassword' });
+        await startGame(AuthService.signToken(hostUser), AuthService.signToken(guestUser));
+        const hostUpdate = nextEloUpdate(hostSocket);
+        const guestUpdate = nextEloUpdate(guestSocket);
+        hostSocket.emit(SocketEvents.SURRENDER);
+        await Promise.all([hostUpdate, guestUpdate]);
+
+        const rematchStart = new Promise<{ players: { red: PlayerProfile; blue: PlayerProfile } }>((resolve) =>
+            guestSocket.once(SocketEvents.GAME_START, resolve)
+        );
+        const offered = new Promise<void>((resolve) => guestSocket.once(SocketEvents.REMATCH_OFFERED, () => resolve()));
+        hostSocket.emit(SocketEvents.OFFER_REMATCH);
+        await offered;
+        guestSocket.emit(SocketEvents.ACCEPT_REMATCH);
+
+        const { players } = await rematchStart;
+        expect([players.red.elo, players.blue.elo].sort((a, b) => a! - b!)).toEqual([984, 1016]);
     });
     
 });
