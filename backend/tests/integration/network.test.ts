@@ -160,6 +160,32 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
         });
     });
 
+    it("Test-03.6: Si el anfitrión se desconecta antes de que se una nadie, la sala se cierra", async () => {
+        const { roomCode } = await new Promise<{ roomCode: string }>((resolve) => {
+            clientSocket1.on(SocketEvents.ROOM_CREATED, resolve);
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
+        });
+
+        expect(RoomManager.getRoomByCode(roomCode)).toBeDefined();
+
+        clientSocket1.disconnect();
+
+        await vi.waitFor(() => expect(RoomManager.getRoomByCode(roomCode)).toBeUndefined());
+    });
+
+    it("Test-03.7: Aceptar un empate en una sala que aún espera rival se rechaza con un error", async () => {
+        await new Promise<void>((resolve) => {
+            clientSocket1.on(SocketEvents.ROOM_CREATED, resolve);
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
+        });
+
+        const error = await new Promise<ErrorPayload>((resolve) => {
+            clientSocket1.on(SocketEvents.ERROR, resolve);
+            clientSocket1.emit(SocketEvents.ACCEPT_DRAW);
+        });
+
+        expect(error.message).toBe('No se encontró la sala o el juego ya ha terminado.');
+    });
 });
 
 
@@ -916,6 +942,66 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
 
         expect(data1.gameState.status).not.toBe('finished');
         expect(data2.gameState.status).not.toBe('finished');
+    });
+
+    it('Test-05.6a: Aceptar una revancha que nadie ha ofrecido se rechaza y no reinicia la partida', async () => {
+        const stateBefore = RoomManager.getRoomById(activeRoomId)!.gameState;
+
+        const error = await new Promise<ErrorPayload>((resolve) => {
+            clientSocket2.once(SocketEvents.ERROR, resolve);
+            clientSocket2.emit(SocketEvents.ACCEPT_REMATCH);
+        });
+
+        expect(error.message).toBe('No hay ninguna revancha pendiente que aceptar.');
+        expect(RoomManager.getRoomById(activeRoomId)!.gameState).toBe(stateBefore);
+    });
+
+    it('Test-05.6b: Un jugador no puede aceptar su propia oferta de revancha', async () => {
+        const offered = new Promise<void>((resolve) => clientSocket2.once(SocketEvents.REMATCH_OFFERED, () => resolve()));
+        clientSocket1.emit(SocketEvents.OFFER_REMATCH);
+        await offered;
+        const stateBefore = RoomManager.getRoomById(activeRoomId)!.gameState;
+
+        const error = await new Promise<ErrorPayload>((resolve) => {
+            clientSocket1.once(SocketEvents.ERROR, resolve);
+            clientSocket1.emit(SocketEvents.ACCEPT_REMATCH);
+        });
+
+        expect(error.message).toBe('No hay ninguna revancha pendiente que aceptar.');
+        expect(RoomManager.getRoomById(activeRoomId)!.gameState).toBe(stateBefore);
+    });
+
+    it('Test-05.6c: Rechazar una revancha que nadie ha ofrecido no cierra la sala', async () => {
+        const rejected = vi.fn();
+        clientSocket1.on(SocketEvents.REMATCH_REJECTED, rejected);
+
+        const error = await new Promise<ErrorPayload>((resolve) => {
+            clientSocket2.once(SocketEvents.ERROR, resolve);
+            clientSocket2.emit(SocketEvents.REJECT_REMATCH);
+        });
+
+        expect(error.message).toBe('No hay ninguna revancha pendiente que rechazar.');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(rejected).not.toHaveBeenCalled();
+        expect(RoomManager.roomExists(activeRoomId)).toBe(true);
+    });
+
+    it('Test-05.6d: Una revancha ya iniciada no se puede aceptar una segunda vez', async () => {
+        const started = new Promise<void>((resolve) => clientSocket1.once(SocketEvents.GAME_START, () => resolve()));
+        clientSocket2.once(SocketEvents.REMATCH_OFFERED, () => clientSocket2.emit(SocketEvents.ACCEPT_REMATCH));
+        clientSocket1.emit(SocketEvents.OFFER_REMATCH);
+        await started;
+        const extraStart = vi.fn();
+        clientSocket1.on(SocketEvents.GAME_START, extraStart);
+
+        const error = await new Promise<ErrorPayload>((resolve) => {
+            clientSocket2.once(SocketEvents.ERROR, resolve);
+            clientSocket2.emit(SocketEvents.ACCEPT_REMATCH);
+        });
+
+        expect(error.message).toBe('No hay ninguna revancha pendiente que aceptar.');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(extraStart).not.toHaveBeenCalled();
     });
 });
 
