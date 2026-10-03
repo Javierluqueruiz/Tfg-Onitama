@@ -88,6 +88,26 @@
 .dotConnected { background-color: var(--game-jade); box-shadow: 0 0 0 3px rgba(63, 109, 87, 0.22); }
 .dotDisconnected { background-color: var(--game-red); box-shadow: 0 0 0 3px rgba(168, 80, 58, 0.22); }
 
+/* Con conexión: solo el punto, sin píldora. */
+.serverOk {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+}
+
+/* Texto solo para lectores de pantalla. */
+.srOnly {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 /*FEAT-08*/
 .authStatus {
     display: contents;
@@ -198,7 +218,7 @@
     }
 
     .topNav {
-        justify-content: flex-start;
+        justify-content: flex-end;
     }
 
     .navPill,
@@ -228,5 +248,13 @@
 
     .navEmoji {
         display: none;
+    }
+
+    .authStatus {
+        display: flex;
+        flex-basis: 100%;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
     }
 }
