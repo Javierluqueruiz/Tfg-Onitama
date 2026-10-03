@@ -145,6 +145,21 @@ describe('FEAT-03: Gestión de Salas Privadas (WebSockets)', () => {
         });
     });
 
+    it("Test-03.5: Debe rechazar que el anfitrión se una a su propia sala con la misma conexión", () => {
+        return new Promise<void>((resolve) => {
+            clientSocket1.on(SocketEvents.ROOM_CREATED, (data) => {
+                clientSocket1.emit(SocketEvents.JOIN_ROOM, { roomCode: data.roomCode, guestName: 'Player1' });
+            });
+
+            clientSocket1.on(SocketEvents.ERROR, (error) => {
+                expect(error.message).toBe('No puedes unirte a tu propia sala.');
+                resolve();
+            });
+
+            clientSocket1.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player1', mode: 'casual' });
+        });
+    });
+
 });
 
 

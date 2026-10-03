@@ -77,6 +77,10 @@ function registerRoomEvents(io: Server, socket: Socket) {
         if(RoomManager.hasAiPlayer(room)) {
             return socket.emit(SocketEvents.ERROR, { message: 'La sala está llena.' });
         }
+        const host = room.players.red ?? room.players.blue;
+        if (host && (host.socketId === socket.id || (guestProfile.userId && guestProfile.userId === host.userId))) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No puedes unirte a tu propia sala.' });
+        }
 
         const roomId = room.roomId;
 

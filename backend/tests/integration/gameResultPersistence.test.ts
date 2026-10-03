@@ -10,6 +10,7 @@ import { User } from '../../src/auth/User.model';
 import { AuthService } from '../../src/auth/authService';
 import { SocketEvents, type EloUpdate } from '../../../shared';
 import type { AddressInfo } from 'net';
+import { RoomManager } from '../../src/network/RoomManager';
 
 describe('Persistencia del resultado de la partida (Sub-09.1)', () => {
     let mongoServer: MongoMemoryServer;
@@ -147,4 +148,31 @@ describe('Persistencia del resultado de la partida (Sub-09.1)', () => {
         expect(await guestUpdate).toEqual({ ranked: false });
     });
 
+    it('rechaza que una cuenta se una a su propia sala desde otra conexión, y no empieza la partida', async () => {
+        const user = await User.create({ username: 'Player', email: 'player@example.com', passwordHash: 'hashedpassword' });
+        const token = AuthService.signToken(user);
+        const connect = () => ioClient(`http://localhost:${port}`, { extraHeaders: { Cookie: `token=${token}` } });
+        hostSocket = connect();
+        guestSocket = connect();
+
+        await Promise.all([
+            new Promise<void>((resolve) => hostSocket.on('connect', () => resolve())),
+            new Promise<void>((resolve) => guestSocket.on('connect', () => resolve())),
+        ]);
+
+        const { roomCode } = await new Promise<{ roomCode: string }>((resolve) => {
+            hostSocket.on(SocketEvents.ROOM_CREATED, (data) => resolve(data));
+            hostSocket.emit(SocketEvents.CREATE_ROOM, { hostName: 'Player', mode: 'casual' });
+        });
+
+        const error = await new Promise<{ message: string }>((resolve) => {
+            guestSocket.on(SocketEvents.ERROR, resolve);
+            guestSocket.emit(SocketEvents.JOIN_ROOM, { roomCode, guestName: 'Player' });
+        });
+
+        expect(error.message).toBe('No puedes unirte a tu propia sala.');
+        const room = RoomManager.getRoomByCode(roomCode);
+        expect([room?.players.red, room?.players.blue].filter(Boolean).length).toBe(1);
+    });
+    
 });

@@ -243,5 +243,19 @@ describe('GameResultService.recordMatchResult', () => {
 
             expect(updates).toEqual(unranked);
         });
+
+        it('una cuenta que juega contra sí misma no puntúa y no se guarda nada', async () => {
+            const findById = vi.spyOn(User, 'findById');
+
+            const updates = await GameResultService.recordMatchResult(createRoom({
+                players: {
+                    red: { socketId: 'redSocket', name: 'RedPlayer', userId: 'sameId' },
+                    blue: { socketId: 'blueSocket', name: 'RedPlayer', userId: 'sameId' },
+                },
+            }));
+            
+            expect(updates).toEqual(unranked);
+            expect(findById).not.toHaveBeenCalled();
+        });
     });
 });
