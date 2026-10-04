@@ -174,6 +174,7 @@ export class MatchmakingService {
     }
 
     private static canMatch(entryA: InternalQueueEntry, entryB: InternalQueueEntry): boolean {
+        if (entryA.userId && entryB.userId && entryA.userId === entryB.userId) return false;
         const diff = Math.abs(entryA.elo - entryB.elo);
         return diff <= Math.min(this.getTolerance(entryA), this.getTolerance(entryB)); 
     }

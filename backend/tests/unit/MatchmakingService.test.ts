@@ -119,6 +119,55 @@ describe("MatchmakingService (Sub-09.2)", () => {
         expect(roomE1500).toBeUndefined();
     });
 
+    it('una cuenta no se empareja consigo misma', () => {
+        const ventana1 = makeEntry({ name: 'Jugador', elo: 1000, userId: 'user1' });
+        MatchmakingService.joinQueue(ventana1, 'casual');
+
+        const ventana2 = makeEntry({ name: 'Jugador', elo: 1000, userId: 'user1' });
+        const result = MatchmakingService.joinQueue(ventana2, 'casual');
+
+        expect(result.matchFound).toBe(false);
+        expect(RoomManager.getRoomBySocketId(ventana1.socketId)).toBeUndefined();
+    });
+
+    it('el barrido tampoco la empareja consigo misma', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+        const ventana1 = makeEntry({ name: 'Jugador', elo: 1000, userId: 'user1' });
+        const ventana2 = makeEntry({ name: 'Jugador', elo: 1000, userId: 'user1' });
+        MatchmakingService.joinQueue(ventana1, 'casual');
+        MatchmakingService.joinQueue(ventana2, 'casual');
+
+        vi.setSystemTime(new Date('2026-01-01T00:00:10Z'));
+        MatchmakingService.runMatchmakingSweep();
+
+        expect(RoomManager.getRoomBySocketId(ventana1.socketId)).toBeUndefined();
+        expect(RoomManager.getRoomBySocketId(ventana2.socketId)).toBeUndefined();
+    });
+
+    it('que haya dos conexiones de la misma cuneta no impide que se empareje con otra cuenta distinta', () => {
+        const ventana1 = makeEntry({ name: 'Jugador', elo: 1000, userId: 'user1' });
+        const ventana2 = makeEntry({ name: 'Jugador', elo: 1000, userId: 'user1' });
+        MatchmakingService.joinQueue(ventana1, 'casual');
+        MatchmakingService.joinQueue(ventana2, 'casual');
+
+        const otra = makeEntry({ name: 'OtraCuenta', elo: 1000, userId: 'user2' });
+        const result = MatchmakingService.joinQueue(otra, 'casual');
+
+        expect(result.matchFound).toBe(true);
+        expect(result.opponentId).toBe(ventana1.socketId);
+    });
+
+    it('dos invitados si pueden emparejar entre sí', () => {
+        const invitado1 = makeEntry({ name: 'Invitado1', elo: 1000 });
+        MatchmakingService.joinQueue(invitado1, 'casual');
+
+        const invitado2 = makeEntry({ name: 'Invitado2', elo: 1000});
+        const result = MatchmakingService.joinQueue(invitado2, 'casual');
+
+        expect(result.matchFound).toBe(true);
+    });
+
     it('el ELO de un invitado nunca llega al PlayerProfile de la sala, aunque sirva para emparejarlo', () => {
         const invitado1 = makeEntry({ name: 'Invitado1', elo: 1000 });
         MatchmakingService.joinQueue(invitado1, 'casual');

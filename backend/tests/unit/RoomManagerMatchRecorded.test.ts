@@ -84,4 +84,46 @@ describe('RoomManager.onMatchRecorded', () => {
         expect(first).not.toHaveBeenCalled();
     });
 
+    it('actualiza el ELO de los perfiles de la sala con el resultado de la partida', async () => {
+        vi.spyOn(GameResultService, 'recordMatchResult').mockResolvedValue(updates);
+        const listener = vi.fn();
+        RoomManager.onMatchRecorded(listener);
+        const room = createRoom();
+        room.players.red!.elo = 1000;
+        room.players.blue!.elo = 1000;
+
+        RoomManager.surrenderGame(room.roomId, 'host-socket');
+
+        await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(1));
+        expect(room.players.red!.elo).toBe(1016);
+        expect(room.players.blue!.elo).toBe(984);
+    });
+
+    it('ya están actualizadas cuando se avisa al listener, para que quien lo reciba no vea el ELO antiguo', async () => {
+        vi.spyOn(GameResultService, 'recordMatchResult').mockResolvedValue(updates);
+        let redEloAlAvisar: number | undefined;
+        RoomManager.onMatchRecorded((room) => { redEloAlAvisar = room.players.red?.elo; });
+        const room = createRoom();
+        room.players.red!.elo = 1000;
+        room.players.blue!.elo = 1000;
+
+        RoomManager.surrenderGame(room.roomId, 'host-socket');
+
+        await vi.waitFor(() => expect(redEloAlAvisar).toBe(1016));
+    });
+
+    it('no toca el ELO de los perfiles si la partida no puntúa', async () => {
+        vi.spyOn(GameResultService, 'recordMatchResult').mockResolvedValue({ red: { ranked: false }, blue: { ranked: false } });
+        const listener = vi.fn();
+        RoomManager.onMatchRecorded(listener);
+        const room = createRoom();
+        room.players.red!.elo = 1000;
+        room.players.blue!.elo = 1000;
+
+        RoomManager.surrenderGame(room.roomId, 'host-socket');
+
+        await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(1));
+        expect(room.players.red!.elo).toBe(1000);
+        expect(room.players.blue!.elo).toBe(1000);
+    });
 });

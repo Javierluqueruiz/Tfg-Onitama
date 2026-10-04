@@ -17,6 +17,8 @@ export class GameResultService {
         const winner = room.gameState.winner;
         if (!winner) return unranked();
 
+        if (red?.userId && blue?.userId && red.userId === blue.userId) return unranked(); 
+
         const redResult: MatchResult = winner === 'red' ? 'win' : winner === 'blue' ? 'loss' : 'draw';
         const blueResult: MatchResult = winner === 'blue' ? 'win' : winner === 'red' ? 'loss' : 'draw';
 
