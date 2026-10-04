@@ -14,6 +14,7 @@ import { useLobbyScene } from '../shared/ui/sceneContext';
 import '../game/theme.css';
 import { NavLinks } from './ui/NavLinks';
 import { VerifyEmailNotice } from './ui/VerifyEmailNotice';
+import { ServerStatus } from './ui/ServerStatus';
 
 // `prefix` se oculta en pantallas estrechas para que las tres pestañas quepan en una fila.
 const MAIN_TABS: { tab: Tab; prefix?: string; label: string }[] = [
@@ -72,10 +73,7 @@ export const Lobby: React.FC =  () => {
             <header className={styles.header}>
                 <Brand reload />
                 <nav className={styles.topNav} aria-label="Cuenta y ayuda">
-                    <span className={styles.serverPill} role="status">
-                        <span className={`${styles.dot} ${isConnected ? styles.dotConnected : styles.dotDisconnected}`} />
-                        {isConnected ? 'Servidor online' : 'Conectando...'}
-                    </span>
+                    <ServerStatus isConnected={isConnected} />
                     {currentScreen !== 'WAITING' && <NavLinks />}
                     <AuthStatus />
                 </nav>

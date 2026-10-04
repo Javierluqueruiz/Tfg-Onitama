@@ -77,6 +77,10 @@ function registerRoomEvents(io: Server, socket: Socket) {
         if(RoomManager.hasAiPlayer(room)) {
             return socket.emit(SocketEvents.ERROR, { message: 'La sala está llena.' });
         }
+        const host = room.players.red ?? room.players.blue;
+        if (host && (host.socketId === socket.id || (guestProfile.userId && guestProfile.userId === host.userId))) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No puedes unirte a tu propia sala.' });
+        }
 
         const roomId = room.roomId;
 
@@ -130,6 +134,14 @@ function registerRoomEvents(io: Server, socket: Socket) {
         const room = RoomManager.getRoomBySocketId(socket.id);
 
         if (room) {
+
+            if (room.gameState && room.gameState.status !== 'finished') {
+                const finalState = RoomManager.surrenderGame(room.roomId, socket.id);
+                if (finalState) {
+                    socket.to(room.roomId).emit(SocketEvents.GAME_UPDATE, { gameState: finalState });
+                }
+            }
+
             socket.leave(room.roomId);
 
             socket.to(room.roomId).emit(SocketEvents.ERROR, { message: 'El jugador ha abandonado la sala.' });
@@ -223,8 +235,14 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
         const timeLimit = RoomManager.DISCONNECT_TIMEOUT_MS; // 30 segundos
         //Sub-05.2
         const room = RoomManager.getRoomBySocketId(socket.id);
+        if (!room) return;
 
-        if (!room || room.gameState.status === 'finished') return;
+        if (!room.gameState ) {
+            RoomManager.deleteRoom(room.roomId);
+            return;
+        }
+
+        if (room.gameState.status === 'finished') return;
 
         io.to(room.roomId).emit(SocketEvents.OPPONENT_DISCONNECTED, {
             message: 'El oponente se ha desconectado. Esperando reconexión...',
@@ -344,7 +362,7 @@ function registerDrawEvents(io: Server, socket: Socket) {
     socket.on(SocketEvents.ACCEPT_DRAW, () => {
         const room = RoomManager.getRoomBySocketId(socket.id);
 
-        if (!room || room.gameState.status === 'finished') {
+        if (!room || !room.gameState || room.gameState.status === 'finished') {
             return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala o el juego ya ha terminado.' });
         }
 
@@ -415,18 +433,22 @@ function registerRematchEvents(io: Server, socket: Socket) {
     });
 
     socket.on(SocketEvents.REJECT_REMATCH, () => {
-        const roomId = RoomManager.getRoomBySocketId(socket.id)?.roomId;
-        if (roomId) {
-            socket.to(roomId).emit(SocketEvents.REMATCH_REJECTED);
-            RoomManager.deleteRoom(roomId);
+        const room = RoomManager.getRoomBySocketId(socket.id);
+        if (!hasPendingRematchOffer(room, socket.id)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No hay ninguna revancha pendiente que rechazar.' });
         }
+
+        socket.to(room.roomId).emit(SocketEvents.REMATCH_REJECTED);
+        RoomManager.deleteRoom(room.roomId);
     });
 
     socket.on(SocketEvents.ACCEPT_REMATCH, () => {
-        const room  = RoomManager.getRoomBySocketId(socket.id);
-        if (room) {
-            startRematch(io, room);
-        }    
+        const room = RoomManager.getRoomBySocketId(socket.id);
+        if (!hasPendingRematchOffer(room, socket.id)) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No hay ninguna revancha pendiente que aceptar.' });
+        }
+
+        startRematch(io, room);
     });
 }
 
@@ -445,6 +467,10 @@ function startRematch(io: Server, room: RoomSession) {
         }
         AiTurnRunner.maybePlayTurn(io, room.roomId); // Sub-14.3
     }
+}
+
+function hasPendingRematchOffer(room: RoomSession | undefined, socketId: string): room is RoomSession {
+    return Boolean(room && room.rematchOfferedBy && room.rematchOfferedBy !== socketId);
 }
 
 //FEAT-07
