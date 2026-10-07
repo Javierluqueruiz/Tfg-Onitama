@@ -127,3 +127,48 @@ describe('RoomManager.onMatchRecorded', () => {
         expect(room.players.blue!.elo).toBe(1000);
     });
 });
+
+//Un asiento solo lo recupera quien lo ocupó: mismo socket anterior y misma identidad (cuenta o invitado)
+describe('RoomManager.reconnectPlayer: identidad', () => {
+    beforeEach(() => {
+        RoomManager.clearActiveRooms();
+    });
+
+    const createRoomWithHost = (hostUserId?: string) => {
+        const room = RoomManager.createRoom({ socketId: 'host-old', name: 'Host', userId: hostUserId }, 'casual');
+        const guest: PlayerProfile = { socketId: 'guest', name: 'Guest' };
+        if (room.players.red) {
+            room.players.blue = guest;
+        } else {
+            room.players.red = guest;
+        }
+        return room;
+    };
+
+    const hostSeat = (room: ReturnType<typeof createRoomWithHost>) =>
+        room.players.red?.name === 'Host' ? room.players.red : room.players.blue;
+
+    // Evita romper la reconexión legítima (el invitado sigue siendo invitado, la cuenta sigue siendo la misma).
+    it.each([undefined, 'user-1'])('acepta la reconexión con la misma identidad (userId: %s)', (userId) => {
+        const room = createRoomWithHost(userId);
+
+        const result = RoomManager.reconnectPlayer(room.roomId, 'host-old', 'host-new', userId);
+
+        expect(result).not.toBeNull();
+        expect(hostSeat(room)?.socketId).toBe('host-new');
+    });
+
+    // Evita tu bug: cambiar de identidad no hereda la partida del perfil anterior.
+    it.each([
+        { caso: 'un invitado que ha iniciado sesión', seatUserId: undefined, socketUserId: 'user-1' },
+        { caso: 'una cuenta que ha cerrado sesión', seatUserId: 'user-1', socketUserId: undefined },
+        { caso: 'otra cuenta distinta', seatUserId: 'user-1', socketUserId: 'user-2' },
+    ])('rechaza la reconexión de $caso y no toca el asiento', ({ seatUserId, socketUserId }) => {
+        const room = createRoomWithHost(seatUserId);
+
+        const result = RoomManager.reconnectPlayer(room.roomId, 'host-old', 'host-new', socketUserId);
+
+        expect(result).toBeNull();
+        expect(hostSeat(room)?.socketId).toBe('host-old');
+    });
+});

@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // viaja en la respuesta de esa llamada -- evita tener que volver a pedir
     // /me solo para refrescar el estado local.
     const updateUser = (updatedUser: AuthUser) => {
-        setUser(updatedUser);
+        setUser((current) => (current?.id === updatedUser.id ? updatedUser : current));
     };
 
     return (

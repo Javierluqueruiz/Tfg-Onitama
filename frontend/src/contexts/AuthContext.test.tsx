@@ -107,4 +107,41 @@ describe("AuthContext", () => {
         expect(AuthApi.login).not.toHaveBeenCalled();
         expect(result.current.isAuthenticated).toBe(false);
     });
+
+    it('updateUser refresca los datos de la cuenta que ya está autenticada', async () => {
+        vi.mocked(AuthApi.me).mockResolvedValueOnce({ id: '123', username: 'testuser', emailVerified: false });
+
+        const { result } = renderHook(() => useAuth(), { wrapper });
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        act(() => {
+            result.current.updateUser({ id: '123', username: 'testuser', emailVerified: true });
+        });
+
+        expect(result.current.user).toEqual({ id: '123', username: 'testuser', emailVerified: true });
+    });
+
+    it('updateUser no inicia sesión por sí solo si no hay una cuenta autenticada', async () => {
+        const { result } = renderHook(() => useAuth(), { wrapper });
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        act(() => {
+            result.current.updateUser({ id: '123', username: 'testuser', emailVerified: true });
+        });
+
+        expect(result.current.isAuthenticated).toBe(false);
+    });
+
+    it('updateUser ignora los datos de otra cuenta distinta a la autenticada', async () => {
+        vi.mocked(AuthApi.me).mockResolvedValueOnce({ id: '999', username: 'otra', emailVerified: true });
+
+        const { result } = renderHook(() => useAuth(), { wrapper });
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        act(() => {
+            result.current.updateUser({ id: '123', username: 'testuser', emailVerified: true });
+        });
+
+        expect(result.current.user).toEqual({ id: '999', username: 'otra', emailVerified: true });
+    });
 });

@@ -53,6 +53,12 @@ export const useLobby = () => {
         socket?.emit(SocketEvents.CREATE_AI_ROOM, { engine, difficulty });
     };
 
+    const handleCancelWaiting = () => {
+        socket?.emit(SocketEvents.LEAVE_ROOM);
+        setErrorMsg(null);
+        setCurrentScreen('MAIN');
+    };
+
     return {
         isConnected,
         currentScreen,
@@ -70,6 +76,7 @@ export const useLobby = () => {
         handleJoinRoom,
         startMatchmaking,
         startAiGame,
+        handleCancelWaiting,
         setSelectMode
     };
 };

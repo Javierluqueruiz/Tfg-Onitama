@@ -19,7 +19,10 @@ export const MatchmakingRoom: React.FC<MatchmakingRoomProps> = ({ onCancel, onMa
     useEffect(() => {
         if (!socket) return;
 
-        socket.emit(SocketEvents.JOIN_QUEUE, { mode });
+        const joinQueue = () => socket.emit(SocketEvents.JOIN_QUEUE, { mode });
+        joinQueue();
+        // Si la conexión se cae y vuelve, el servidor ya te ha sacado de la cola al desconectarte.
+        socket.on('connect', joinQueue);
 
         socket.on(SocketEvents.MATCH_FOUND, (payload: MatchFoundPayload) => {
             onMatchFound(payload.roomId, payload.roomCode);
@@ -33,6 +36,7 @@ export const MatchmakingRoom: React.FC<MatchmakingRoomProps> = ({ onCancel, onMa
             clearInterval(timer);
             socket.emit(SocketEvents.LEAVE_QUEUE);
             socket.off(SocketEvents.MATCH_FOUND);
+            socket.off('connect', joinQueue);
         };
     }, [socket, mode, onMatchFound]);
 

@@ -14,10 +14,10 @@ export const VerifyEmailPage = () => {
     const token = searchParams.get('token');
     const [status, setStatus] = useState<VerifyEmailStatus>(token ? 'loading' : 'error');
     const [errorMessage, setErrorMessage] = useState<string>(token ? '' : 'Token de verificación no proporcionado.');
-    const { updateUser } = useAuth();
+    const { updateUser, isLoading } = useAuth();
 
     useEffect(() => {
-        if (!token) {
+        if (!token || isLoading) {
             return;
         }
 
@@ -35,7 +35,7 @@ export const VerifyEmailPage = () => {
                 setErrorMessage(err instanceof Error ? err.message : 'Error desconocido al verificar el correo electrónico.');
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [token]);
+    }, [token, isLoading]);
 
     return(
         <AuthLayout>
