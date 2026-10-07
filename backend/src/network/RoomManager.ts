@@ -167,7 +167,7 @@ export class RoomManager {
     }
 
     //Sub-05.2: Reconexión
-    public static reconnectPlayer(roomId: string, oldSocketId: string, newSocketId: string): RoomSession | null {
+    public static reconnectPlayer(roomId: string, oldSocketId: string, newSocketId: string, userId?: string): RoomSession | null {
         const room = this.getRoomById(roomId);
 
         // No se bloquea la reconexión si la partida ya ha finalizado: las salas se mantienen en memoria
@@ -175,9 +175,9 @@ export class RoomManager {
         // poder ver el resultado, el chat y una posible oferta de revancha o empate pendiente.
         if (!room) return null;
 
-        if (room.players.red?.socketId === oldSocketId) {
+        if (room.players.red?.socketId === oldSocketId && room.players.red.userId === userId) {
             room.players.red.socketId = newSocketId;
-        } else if (room.players.blue?.socketId === oldSocketId) {
+        } else if (room.players.blue?.socketId === oldSocketId && room.players.blue.userId === userId) {
             room.players.blue.socketId = newSocketId;
         } else {
             return null;

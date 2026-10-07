@@ -907,6 +907,34 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
         expect(RoomManager.roomExists(activeRoomId)).toBe(true);
     });
 
+        // Evita que un cliente modificado fuerce un empate (y se libre de una derrota de ELO) sin que el rival lo haya ofrecido.
+    it('Test-05.4c: Aceptar un empate que nadie ha ofrecido se rechaza y la partida continúa', async () => {
+        const error = await new Promise<ErrorPayload>((resolve) => {
+            clientSocket2.on(SocketEvents.ERROR, resolve);
+            clientSocket2.emit(SocketEvents.ACCEPT_DRAW);
+        });
+
+        expect(error.message).toBe('No hay ninguna oferta de empate pendiente.');
+        expect(RoomManager.getRoomById(activeRoomId)?.gameState.status).not.toBe('finished');
+    });
+
+    // Evita que quien ofrece tablas se las acepte a sí mismo.
+    it('Test-05.4d: Quien ofrece el empate no puede aceptarlo él mismo', async () => {
+        const offerDrawPromise = new Promise<void>((resolve) => {
+            clientSocket2.on(SocketEvents.OFFER_DRAW, () => resolve());
+        });
+        clientSocket1.emit(SocketEvents.OFFER_DRAW);
+        await offerDrawPromise;
+
+        const error = await new Promise<ErrorPayload>((resolve) => {
+            clientSocket1.on(SocketEvents.ERROR, resolve);
+            clientSocket1.emit(SocketEvents.ACCEPT_DRAW);
+        });
+
+        expect(error.message).toBe('No hay ninguna oferta de empate pendiente.');
+        expect(RoomManager.getRoomById(activeRoomId)?.gameState.status).not.toBe('finished');
+    });
+
     it('Test-05.5a: Debe notificar el rechazo de una revancha y eliminar la sala', async () => {
                 
         const offerPromise = new Promise<void>((resolve) => {
@@ -1027,7 +1055,9 @@ describe('FEAT-05: Resoluciones alternativas de partida', () => {
     });
 
     it('Test-05.7b: Salir de una partida ya terminada no la cambia ni genera otro resultado', async () => {
-        const finished = new Promise<void>((resolve) => clientSocket2.once(SocketEvents.GAME_UPDATE, () => resolve()));
+        const finished = Promise.all([clientSocket1, clientSocket2].map(
+            (client) => new Promise<void>((resolve) => client.once(SocketEvents.GAME_UPDATE, () => resolve()))
+        ));
         clientSocket1.emit(SocketEvents.SURRENDER);
         await finished;
         const extraUpdate = vi.fn();

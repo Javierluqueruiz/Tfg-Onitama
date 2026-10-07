@@ -50,4 +50,15 @@ describe("VerifyEmailPage", () => {
         expect(await screen.findByText('El enlace de verificación es inválido o ha expirado.')).toBeInTheDocument();
         expect(updateUser).not.toHaveBeenCalled();
     });
+
+    it('espera a que AuthContext termine de cargar antes de verificar, para que /me no pise el resultado', () => {
+        vi.mocked(useAuth).mockReturnValue({
+            user: null, isAuthenticated: false, isLoading: true,
+            login: vi.fn(), register: vi.fn(), logout: vi.fn(), updateUser,
+        });
+
+        render(<MemoryRouter initialEntries={['/verify-email?token=fake-token']}><VerifyEmailPage /></MemoryRouter>);
+
+        expect(AuthApi.verifyEmail).not.toHaveBeenCalled();
+    });
 });

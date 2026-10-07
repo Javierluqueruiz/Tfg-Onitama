@@ -28,7 +28,7 @@ export const Lobby: React.FC =  () => {
         isConnected, currentScreen, setCurrentScreen,
         playerName, setPlayerName, joinCode, setJoinCode,
         createdRoomCode, errorMsg, setErrorMsg,
-        handleCreateRoom, handleJoinRoom, startMatchmaking, startAiGame, selectMode, setSelectMode, accountUsername
+        handleCreateRoom, handleJoinRoom, startMatchmaking, startAiGame, handleCancelWaiting, selectMode, setSelectMode, accountUsername
     } = useLobby();
 
     // FEAT-08: qué pestaña del menú principal está activa, solo para decidir
@@ -75,7 +75,7 @@ export const Lobby: React.FC =  () => {
                 <nav className={styles.topNav} aria-label="Cuenta y ayuda">
                     <ServerStatus isConnected={isConnected} />
                     {currentScreen !== 'WAITING' && <NavLinks />}
-                    <AuthStatus />
+                    {currentScreen !== 'WAITING' && <AuthStatus />}
                 </nav>
             </header>
 
@@ -137,10 +137,7 @@ export const Lobby: React.FC =  () => {
                         {currentScreen === "WAITING" && (
                             <WaitingRoom
                                 roomCode={createdRoomCode}
-                                onCancel={() => {
-                                    setErrorMsg(null);
-                                    setCurrentScreen('MAIN');
-                                }}
+                                onCancel={handleCancelWaiting}
                             />
                         )}
 

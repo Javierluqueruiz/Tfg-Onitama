@@ -52,7 +52,7 @@ export class AuthService {
     
 
     private static assertStrongPassword(password: string): void {
-        if (password.length < 8) {
+        if (typeof password !== 'string' || password.length < 8) {
             throw new AuthError('La contraseña debe tener al menos 8 caracteres', 400);
         }
         if (COMMON_PASSWORDS.has(password.toLocaleLowerCase())) {
@@ -65,6 +65,7 @@ export class AuthService {
     }
 
     static comparePassword(password: string, hash: string): Promise<boolean> {
+        if (typeof password !== 'string') return Promise.resolve(false);
         return bcrypt.compare(password, hash);
     }
 

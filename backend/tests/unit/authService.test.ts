@@ -32,6 +32,12 @@ describe('AuthService - hashing y JWT', () => {
         expect(isValid).toBe(false);
     });
 
+    it('comparePassword devuelve false si la contraseña no es texto, en vez de lanzar', async () => {
+        const hash = await AuthService.hashPassword('miContraseña');
+        const isValid = await AuthService.comparePassword(undefined as unknown as string, hash);
+        expect(isValid).toBe(false);
+    });
+
     it('signToken y verifyToken son funciones complementarias', () => {
         const fakeUser = { _id: new mongoose.Types.ObjectId(), username: 'usuarioPrueba', passwordChangedAt: new Date() } as IUser;
         const token = AuthService.signToken(fakeUser);
@@ -79,6 +85,12 @@ describe('AuthService.register', async () => {
 
     it('lanza un error 400 si la contraseña es demasiado corta', async () => {
         await expect(AuthService.register('usuarioPrueba', 'usuario@prueba.com', '12345')
+        ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    // Evita un 500: el cuerpo de la petición lo controla el cliente y la contraseña puede no ser texto.
+    it.each([undefined, null, 12345678, { length: 20 }])('lanza un error 400 si la contraseña no es texto (%o)', async (password) => {
+        await expect(AuthService.register('usuarioPrueba', 'usuario@prueba.com', password as unknown as string)
         ).rejects.toMatchObject({ statusCode: 400 });
     });
 });
@@ -281,6 +293,15 @@ describe('AuthService.deleteAccount', () => {
         vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
 
         await expect(AuthService.deleteAccount(fakeUser._id.toString(), 'testUser', 'contraseñaIncorrecta'))
+            .rejects.toMatchObject({ statusCode: 401 });
+    });
+
+    it('lanza un error 401 si la contraseña no es texto', async () => {
+        const hash = await AuthService.hashPassword('contraseñaCorrecta');
+        const fakeUser = { _id: new mongoose.Types.ObjectId(), username: 'testUser', passwordHash: hash } as unknown as IUser;
+        vi.spyOn(User, 'findById').mockResolvedValue(fakeUser);
+
+        await expect(AuthService.deleteAccount(fakeUser._id.toString(), 'testUser', undefined as unknown as string))
             .rejects.toMatchObject({ statusCode: 401 });
     });
 

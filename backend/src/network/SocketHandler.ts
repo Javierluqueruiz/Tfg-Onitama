@@ -272,7 +272,8 @@ function registerGamePlayEvents(io: Server, socket: Socket) {
             const room = RoomManager.reconnectPlayer(
                 payload.roomId,
                 payload.originalSocketId,
-                socket.id //Nuevo socketId del jugador que se reconecta
+                socket.id, //Nuevo socketId del jugador que se reconecta
+                socket.data.userId
             );
 
             if (room) {
@@ -364,6 +365,10 @@ function registerDrawEvents(io: Server, socket: Socket) {
 
         if (!room || !room.gameState || room.gameState.status === 'finished') {
             return socket.emit(SocketEvents.ERROR, { message: 'No se encontró la sala o el juego ya ha terminado.' });
+        }
+
+        if (!room.drawOfferedBy || room.drawOfferedBy === socket.id) {
+            return socket.emit(SocketEvents.ERROR, { message: 'No hay ninguna oferta de empate pendiente.' });
         }
 
         try {
