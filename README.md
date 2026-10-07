@@ -4,7 +4,7 @@
 
 Implementación web y multijugador en tiempo real del juego de mesa abstracto **Onitama**, desarrollada como Trabajo de Fin de Grado. El proyecto cubre el motor de juego (reglas, cartas y condiciones de victoria), la infraestructura de red para que dos jugadores remotos se enfrenten desde el navegador, un sistema de cuentas con puntuación ELO y clasificación global, y dos oponentes virtuales (uno heurístico y otro basado en búsqueda Minimax) con los que se puede jugar en solitario.
 
-## 🎮 Demo
+##  Demo
 
 | Servicio | URL |
 |---|---|
@@ -13,7 +13,7 @@ Implementación web y multijugador en tiempo real del juego de mesa abstracto **
 
 > ⚠️ El backend está desplegado en el plan gratuito de Render, que suspende el servicio tras 15 minutos de inactividad. La primera conexión tras un periodo de inactividad puede tardar unos segundos en establecerse mientras la instancia se reactiva.
 
-## ✨ Características
+##  Características
 
 **Juego**
 
@@ -48,7 +48,7 @@ Implementación web y multijugador en tiempo real del juego de mesa abstracto **
 - Verificación anti-bots con **Cloudflare Turnstile** (validada siempre en el servidor), limitación de peticiones por IP, cabeceras de seguridad (`helmet`), protección frente a CSRF mediante una cabecera obligatoria en las peticiones que modifican datos y saneado de filtros de consulta contra inyección NoSQL.
 - Tokens con propósito distinto (sesión, verificación de correo y recuperación de contraseña) y sesiones que se invalidan al cambiar la contraseña.
 
-## 🏗️ Arquitectura
+##  Arquitectura
 
 El repositorio es un monorepo con tres paquetes independientes:
 
@@ -98,7 +98,7 @@ El estado de las partidas, las colas de emparejamiento y el historial de chat re
 
 La partida en sí se juega por Socket.IO; los eventos están definidos en `shared/socket.types.ts`.
 
-## 🚀 Puesta en marcha local
+##  Puesta en marcha local
 
 ### Requisitos
 
@@ -164,7 +164,7 @@ cd backend
 DEMO_PASSWORD='una-contraseña' npx ts-node scripts/seedDemo.ts
 ```
 
-## ✅ Testing
+##  Testing
 
 Cada paquete tiene su propia suite de pruebas con Vitest.
 
@@ -183,7 +183,7 @@ npm run test:coverage  # con cobertura
 
 El flujo de integración continua (`.github/workflows/ci.yml`) se ejecuta en cada *push* a `main` y en cada *pull request* hacia `develop` o `main`. En el backend ejecuta la instalación limpia (`npm ci`), los tests con cobertura y el *linting* (ESLint); en el frontend, el *linting*, la compilación (`tsc -b` + Vite, que incluye la comprobación de tipos) y los tests.
 
-## 🧪 Experimentos del oponente virtual
+##  Experimentos del oponente virtual
 
 Los niveles de dificultad de los dos oponentes se calibraron con experimentos reproducibles que enfrentan a los bots entre sí con el motor de reglas real. Se ejecutan desde `backend/`:
 
@@ -198,14 +198,14 @@ npm run experiment:minimax -- discard 500  # frecuencia del descarte forzoso
 
 El método, los resultados y las limitaciones de cada experimento están en [`backend/experiments/README.md`](backend/experiments/README.md).
 
-## 🌿 Flujo de trabajo
+##  Flujo de trabajo
 
 Se sigue un flujo con una rama por característica (`feat/…`) que se integra en `develop` mediante *pull request*, y `develop` se integra en `main`, que es la rama que se despliega. La integración continua actúa como filtro en cada *pull request*.
 
-## 📄 Documentación
+##  Documentación
 
 El diseño y las decisiones arquitectónicas de cada iteración (memorandos técnicos, análisis de valor aportado, estrategia de pruebas y experimentos) están documentados en detalle en la memoria del TFG.
 
-## 👤 Autor
+##  Autor
 
 **Javier Luque** — Trabajo de Fin de Grado
